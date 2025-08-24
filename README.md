@@ -73,3 +73,9 @@ llm-finetune-supportbot/
 ## ⚖️ License
 
 MIT (adjust as needed). Respect upstream licenses.
+
+## 🤖 Cline Setup
+
+- Memory Bank: see `memory-bank/` (project brief, tech context, active focus, progress). Keep `activeContext.md` and `progress.md` fresh after milestones.
+- Rules: see `.clinerules/*.md` for coding/testing guidelines and memory bank usage.
+- Workflows: run `/parse-prd` to turn `PRD.txt` into tasks; also available: `/pr-review`, `/deploy-service` (template), `/release` (template).
