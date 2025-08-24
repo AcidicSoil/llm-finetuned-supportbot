@@ -3,458 +3,636 @@
     "tasks": [
       {
         "id": 1,
-        "title": "Set up repo scaffold and environment",
-        "description": "Create the project structure and ensure a clean Quickstart installs and runs the demo without errors.",
+        "title": "Quickstart Environment Setup",
+        "description": "Create and validate a reproducible Python environment that runs the demo end-to-end on a clean machine.",
         "status": "pending",
         "dependencies": [],
         "priority": "high",
-        "details": "FR-1, FR-7; README: 'Quickstart', 'Structure'",
-        "testStrategy": "On a clean machine: create venv, install requirements, and run `python demo.py` with no errors; repository contains required top-level files and folders.",
+        "details": "Provision virtualenv, install dependencies from requirements.txt, and verify demo.py executes successfully. Document platform notes (Linux/macOS/Windows), GPU optionality, and minimal hardware specs.",
+        "testStrategy": "Run a smoke test script that creates a venv, installs deps, executes demo.py with a dummy prompt, and asserts non-empty output and zero exit code.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Create repository structure",
-            "description": "Add src/, eval/, results/, tests/, demo.py, requirements.txt, README.md.",
-            "status": "pending"
+            "title": "Create virtual environment",
+            "description": "Add make/PowerShell helpers to create/activate .venv consistently across OSes.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "Running the helper creates .venv and activation succeeds without errors."
           },
           {
             "id": 2,
-            "title": "Author requirements.txt",
-            "description": "List Python, PyTorch, Transformers, datasets, peft, trl, BitsAndBytes.",
-            "status": "pending"
+            "title": "Install dependencies",
+            "description": "Pin and install requirements.txt; verify CUDA/CPU variants as applicable.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "pip install completes with zero errors and compatible versions are resolved."
           },
           {
             "id": 3,
-            "title": "Write Quickstart section",
-            "description": "Document venv creation, install, and demo run for Unix/Windows.",
-            "status": "pending"
+            "title": "Run demo smoke test",
+            "description": "Execute python demo.py with a sample question and capture output.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "Command exits 0 and prints a response string > 10 characters."
           },
           {
             "id": 4,
-            "title": "Bootstrap demo.py",
-            "description": "Add a placeholder script that imports core modules and prints a sanity message.",
-            "status": "pending"
+            "title": "Document Quickstart",
+            "description": "Add Quickstart section with exact commands and troubleshooting tips.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "README Quickstart produces a working run on a fresh machine following steps verbatim."
           },
           {
             "id": 5,
-            "title": "Verify structure script",
-            "description": "Add a small script/test that asserts required files/folders exist.",
-            "status": "pending"
+            "title": "Hardware & OS matrix",
+            "description": "List tested OS/GPU configurations and minimum specs to complete Quickstart.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "Matrix table shows at least 2 OS variants and states GPU optionality/VRAM guidance."
           }
         ]
       },
       {
         "id": 2,
-        "title": "Implement data ingestion and preprocessing",
-        "description": "Define dataset schema and preprocessing for tech-support style conversations with clear licensing notes.",
+        "title": "Repository Structure & Scaffolding",
+        "description": "Ensure required folders/files exist and are populated with minimal working content.",
         "status": "pending",
         "dependencies": [
           1
         ],
         "priority": "high",
-        "details": "FR-2; NFR-1, NFR-4, NFR-5; README: 'Evaluation'; PRD: Open Questions (dataset, preprocessing, license).",
-        "testStrategy": "Running `python -m src.data.make_dataset` produces standardized train/val/eval files; schema validated; a sample of n≥100 eval Qs is available; license compliance notes present.",
+        "details": "Create src/, eval/, results/, tests/, demo.py, requirements.txt, and a structured README. Provide sample config files and placeholders where applicable.",
+        "testStrategy": "Unit test asserts presence of required paths and lints template files for syntax; CI job fails if structure is missing.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Define conversation schema",
-            "description": "Specify fields (e.g., id, user_utterance, agent_response, metadata).",
-            "status": "pending"
+            "title": "Create directory scaffold",
+            "description": "Generate src/, eval/, results/, tests/ with .gitkeep as needed.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "git status shows directories tracked; tree matches PRD structure list."
           },
           {
             "id": 2,
-            "title": "Build preprocessing pipeline",
-            "description": "Tokenization/formatting and cleanup suitable for instruction tuning.",
-            "status": "pending"
+            "title": "Add demo.py",
+            "description": "Minimal CLI entrypoint that loads a base model and answers a prompt.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "Running python demo.py returns an answer without exceptions."
           },
           {
             "id": 3,
-            "title": "Create splits",
-            "description": "Generate train/val and a 100-question eval set stored under results/seeded.",
-            "status": "pending"
+            "title": "Seed requirements.txt",
+            "description": "Include torch, transformers, datasets, peft, trl, bitsandbytes with compatible pins.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "pip install -r requirements.txt succeeds on a clean env."
           },
           {
             "id": 4,
-            "title": "Add data validation",
-            "description": "Implement checks with a small unit test ensuring non-empty fields and limits.",
-            "status": "pending"
+            "title": "README skeleton",
+            "description": "Add sections: Goal, Tech Stack, Quickstart, Evaluation, Tests, Structure, Demos, Roadmap, License.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "README renders with all listed sections and working code blocks."
           },
           {
             "id": 5,
-            "title": "Document licensing",
-            "description": "Record dataset sources/attribution and compliance in README or LICENSE notes.",
-            "status": "pending"
+            "title": "Pre-commit lint config",
+            "description": "Optional: basic ruff/black/isort config files to standardize formatting.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "Running linters yields 0 errors on fresh checkout."
           }
         ]
       },
       {
         "id": 3,
-        "title": "Build fine-tuning pipeline with PEFT/LoRA",
-        "description": "Create training scripts using Transformers, PEFT/LoRA, and 4-bit quantization to fine-tune a small open LLM.",
+        "title": "Fine-tuning Pipeline (PEFT/LoRA, 4-bit)",
+        "description": "Implement training scripts to fine-tune a small open LLM for tech-support dialogs with PEFT/LoRA and optional 4-bit quantization.",
         "status": "pending",
         "dependencies": [
+          1,
           2
         ],
         "priority": "high",
-        "details": "NFR-2, NFR-3; FR-1 (env); README: 'Tech Stack', 'Success Metrics'; PRD Open Questions (base model, hardware).",
-        "testStrategy": "Running `python -m src.train.run` completes a short training job, logs wall-clock time and estimated cost, and saves an adapter checkpoint and config.",
+        "details": "Use Hugging Face Transformers + PEFT/TRL with BitsAndBytes for 4-bit. Support dataset loading, tokenization, training args, checkpointing, and inference adapter merge/load.",
+        "testStrategy": "Run a short training (few steps) on a tiny subset; assert checkpoints saved and generated answer differs from base on at least one prompt.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Select baseline model(s)",
-            "description": "Parameterize model name/size and device settings in a config file.",
-            "status": "pending"
+            "title": "Select base model(s)",
+            "description": "Decide parameter range and default checkpoint for \"small\" model category.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "Model name(s) documented; loading succeeds on test machine."
           },
           {
             "id": 2,
-            "title": "Implement LoRA training script",
-            "description": "Use PEFT with 4-bit quantization (BitsAndBytes) and HF Trainer/TRL.",
-            "status": "pending"
+            "title": "Dataset loader & preprocessing",
+            "description": "Implement scripts to load tech-support dialogs and format prompt/response pairs.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "CLI produces tokenized dataset stats and sample batch preview JSON."
           },
           {
             "id": 3,
-            "title": "Add cost/time logging",
-            "description": "Capture wall-clock and optional cost estimate per run; serialize to JSON.",
-            "status": "pending"
+            "title": "LoRA config & 4-bit setup",
+            "description": "Enable PEFT adapters and BitsAndBytes quantization; expose key hyperparameters.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "Training starts with adapters enabled and GPU memory < target threshold documented."
           },
           {
             "id": 4,
-            "title": "Persist artifacts",
-            "description": "Save adapter weights, tokenizer, and run config under results/checkpoints/.",
-            "status": "pending"
+            "title": "Training & checkpointing",
+            "description": "Train for N steps, save adapter checkpoints, and log metrics periodically.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "Checkpoints saved under runs/ or outputs/; logs include loss and steps."
           },
           {
             "id": 5,
-            "title": "Provide config presets",
-            "description": "Create small GPU-friendly defaults and flags for batch size/epochs/lr.",
-            "status": "pending"
+            "title": "Adapter load/merge for inference",
+            "description": "Script to load fine-tuned adapters for inference and optional weight merge.",
+            "status": "pending",
+            "dependencies": [
+              4
+            ],
+            "acceptanceCriteria": "Inference script loads adapter and returns an answer without error."
           }
         ]
       },
       {
         "id": 4,
-        "title": "Develop evaluation suite and metrics",
-        "description": "Implement scripts to compute win-rate vs. base model and hallucination rate, writing CSV/JSON summaries.",
+        "title": "Evaluation Suite & Results Artifacts",
+        "description": "Provide scripts to evaluate base vs. fine-tuned models on 100 questions, compute win-rate and hallucination rate, and write CSV/JSON under results/.",
         "status": "pending",
         "dependencies": [
+          1,
           2,
-          3,
-          9
+          3
         ],
         "priority": "high",
-        "details": "FR-2; NFR-1, NFR-4; README: 'Evaluation', 'Success Metrics'; PRD Open Questions (eval procedure, rubric).",
-        "testStrategy": "Running `python -m eval.run` produces results/*.csv and *.json containing per-item and aggregate metrics (win-rate on 100 Qs, hallucination rate) for base and tuned models.",
+        "details": "Include prompt templates, sampling params, rubric hooks, and summary table generation. Log training cost/time and surface in outputs.",
+        "testStrategy": "Run eval on a 10-question subset in CI; assert outputs exist, schema matches, and metrics parse without NaN.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Define eval prompt format",
-            "description": "Standardize input templates and decoding params for fair comparison.",
-            "status": "pending"
+            "title": "Define eval data split",
+            "description": "Create/ingest 100 Qs representing tech-support scenarios with references if available.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "A fixed 100-item JSON/CSV file exists with schema documented."
           },
           {
             "id": 2,
-            "title": "Implement base vs tuned runner",
-            "description": "Batch evaluate both models over the shared 100-question set.",
-            "status": "pending"
+            "title": "Prompt & sampling config",
+            "description": "Standardize temperature, top_p, max_tokens, and prompt format for fair comparison.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "Config file checked into repo and consumed by eval scripts."
           },
           {
             "id": 3,
-            "title": "Operationalize hallucination rubric",
-            "description": "Document rubric and add scorer interface (manual labels or assisted).",
-            "status": "pending"
+            "title": "Win-rate computation",
+            "description": "Implement pairwise comparison or rubric scoring pipeline for base vs. fine-tuned.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "CSV/JSON includes per-item scores and aggregate win-rate %."
           },
           {
             "id": 4,
-            "title": "Write results to CSV/JSON",
-            "description": "Include per-sample judgments and an aggregates file with metrics.",
-            "status": "pending"
+            "title": "Hallucination rubric",
+            "description": "Implement manual rubric capture form and aggregation logic.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "Results include hallucination rate with n and definitions documented."
           },
           {
             "id": 5,
-            "title": "Add summary table generator",
-            "description": "Produce README-ready markdown tables from results files.",
-            "status": "pending"
+            "title": "Cost & time logging",
+            "description": "Capture wall-clock and (if using paid endpoints) cost; summarize in results.",
+            "status": "pending",
+            "dependencies": [
+              3,
+              4
+            ],
+            "acceptanceCriteria": "Summary JSON reports duration and estimated cost per run."
           }
         ]
       },
       {
         "id": 5,
-        "title": "Ship CLI Q&A demo",
-        "description": "Provide a command-line interface for asking questions and receiving model answers.",
+        "title": "Test Suite (pytest)",
+        "description": "Ship unit and integration tests to validate core behaviors across setup, training, and evaluation.",
         "status": "pending",
         "dependencies": [
+          1,
+          2,
           3
         ],
-        "priority": "medium",
-        "details": "FR-4; README: 'Demos'.",
-        "testStrategy": "Running `python demo.py --cli` accepts a prompt and returns a model answer without crashing; handles both base and tuned model selection.",
+        "priority": "high",
+        "details": "Provide fast tests runnable via pytest -q, including dataset loader, tokenization, tiny-step training, and eval artifact schema checks.",
+        "testStrategy": "CI runs pytest -q on CPU-only mode with mocks/fakes where needed; tests must complete in < 5 minutes.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Design CLI interface",
-            "description": "Add argparse flags for model path, temperature, and max tokens.",
-            "status": "pending"
+            "title": "Unit tests: utilities",
+            "description": "Test config parsing, path utils, and seed control for determinism.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "All utility tests pass locally and in CI."
           },
           {
             "id": 2,
-            "title": "Load model abstraction",
-            "description": "Shared loader for base or LoRA-adapted model with 4-bit support.",
-            "status": "pending"
+            "title": "Dataset tests",
+            "description": "Validate schema, tokenization, and truncation/padding behavior.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "Loader returns batches with expected shapes and attention masks."
           },
           {
             "id": 3,
-            "title": "Prompt formatting",
-            "description": "Apply the same template used in evaluation for consistency.",
-            "status": "pending"
+            "title": "Tiny training test",
+            "description": "Run 5-10 steps with small batch to ensure loss decreases and checkpoints write.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "Loss at final step < first step; checkpoint dir exists."
           },
           {
             "id": 4,
-            "title": "Error handling",
-            "description": "Gracefully handle OOM and missing checkpoint with clear messages.",
-            "status": "pending"
+            "title": "Eval artifact schema test",
+            "description": "Assert CSV/JSON fields exist for metrics (win_rate, hallucination_rate, duration).",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "pydantic or jsonschema validation passes for results files."
           },
           {
             "id": 5,
-            "title": "Demo script docs",
-            "description": "Add usage examples in README and `--help` output.",
-            "status": "pending"
+            "title": "Demo smoke tests",
+            "description": "Exercise CLI and API endpoints with a short request and assert 200/zero exit code.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "CLI returns string; API GET/POST returns 200 with non-empty JSON."
           }
         ]
       },
       {
         "id": 6,
-        "title": "Ship FastAPI demo endpoint",
-        "description": "Expose a minimal HTTP API for request/response testing of the model.",
+        "title": "CLI Demo",
+        "description": "Provide a command-line Q&A demo showcasing base and fine-tuned model responses.",
         "status": "pending",
         "dependencies": [
           3
         ],
         "priority": "medium",
-        "details": "FR-5; README: 'Demos'.",
-        "testStrategy": "Starting `uvicorn src.api.app:app` serves `/health` and `/generate`; a sample curl returns a model answer within a bounded latency on a dev machine.",
+        "details": "Interactive CLI with flags to select model (base/fine-tuned), choose sampling params, and save transcripts.",
+        "testStrategy": "Run CLI in non-interactive mode with a canned prompt; assert output file and stdout contain response.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Create FastAPI app",
-            "description": "Implement /health and /generate routes with Pydantic schemas.",
-            "status": "pending"
+            "title": "Argument parser",
+            "description": "Add flags for --model, --temperature, --top-p, --max-tokens, --save.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "--help lists all flags and defaults; invalid args error cleanly."
           },
           {
             "id": 2,
-            "title": "Model lifecycle",
-            "description": "Lazy-load model on startup and reuse across requests.",
-            "status": "pending"
+            "title": "Base vs fine-tuned toggle",
+            "description": "Switch between base and adapter-augmented model for side-by-side checks.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "Two outputs saved with metadata identifying model selection."
           },
           {
             "id": 3,
-            "title": "Config via env",
-            "description": "Support env vars for model path and inference params.",
-            "status": "pending"
+            "title": "Transcript logging",
+            "description": "Optionally save Q&A runs under results/transcripts/ with timestamps.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "Files created with ISO timestamps and prompt/response payloads."
           },
           {
             "id": 4,
-            "title": "Add run script",
-            "description": "Provide `python -m src.api.run` or uvicorn command with host/port.",
-            "status": "pending"
+            "title": "Error handling",
+            "description": "Graceful failures for OOM, missing model, or bad config with actionable messages.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "Known failure modes produce friendly error text and non-zero exit codes."
           },
           {
             "id": 5,
-            "title": "Example requests",
-            "description": "Document curl/httpie examples and expected response shape.",
-            "status": "pending"
+            "title": "README demo section",
+            "description": "Add usage examples and sample outputs for the CLI demo.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "Users can copy/paste commands and reproduce outputs shown."
           }
         ]
       },
       {
         "id": 7,
-        "title": "Add tests and quality gates",
-        "description": "Implement pytest-based tests covering data, training stubs, evaluation, and demos.",
+        "title": "FastAPI Demo",
+        "description": "Expose a minimal REST endpoint that returns model answers for a given question.",
         "status": "pending",
         "dependencies": [
-          1,
-          2,
-          3,
-          4,
-          5,
-          6
+          3
         ],
-        "priority": "high",
-        "details": "FR-3; README: 'Tests'.",
-        "testStrategy": "`pytest -q` passes locally; includes unit tests for data validation, config parsing, small eval dry-run, and smoke tests for CLI/API.",
+        "priority": "medium",
+        "details": "FastAPI app with POST /answer accepting {question, model, params} and returning JSON with answer and metadata.",
+        "testStrategy": "Use TestClient to POST a sample payload; assert 200 and JSON schema with answer length > 10.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Data tests",
-            "description": "Validate schema, missing fields, and split sizes.",
-            "status": "pending"
+            "title": "Project layout",
+            "description": "Place app in src/api with main.py and router; add uvicorn entrypoint.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "uvicorn src.api.main:app --reload starts without errors."
           },
           {
             "id": 2,
-            "title": "Training config tests",
-            "description": "Assert configs load and produce expected Trainer args.",
-            "status": "pending"
+            "title": "Request/response models",
+            "description": "Define pydantic schemas for input params and output payload.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "Invalid input returns 422 with clear validation messages."
           },
           {
             "id": 3,
-            "title": "Eval dry-run test",
-            "description": "Run N=3 items through base model to validate pipeline.",
-            "status": "pending"
+            "title": "Model routing",
+            "description": "Wire base vs fine-tuned model selection and sampling params.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "Endpoint returns distinct answers for different model selections."
           },
           {
             "id": 4,
-            "title": "CLI smoke test",
-            "description": "Invoke demo CLI with a tiny prompt using a mock model.",
-            "status": "pending"
+            "title": "Logging & timing",
+            "description": "Log request duration and basic telemetry for observability.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "Response includes duration_ms field; logs show start/stop timestamps."
           },
           {
             "id": 5,
-            "title": "API smoke test",
-            "description": "Spin up app in test client and assert /health and /generate.",
-            "status": "pending"
+            "title": "API docs & example client",
+            "description": "Enable /docs and provide a curl/httpie example in README.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "OpenAPI UI renders; example curl returns 200 with sample answer."
           }
         ]
       },
       {
         "id": 8,
-        "title": "Set up CI checks",
-        "description": "Add a CI workflow to run tests and surface pass/fail on pull requests.",
+        "title": "Define Baselines, Targets, and Timeframes",
+        "description": "Decide and document baseline/target values and timelines for win-rate, hallucination rate, and training cost/time.",
         "status": "pending",
         "dependencies": [
-          7
+          4
         ],
-        "priority": "medium",
-        "details": "FR-9; README: 'Roadmap'.",
-        "testStrategy": "CI runs on push/PR, executes `pytest -q`, and reports status; a status badge or run link is visible from the repo.",
+        "priority": "high",
+        "details": "Collaborate to set numeric goals, capture rationale, and record them in the README and config. Tie to eval outputs for traceability.",
+        "testStrategy": "Schema check ensures metrics.yaml/json contains fields {baseline, target, timeframe} for each metric and README references them.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Author CI workflow",
-            "description": "Create GitHub Actions YAML to set up Python, cache deps, run tests.",
-            "status": "pending"
+            "title": "Collect baseline runs",
+            "description": "Execute base-model eval to establish observed baseline metrics.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "Baseline values stored under results/ with timestamp and commit hash."
           },
           {
             "id": 2,
-            "title": "Pin Python version",
-            "description": "Select a supported Python version and document it.",
-            "status": "pending"
+            "title": "Set targets",
+            "description": "Define improvement thresholds (e.g., +X% win-rate, -Y% hallucinations).",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "Targets documented with rationale and feasibility notes."
           },
           {
             "id": 3,
-            "title": "Artifact retention",
-            "description": "Upload coverage or test logs for debugging on failures.",
-            "status": "pending"
+            "title": "Define timeframes",
+            "description": "Attach dates/iterations for achieving targets and re-evaluation cadence.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "Timeframes captured in metrics config and referenced in Roadmap."
           },
           {
             "id": 4,
-            "title": "Add README badge",
-            "description": "Display CI status in README.",
-            "status": "pending"
+            "title": "README metrics section",
+            "description": "Publish metrics table with baseline/target/timeframe and data source references.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "Rendered table matches config and links to results artifacts."
           },
           {
             "id": 5,
-            "title": "Pre-commit optional",
-            "description": "Optionally add black/ruff hooks and wire into CI.",
-            "status": "pending"
+            "title": "Review & sign-off",
+            "description": "Stakeholder review of metrics and acceptance of success criteria.",
+            "status": "pending",
+            "dependencies": [
+              4
+            ],
+            "acceptanceCriteria": "Issue approved with recorded reviewers and decision log entry."
           }
         ]
       },
       {
         "id": 9,
-        "title": "Define baseline and target metrics",
-        "description": "Establish baseline values and target thresholds for win-rate, hallucination rate, and training cost/time.",
+        "title": "Continuous Integration (CI)",
+        "description": "Add a CI pipeline to run linters and pytest; optionally build small eval subset.",
         "status": "pending",
         "dependencies": [
-          1
+          5,
+          8
         ],
-        "priority": "high",
-        "details": "FR-8; README: 'Success Metrics', 'Roadmap'; PRD: 'Success Metrics', Open Questions.",
-        "testStrategy": "README (or a metrics.yml) contains explicit baselines and targets with timeframe; referenced by eval scripts; tables display targets vs. achieved.",
+        "priority": "medium",
+        "details": "GitHub Actions (or equivalent) workflow that sets up Python, caches deps, runs lint, pytest -q, and executes a fast eval of 10 items to validate artifacts.",
+        "testStrategy": "Open a PR to trigger CI; require all jobs green. Introduce a seeded failure to ensure CI catches issues.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Pick baseline model",
-            "description": "Document chosen base model(s) and reasoning.",
-            "status": "pending"
+            "title": "Author workflow YAML",
+            "description": "Create ci.yml with Python matrix and cache steps.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "Workflow appears in Actions and runs on pull_request and push."
           },
           {
             "id": 2,
-            "title": "Set numeric targets",
-            "description": "Specify target win-rate uplift, max hallucination rate, and acceptable cost/time.",
-            "status": "pending"
+            "title": "Lint & type check",
+            "description": "Run ruff/black/isort and optional mypy; fail on violations.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "CI job fails if formatting or types are incorrect."
           },
           {
             "id": 3,
-            "title": "Define timeframe",
-            "description": "State when targets are expected (e.g., MVP, next milestone).",
-            "status": "pending"
+            "title": "Run tests",
+            "description": "Execute pytest -q with minimal resources and report JUnit summary.",
+            "status": "pending",
+            "dependencies": [
+              2
+            ],
+            "acceptanceCriteria": "All tests pass in < 5 minutes on default runner."
           },
           {
             "id": 4,
-            "title": "Publish metrics spec",
-            "description": "Create metrics.yml or README section consumed by eval scripts.",
-            "status": "pending"
+            "title": "Eval smoke job",
+            "description": "Optional: run 10-question eval to validate results schema generation.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "CI artifact upload includes CSV/JSON with expected fields."
           },
           {
             "id": 5,
-            "title": "Link to results format",
-            "description": "Ensure eval outputs map to the documented success metrics fields.",
-            "status": "pending"
+            "title": "Status badge",
+            "description": "Add CI status badge to README.",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "Badge renders and reflects latest workflow status."
           }
         ]
       },
       {
         "id": 10,
-        "title": "Complete documentation, examples, and licensing",
-        "description": "Deliver before/after examples, limitations & next steps, and licensing compliance.",
+        "title": "Documentation: Limitations, Next Steps, and License",
+        "description": "Document known limitations, future work, and license/attribution requirements.",
         "status": "pending",
         "dependencies": [
-          1,
+          2,
           4,
-          5,
-          6,
-          8,
-          9
+          8
         ],
         "priority": "medium",
-        "details": "FR-6, FR-10, FR-11; README: 'Demos', 'Roadmap', 'License'.",
-        "testStrategy": "README includes a 'Limitations & Next Steps' section; at least one before/after qualitative pair; LICENSE set to MIT with upstream notices; docs reference eval tables.",
+        "details": "Add \"Limitations & Next Steps\" section detailing dataset scope, evaluation caveats, and hardware assumptions. Ensure MIT license present and upstream licenses respected.",
+        "testStrategy": "Docs lint (links/spell) passes; LICENSE file exists; README section present and referenced in index.",
         "subtasks": [
           {
             "id": 1,
-            "title": "Add before/after examples",
-            "description": "Include qualitative comparison of base vs. tuned answers.",
-            "status": "pending"
+            "title": "Limitations section",
+            "description": "Describe dataset representativeness, hallucination rubric subjectivity, and small-model constraints.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "Section lists at least 3 concrete limitations with rationale."
           },
           {
             "id": 2,
-            "title": "Write limitations & next steps",
-            "description": "Document known gaps and prioritized future work.",
-            "status": "pending"
+            "title": "Next steps roadmap",
+            "description": "Outline immediate enhancements (dataset curation, more evals, CI hardening).",
+            "status": "pending",
+            "dependencies": [
+              1
+            ],
+            "acceptanceCriteria": "Checklist of 5+ actionable next steps with owners or tags."
           },
           {
             "id": 3,
-            "title": "Finalize license",
-            "description": "Ensure MIT license file and upstream attributions are present.",
-            "status": "pending"
+            "title": "License file",
+            "description": "Add MIT LICENSE file and ensure notices for upstream assets as needed.",
+            "status": "pending",
+            "dependencies": [],
+            "acceptanceCriteria": "LICENSE exists; README references license and upstream compliance."
           },
           {
             "id": 4,
-            "title": "Update README tables",
-            "description": "Summarize evaluation results and link to artifacts.",
-            "status": "pending"
+            "title": "Attribution audit",
+            "description": "Review dependencies for license requirements and add NOTICE if required.",
+            "status": "pending",
+            "dependencies": [
+              3
+            ],
+            "acceptanceCriteria": "Audit notes committed; no missing attributions detected."
           },
           {
             "id": 5,
-            "title": "Add usage and troubleshooting",
-            "description": "Provide common fixes for install, OOM, and missing models.",
-            "status": "pending"
+            "title": "Doc QA pass",
+            "description": "Grammar, links, and command blocks verified; screenshots added if applicable.",
+            "status": "pending",
+            "dependencies": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "acceptanceCriteria": "Markdown lints pass and all links resolve."
           }
         ]
       }
     ],
     "metadata": {
-      "created": "2025-08-22T20:23:42.238Z",
-      "updated": "2025-08-22T20:23:42.239Z",
+      "created": "2025-08-24T05:44:42.991Z",
+      "updated": "2025-08-24T05:44:42.992Z",
       "description": "Tasks for master context"
     }
   }

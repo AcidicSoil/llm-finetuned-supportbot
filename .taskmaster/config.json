@@ -1,14 +1,14 @@
 {
   "models": {
     "main": {
-      "provider": "gemini-cli",
-      "modelId": "gemini-2.5-pro",
+      "provider": "ollama",
+      "modelId": "hf.co/Mungert/osmosis-mcp-4b-GGUF:Q4_K_M",
       "maxTokens": 65536,
       "temperature": 0.8
     },
     "research": {
-      "provider": "gemini-cli",
-      "modelId": "gemini-2.5-pro",
+      "provider": "openrouter",
+      "modelId": "qwen/qwen3-coder:free",
       "maxTokens": 65536,
       "temperature": 0.8
     },
