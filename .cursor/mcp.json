@@ -4,7 +4,7 @@
 			"command": "npx",
 			"args": ["-y", "--package=task-master-ai", "task-master-ai"],
 			"env": {
-				"OPENROUTER_API_KEY": "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",
+
 				"OLLAMA_API_KEY":"ollama"
 			}
 		}

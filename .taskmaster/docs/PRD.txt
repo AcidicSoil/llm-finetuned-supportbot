@@ -1,0 +1,219 @@
+# Overview
+
+Train and evaluate a small open LLM fine‑tuned on tech‑support conversations. Target users are applied ML engineers, platform engineers, and support tooling owners who need a low‑cost, local or self‑hostable helper that answers product support questions with higher helpfulness and lower hallucinations than the base model. Value: cheaper inference, controllable behavior, faster iteration on support knowledge, and reproducible evaluation.
+
+# Core Features
+
+1. Data ingestion & preprocessing
+
+* What: Load support dialogs, tickets, and Q\&A into a unified supervised dataset.
+* Why: Clean, consistent inputs drive stable training and evaluation.
+* How: Parsers → schema validation → train/val/test splits → tokenization.
+
+2. Parameter‑efficient fine‑tuning (PEFT/LoRA)
+
+* What: Fine‑tune a small open LLM using LoRA with 4/8‑bit quantization.
+* Why: Reduce compute and cost while preserving performance.
+* How: Transformers + PEFT + BitsAndBytes; hyperparameters surfaced via CLI.
+
+3. Training orchestration
+
+* What: Reproducible training runs with deterministic seeds and saved checkpoints.
+* Why: Comparable experiments and rollbacks.
+* How: PyTorch + Transformers Trainer/TRL; YAML/CLI config; resume/train‑from‑checkpoint.
+
+4. Evaluation suite
+
+* What: Automated metrics and side‑by‑side win‑rate tests on 100 eval questions.
+* Why: Measure quality, hallucination rate, and regressions.
+* How: `eval/` scripts output CSV/JSON into `results/`, plus summary tables.
+
+5. Inference demos
+
+* What: CLI Q\&A and FastAPI endpoint.
+* Why: Quick validation and easy integration.
+* How: `demo.py` and a minimal FastAPI app with `/generate` and `/healthz`.
+
+6. Model packaging & artifacts
+
+* What: Save adapters, tokenizer, and config for deployment.
+* Why: Consistent inference across environments.
+* How: HF format with adapter weights; simple loader utility.
+
+7. Testing & CI hooks
+
+* What: Unit tests for data, training, and inference paths; basic CI checks.
+* Why: Guardrails against regressions.
+* How: `pytest`, fast smoke tests, style and type checks (optional).
+
+8. Metrics targets & reporting
+
+* What: Win rate vs. base, hallucination rate, training cost/time.
+* Why: Clear success criteria.
+* How: Aggregated report printed to console and written to `results/`.
+
+# User Experience
+
+Personas
+
+* Applied ML Engineer: runs fine‑tunes, tunes hyperparameters, inspects metrics.
+* Platform Engineer: deploys FastAPI, manages artifacts, ensures reliability.
+* Support Lead/Analyst: contributes evaluation questions and reviews qualitative samples.
+
+Key flows
+
+1. Prepare data → `python scripts/prepare_data.py --input data/ --out data/processed/`
+2. Train → `python scripts/train.py --config configs/sft.yaml`
+3. Evaluate → `python scripts/eval.py --model runs/last/ --base <base_id> --suite eval/suites/support_100.json`
+4. Demo → `python demo.py` or `uvicorn api.app:app`
+5. Package/ship → export adapters and config for inference.
+
+UI/UX considerations
+
+* Single‑command defaults with sensible hyperparams.
+* Clear console logs with run IDs and output paths.
+* Results table summarizing win rate, hallucination rate, and cost/time.
+* 60‑second local demo from a fresh checkout.
+
+# Technical Architecture
+
+System components
+
+* Data layer: loaders, cleaners, schema validators, splitters.
+* Training layer: HF Transformers + PEFT/LoRA, optional TRL for SFT/DPO‑style objectives.
+* Quantization: BitsAndBytes for 4/8‑bit finetuning and inference.
+* Evaluation: deterministic prompt runner, win‑rate harness, hallucination rubric hooks.
+* Serving: FastAPI app with batching toggle and simple auth stub.
+* Utilities: config management, checkpointing, logging, seed control.
+
+Data models
+
+* Example schema: `{id, inputs:{question, context?}, outputs:{answer}, meta:{source, timestamp, tags[]}}`.
+* Splits: stratified by tag/source to reduce leakage.
+
+APIs and integrations
+
+* Inference: `POST /generate {prompt, max_new_tokens, temperature}` → `{text, latency_ms}`.
+* Health: `GET /healthz` → `{status}`.
+* Optional callback for logging requests/results to file.
+
+Infrastructure requirements
+
+* Dev: 1x GPU with ≥16 GB VRAM or CPU for small runs; Python 3.10+; virtualenv.
+* Storage: <10 GB for datasets, checkpoints, and results per project.
+* Repro: pinned `requirements.txt`; seeds; deterministic flags where feasible.
+
+# Development Roadmap
+
+MVP
+
+* Data pipeline with validation and splits.
+* PEFT/LoRA training on a small open LLM with quantization.
+* Eval harness for 100 Qs: win rate vs. base, hallucination rubric stub.
+* CLI demo and FastAPI endpoint.
+* Basic tests and CI hooks.
+* Results export to CSV/JSON with summary table in README.
+
+Phase 2: Hardening
+
+* Configurable training recipes (SFT; optional preference‑style with TRL).
+* Checkpoint management and best‑model selection by eval metric.
+* Expanded eval sets, before/after qualitative examples, and error buckets.
+* Input length handling: truncation strategy and sliding‑window option.
+* Robust logging and graceful failure paths.
+
+Phase 3: Optimization
+
+* Mixed‑precision and gradient‑accumulation presets.
+* LoRA rank/alpha sweeps; early stopping.
+* Tokenizer/domain adaptation option.
+* Faster inference graph (compile where supported).
+
+Phase 4: Extensions
+
+* Lightweight model registry directory with metadata.
+* Prompt templates for common support intents.
+* Optional guardrail hooks (regex/keywords) for unsafe or out‑of‑scope queries.
+* Packaging for Docker.
+
+# Logical Dependency Chain
+
+1. Repository scaffolding, env setup, requirements pinning.
+2. Data schema and validators.
+3. Deterministic splits and tokenization.
+4. Core training loop with PEFT/LoRA and checkpointing.
+5. Eval harness against base model with metrics export.
+6. CLI demo, then FastAPI service.
+7. Tests and CI.
+8. Optimization passes and extended recipes.
+9. Packaging and optional registry.
+
+# Risks and Mitigations
+
+Data quality and drift
+
+* Risk: Noisy tickets or mixed domains degrade learning.
+* Mitigation: Schema validation, deduplication, stratified splits, tag‑based filtering.
+
+Hallucinations and safety
+
+* Risk: Confident but wrong answers.
+* Mitigation: Rubric‑based scoring, error buckets, optional guardrails, prompt templates with disclaimers.
+
+Overfitting and leakage
+
+* Risk: Memorization of test items or PII.
+* Mitigation: Strict split policy, PII scrubbing, holdout refresh, differential sampling.
+
+Compute and cost limits
+
+* Risk: Insufficient VRAM or long runtimes.
+* Mitigation: LoRA + 4/8‑bit, gradient accumulation, smaller context, early stopping.
+
+Evaluation validity
+
+* Risk: Win‑rate suite not representative.
+* Mitigation: Periodic refresh, expand domains, include qualitative review.
+
+Licensing and compliance
+
+* Risk: Incompatible upstream licenses or sensitive data.
+* Mitigation: MIT project license with upstream attribution; data usage review.
+
+# Appendix
+
+Research and references (implementation‑level)
+
+* Libraries: `transformers`, `datasets`, `peft`, `trl`, `bitsandbytes`, `pytorch`.
+* Training knobs: LR, epochs, batch size, max seq length, LoRA rank/alpha, weight decay, warmup, grad clip.
+* Default targets: ≥60% win rate vs. base on 100 Qs; ≥30% hallucination reduction vs. baseline rubric; track training wall‑time and rough cost per run.
+
+Example commands
+
+* Create env: `python -m venv .venv && source .venv/bin/activate`
+* Install: `pip install -r requirements.txt`
+* Train: `python scripts/train.py --config configs/sft.yaml`
+* Eval: `python scripts/eval.py --model runs/last --base <base_id> --suite eval/suites/support_100.json`
+* Demo: `python demo.py` or `uvicorn api.app:app`
+
+Repository structure (reference)
+
+```
+llm-finetune-supportbot/
+  src/                # data, training, inference modules
+  demo.py             # CLI demo
+  api/                # FastAPI app
+  eval/               # evaluation scripts and suites
+  results/            # CSV/JSON outputs and summaries
+  tests/              # unit and smoke tests
+  requirements.txt
+  README.md
+  configs/            # training/eval configs
+  scripts/            # entrypoints for prepare/train/eval
+```
+
+Assumptions
+
+* Small open LLM baseline compatible with HF stack.
+* Single‑GPU dev acceptable; scale‑out not required for MVP.
+* Support dialogs are available or synthesizable for experimentation.

@@ -1,942 +1,998 @@
 {
-  "master": {
+  "default": {
     "tasks": [
       {
         "id": 1,
-        "title": "Finalize Core Technical Decisions",
-        "description": "Address all 'Open Questions' from the PRD to establish a clear technical baseline for the project. This is a prerequisite for most implementation tasks.",
-        "details": "Decide on: 1) The specific small open LLM(s) to use. 2) The tech-support dataset and any preprocessing steps. 3) The target hardware assumptions (GPU/memory). 4) The detailed evaluation procedure, including the manual rubric for hallucinations. 5) The initial scope for CI checks.",
-        "testStrategy": "Review a written decision log or updated PRD section confirming that all open questions have been answered and documented for the team.",
+        "title": "Setup Project Repository and Environment",
+        "description": "Create the basic repository structure, initialize a virtual environment, and create a pinned `requirements.txt` file to ensure a reproducible setup.",
+        "details": "Scaffold directories: `src/`, `scripts/`, `configs/`, `eval/`, `tests/`, `api/`, `results/`. Create a virtual environment using `python -m venv .venv`. Install core libraries like `transformers`, `peft`, `bitsandbytes`, `torch`, `datasets`, `fastapi`, `uvicorn`, `pytest` and pin their versions in `requirements.txt`.",
+        "testStrategy": "Verify that `pip install -r requirements.txt` runs successfully in a clean environment and all specified directories exist.",
         "priority": "high",
         "dependencies": [],
         "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Select and Configure Base LLM and Quantization",
-            "description": "Choose the specific open-source LLM checkpoint and define the 4-bit quantization settings to establish the model baseline.",
+            "title": "Scaffold Project Directories",
+            "description": "Create the standard directory structure for the project to house source code, scripts, configurations, and other artifacts.",
             "dependencies": [],
-            "details": "Create a configuration file `configs/model_config.yaml`. Specify the `model_name_or_path` (e.g., 'mistralai/Mistral-7B-Instruct-v0.2') and the 4-bit quantization settings (e.g., `load_in_4bit: true`, `bnb_4bit_quant_type: 'nf4'`, `bnb_4bit_compute_dtype: 'bfloat16'`).",
+            "details": "Create the following empty directories at the project root: `src/`, `scripts/`, `configs/`, `eval/`, `tests/`, `api/`, `results/`. Add a `.gitkeep` file to each to ensure they can be committed to the repository.",
             "status": "pending",
-            "testStrategy": "Review `configs/model_config.yaml` to confirm it contains the chosen model checkpoint and complete quantization settings."
+            "testStrategy": "Verify that all specified directories exist in the project root using `ls -d */`."
           },
           {
             "id": 2,
-            "title": "Define Dataset Path and Prompt Template",
-            "description": "Finalize the tech-support dataset to be used for fine-tuning and document the exact prompt template for training and inference.",
+            "title": "Create Python Virtual Environment",
+            "description": "Create an isolated Python virtual environment to manage project dependencies without conflicting with system-wide packages.",
             "dependencies": [],
-            "details": "Create `configs/data_config.yaml` specifying the `dataset_path` and format. Create a new document `docs/prompt_engineering.md` to define the precise prompt template, including roles, instructions, and placeholders.",
+            "details": "Execute the command `python -m venv .venv` in the project root to create the environment directory.",
             "status": "pending",
-            "testStrategy": "Verify `configs/data_config.yaml` contains the dataset path. Review `docs/prompt_engineering.md` to ensure the prompt template is clearly defined."
+            "testStrategy": "Verify the existence of the `.venv/` directory in the project root."
           },
           {
             "id": 3,
-            "title": "Configure Default PEFT/LoRA Parameters",
-            "description": "Establish the default Parameter-Efficient Fine-Tuning (PEFT) configuration for LoRA to be used in initial training runs.",
+            "title": "Initialize Git and Configure .gitignore",
+            "description": "Initialize a new Git repository and create a `.gitignore` file to prevent tracking of transient files like the virtual environment.",
             "dependencies": [],
-            "details": "Create `configs/peft_config.yaml`. Define the initial LoRA parameters: `r` (e.g., 16), `lora_alpha` (e.g., 32), `lora_dropout` (e.g., 0.05), and `target_modules` (e.g., `['q_proj', 'v_proj']`).",
+            "details": "Run `git init`. Create a `.gitignore` file that includes entries for the virtual environment (`.venv/`), Python cache (`__pycache__/`), and results (`results/`).",
             "status": "pending",
-            "testStrategy": "Review `configs/peft_config.yaml` to ensure all required LoRA parameters (`r`, `lora_alpha`, `lora_dropout`, `target_modules`) are present with default values."
+            "testStrategy": "Confirm that `git status` does not list the `.venv/` directory as an untracked directory."
           },
           {
             "id": 4,
-            "title": "Set Initial Training Hyperparameters for Demo Run",
-            "description": "Define a complete set of training hyperparameters for a small-scale, initial demonstration run to validate the training pipeline.",
+            "title": "Install Core Python Dependencies",
+            "description": "Install the required Python libraries for model training, evaluation, and serving into the virtual environment.",
             "dependencies": [],
-            "details": "Create `configs/training_args.yaml`. Specify key hyperparameters like `learning_rate` (e.g., 2e-4), `per_device_train_batch_size` (e.g., 1), `num_train_epochs` (e.g., 1), `weight_decay` (e.g., 0.01), and `gradient_accumulation_steps` (e.g., 4).",
+            "details": "Activate the virtual environment (e.g., `source .venv/bin/activate`). Use pip to install the core libraries: `transformers`, `peft`, `bitsandbytes`, `torch`, `datasets`, `fastapi`, `uvicorn`, `pytest`.",
             "status": "pending",
-            "testStrategy": "Check `configs/training_args.yaml` for the presence and sensible default values for all specified training hyperparameters."
+            "testStrategy": "Run `pip list` within the activated environment and confirm all specified libraries are present."
           },
           {
             "id": 5,
-            "title": "Document Manual Evaluation Rubric and Procedure",
-            "description": "Create a detailed manual evaluation rubric, with a focus on identifying hallucinations, and document the overall evaluation procedure.",
+            "title": "Generate Pinned requirements.txt",
+            "description": "Create a `requirements.txt` file with the exact versions of all installed dependencies to ensure a reproducible environment.",
             "dependencies": [],
-            "details": "Create a new file `docs/evaluation_procedure.md`. Define a structured rubric for manual evaluation (e.g., scales for helpfulness/correctness, a binary flag/reason for hallucinations). Outline the step-by-step process for sampling and evaluating model outputs.",
+            "details": "With the virtual environment activated, run the command `pip freeze > requirements.txt` to save the list of installed packages and their exact versions to a file in the project root.",
             "status": "pending",
-            "testStrategy": "Review `docs/evaluation_procedure.md` to confirm it contains a detailed rubric with clear criteria and a step-by-step evaluation process."
-          },
-          {
-            "id": 6,
-            "title": "Specify Target Hardware and Initial CI Scope",
-            "description": "Document the assumed target hardware for development and training, and define the initial scope for Continuous Integration (CI) checks.",
-            "dependencies": [],
-            "details": "Create `docs/project_setup.md`. Add a 'Hardware Assumptions' section detailing the target GPU and memory (e.g., 'NVIDIA L4 24GB' or 'NVIDIA A100 40GB'). Add an 'Initial CI Scope' section outlining the first checks (e.g., 'Run pytest', 'Run ruff linter').",
-            "status": "pending",
-            "testStrategy": "Review `docs/project_setup.md` to ensure the 'Hardware Assumptions' and 'Initial CI Scope' sections are present and contain specific information."
+            "testStrategy": "Verify the `requirements.txt` file is created and contains pinned versions for the core libraries. Test by running `pip install -r requirements.txt` in a fresh environment."
           }
         ]
       },
       {
         "id": 2,
-        "title": "Scaffold Project Repository Structure",
-        "description": "Create the initial directory structure and placeholder files as specified in the PRD to establish the project's foundation.",
-        "details": "Fulfills FR-7. The repository must contain the following top-level items: `src/`, `demo.py`, `eval/`, `results/`, `tests/`, `requirements.txt`, and `README.md`.",
-        "testStrategy": "Clone the repository and verify that all specified directories and files exist in the main branch.",
+        "title": "Define and Validate Data Schema",
+        "description": "Define a unified schema for all input data (dialogs, tickets, Q&A) and implement a validator to ensure data quality and consistency.",
+        "details": "Implement a Pydantic or similar model for the schema: `{id, inputs:{question, context?}, outputs:{answer}, meta:{source, timestamp, tags[]}}`. The validator should enforce required fields and correct data types.",
+        "testStrategy": "Unit test the validator with both valid and invalid data samples to ensure it raises appropriate errors for malformed records.",
         "priority": "high",
-        "dependencies": [],
+        "dependencies": [
+          1
+        ],
         "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Create Core Project Directories",
-            "description": "Establish the foundational directory structure for the project by creating all necessary top-level and nested directories as specified in the PRD.",
+            "title": "Define Core Pydantic Schema Models",
+            "description": "Create the basic Pydantic models for the data schema, including nested structures for inputs, outputs, and metadata, based on the specified structure.",
             "dependencies": [],
-            "details": "Create the following empty directories at the root of the repository: `src/`, `eval/`, `results/`, `tests/`, `docs/`, and `.github/workflows/`. The `results/` directory is for outputs and should be created but remain empty.",
+            "details": "In a new file (e.g., `src/schema.py`), implement Pydantic models: `InputModel` (`question`, `context`), `OutputModel` (`answer`), `MetaModel` (`source`, `timestamp`, `tags`), and a main `DataRecordModel` that composes them along with the top-level `id` field. Use appropriate Python types like `str`, `Optional[str]`, `datetime`, and `List[str]`.",
             "status": "pending",
-            "testStrategy": "Acceptance criteria: Run `ls -R` or an equivalent command in the project root to verify that all specified directories (`src/`, `eval/`, `results/`, `tests/`, `docs/`, `.github/workflows/`) exist."
+            "testStrategy": "A code review will verify that all specified fields and their corresponding data types are correctly implemented in the Pydantic models."
           },
           {
             "id": 2,
-            "title": "Add Source Code Placeholder Files",
-            "description": "Create minimal, runnable placeholder Python files in the `src/` directory to define the structure for the core training, data, and model logic.",
-            "dependencies": [],
-            "details": "In the `src/` directory, create: `__init__.py` (can be empty), `train.py`, `data.py`, and `model.py`. Each `.py` file (except `__init__.py`) should contain a minimal function (e.g., `def main(): print('Module executed')`) and an `if __name__ == '__main__':` block to ensure it can be executed without errors.",
+            "title": "Implement Field-Level Validation Logic",
+            "description": "Enhance the Pydantic models with custom validators to enforce constraints beyond basic type checking, such as ensuring required string fields are not empty.",
+            "dependencies": [
+              "2.1"
+            ],
+            "details": "Using Pydantic's `@validator` decorator in `src/schema.py`, add logic to ensure that the `id` and `question` fields are non-empty strings. This prevents records with valid types but empty, meaningless values.",
             "status": "pending",
-            "testStrategy": "Acceptance criteria: Execute `python src/train.py`, `python src/data.py`, and `python src/model.py` from the command line. Each script must run to completion without raising an exception."
+            "testStrategy": "The effectiveness of these validators will be confirmed by the unit tests for invalid data in a subsequent subtask."
           },
           {
             "id": 3,
-            "title": "Add Application, Demo, and Test Script Stubs",
-            "description": "Create placeholder scripts for the FastAPI application, command-line demo, evaluation entry point, and a basic smoke test.",
-            "dependencies": [],
-            "details": "Create the following files with minimal, runnable content: `demo.py` (prints a message), `app.py` (a minimal FastAPI app with a root endpoint returning `{\"status\": \"ok\"}`), `eval/run_eval.py` (prints a message), and `tests/test_smoke.py` (contains a single test `def test_always_passes(): assert True`).",
+            "title": "Create a Central Validation Function",
+            "description": "Implement a single, reusable function that takes raw data (e.g., a dictionary) and attempts to parse and validate it against the Pydantic schema.",
+            "dependencies": [
+              "2.2"
+            ],
+            "details": "Create a function `validate_record(data: dict) -> DataRecordModel` in a new `src/validator.py` file. This function will encapsulate the validation logic by trying to instantiate `DataRecordModel(data)`. It should catch Pydantic's `ValidationError` and can be extended later to log errors.",
             "status": "pending",
-            "testStrategy": "Acceptance criteria: `python demo.py` and `python eval/run_eval.py` run without error. `pytest tests/test_smoke.py` runs and passes. The FastAPI app can be started and a `curl` to its root endpoint returns a successful JSON response."
+            "testStrategy": "This function will be the primary entry point for the unit tests, verifying it correctly processes both valid and invalid data."
           },
           {
             "id": 4,
-            "title": "Initialize Dependencies and Git Ignore",
-            "description": "Define the initial project dependencies in `requirements.txt` and configure the `.gitignore` file to exclude unnecessary files from version control.",
-            "dependencies": [],
-            "details": "Create `requirements.txt` and add minimal dependencies for the stubs: `fastapi`, `uvicorn[standard]`, and `pytest`. Create a `.gitignore` file and add common Python/IDE patterns (`__pycache__/`, `.venv/`, `*.pyc`) and project-specific directories (`results/`).",
+            "title": "Develop Unit Tests for Valid Data",
+            "description": "Create a suite of unit tests to confirm that correctly structured data records pass validation without errors.",
+            "dependencies": [
+              "2.3"
+            ],
+            "details": "In a new `tests/test_validator.py` file, use a framework like `pytest` to write test cases. Create sample data dictionaries that conform to the schema, including one with the optional `context` field and one without. Assert that the `validate_record` function successfully returns a `DataRecordModel` instance for each valid sample.",
             "status": "pending",
-            "testStrategy": "Acceptance criteria: After creating a virtual environment, `pip install -r requirements.txt` completes successfully. `git status` does not show any files or directories listed in `.gitignore`."
+            "testStrategy": "Run the test suite and ensure all tests for valid data pass, confirming the 'happy path' works as expected."
           },
           {
             "id": 5,
-            "title": "Scaffold README.md with Key Sections",
-            "description": "Create the main `README.md` file with a project title and placeholder sections for essential project documentation.",
-            "dependencies": [],
-            "details": "Create a `README.md` file at the project root. It must include a project title (H1) and the following H2-level markdown sections: `## Quickstart`, `## Evaluation`, and `## Demos`. Each section should contain a placeholder sentence, e.g., 'Details to be added.'",
+            "title": "Develop Unit Tests for Invalid Data",
+            "description": "Add unit tests to ensure the validator correctly identifies and rejects malformed data, raising appropriate errors.",
+            "dependencies": [
+              "2.3"
+            ],
+            "details": "In `tests/test_validator.py`, add parameterized tests to cover various failure modes: missing required fields (`id`, `question`), incorrect data types (`id` as an integer), and values that fail custom validation (empty string for `question`). Use `pytest.raises(ValidationError)` to assert that the `validate_record` function raises the expected exception for each invalid case.",
             "status": "pending",
-            "testStrategy": "Acceptance criteria: Open the `README.md` file in a viewer and confirm the presence and correct markdown formatting of the title and all three specified sections."
-          },
-          {
-            "id": 6,
-            "title": "Add Placeholder GitHub Actions CI Workflow",
-            "description": "Create a basic CI workflow file to ensure the repository is set up for continuous integration and that the smoke test runs automatically.",
-            "dependencies": [],
-            "details": "Create the file `.github/workflows/ci.yml`. The workflow should trigger on push to the `main` branch. It must define a job that checks out the code, sets up Python, runs `pip install -r requirements.txt`, and executes `pytest tests/test_smoke.py`.",
-            "status": "pending",
-            "testStrategy": "Acceptance criteria: After pushing the initial commits to a GitHub repository, the CI workflow is triggered automatically and completes successfully in the 'Actions' tab."
+            "testStrategy": "Run the test suite and verify that each test for malformed data correctly triggers a `ValidationError`."
           }
         ]
       },
       {
         "id": 3,
-        "title": "Implement Quickstart Environment Setup",
-        "description": "Populate the `requirements.txt` file and document the virtual environment setup process in the README to ensure users can easily prepare their environment.",
-        "details": "Fulfills FR-1 and NFR-2. The `requirements.txt` must include all necessary dependencies (e.g., PyTorch, Transformers, PEFT, BitsAndBytes). The README must contain the commands to create a venv, activate it, and install dependencies.",
-        "testStrategy": "On a clean machine or in a fresh environment, execute the setup commands from the README. The process must complete without errors.",
+        "title": "Implement Data Parsers",
+        "description": "Create parsers to load raw support data from various formats (e.g., JSON, CSV) into the unified, validated schema.",
+        "details": "Develop modular parser functions in `src/data/loaders.py` for each expected input source. Parsers should output a list of objects conforming to the defined schema.",
+        "testStrategy": "Unit test each parser with sample raw data files to ensure correct conversion to the target schema.",
         "priority": "high",
         "dependencies": [
-          1,
           2
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Identify Core Dependencies",
-            "description": "Research and finalize the list of Python packages required for the project, including specific versions for reproducibility.",
+            "title": "Define Unified Data Schema",
+            "description": "Establish the standard, unified data structure that all raw data will be converted into. This schema will serve as the single source of truth for a data record.",
             "dependencies": [],
-            "details": "Deliverable: A finalized list of packages (e.g., `torch`, `transformers`, `peft`, `bitsandbytes`, `accelerate`). Acceptance Criteria: The list is complete and versions are chosen to ensure compatibility.",
+            "details": "In a new file, `src/data/schema.py`, define a Pydantic model or Python dataclass named `UnifiedRecord`. This class will specify the required fields (e.g., `id`, `source_format`, `content`, `metadata`), their data types, and any validation rules.",
             "status": "pending",
-            "testStrategy": "Validated by the successful installation in subtask 3.2. No direct command."
+            "testStrategy": "The schema's correctness will be validated by the unit tests for the parsers that use it."
           },
           {
             "id": 2,
-            "title": "Create and Populate requirements.txt",
-            "description": "Create the `requirements.txt` file in the project root and add all dependencies identified in the previous step.",
+            "title": "Implement JSON Parser Function",
+            "description": "Create a dedicated function to read a JSON file and transform its contents into a list of `UnifiedRecord` objects.",
             "dependencies": [
               "3.1"
             ],
-            "details": "Deliverable: `requirements.txt`. Acceptance Criteria: The file exists at the project root and contains all necessary packages with pinned versions.",
+            "details": "In `src/data/loaders.py`, create a function `parse_json(file_path: str) -> List[UnifiedRecord]`. This function will load the JSON data, iterate through the records, and instantiate a `UnifiedRecord` for each, ensuring it conforms to the defined schema.",
             "status": "pending",
-            "testStrategy": "In a new virtual environment, run: `pip install -r requirements.txt`. The command must complete without any installation errors."
+            "testStrategy": "A specific unit test will be created in a later subtask to verify this parser with a sample JSON file."
           },
           {
             "id": 3,
-            "title": "Draft 'Quickstart' Section in README",
-            "description": "Add a new top-level 'Quickstart' or 'Environment Setup' section to the `README.md` file to house the setup instructions.",
-            "dependencies": [],
-            "details": "Deliverable: `README.md`. Acceptance Criteria: The `README.md` file contains a new, clearly marked markdown section (e.g., `## Quickstart`).",
+            "title": "Implement CSV Parser Function",
+            "description": "Create a dedicated function to read a CSV file and transform its rows into a list of `UnifiedRecord` objects.",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "In `src/data/loaders.py`, create a function `parse_csv(file_path: str) -> List[UnifiedRecord]`. Use Python's `csv.DictReader` to process the file row by row, mapping column data to the fields of the `UnifiedRecord` schema.",
             "status": "pending",
-            "testStrategy": "Visually inspect the rendered `README.md` to confirm the new section exists."
+            "testStrategy": "A specific unit test will be created in a later subtask to verify this parser with a sample CSV file."
           },
           {
             "id": 4,
-            "title": "Add venv Commands to README",
-            "description": "Document the commands for creating and activating a Python virtual environment in the 'Quickstart' section of the README.",
+            "title": "Create Data Loader Dispatcher Function",
+            "description": "Develop a single, high-level loader function that automatically selects the correct parser based on the input file's extension.",
             "dependencies": [
+              "3.2",
               "3.3"
             ],
-            "details": "Deliverable: `README.md`. Acceptance Criteria: The README provides commands for venv creation (e.g., `python3 -m venv venv`) and activation for both Linux/macOS (`source venv/bin/activate`) and Windows (`venv\\Scripts\\activate`).",
+            "details": "In `src/data/loaders.py`, create a main function `load_data(file_path: str) -> List[UnifiedRecord]`. It will inspect the file extension of `file_path` (e.g., '.json', '.csv') and call the corresponding parser (`parse_json` or `parse_csv`). It should raise a `ValueError` for unsupported file types.",
             "status": "pending",
-            "testStrategy": "On a clean system, copy and paste the commands from the README into a terminal to verify they create and activate a virtual environment successfully."
+            "testStrategy": "The dispatcher logic will be tested via unit tests that pass different file types to it."
           },
           {
             "id": 5,
-            "title": "Add Install Command and Validate",
-            "description": "Add the final `pip install` command to the README and perform a full end-to-end validation of the entire documented setup process.",
+            "title": "Write Unit Tests for All Parsers",
+            "description": "Create a comprehensive set of unit tests to validate the JSON parser, CSV parser, and the main dispatcher function.",
             "dependencies": [
-              "3.2",
               "3.4"
             ],
-            "details": "Deliverable: `README.md`. Acceptance Criteria: The README includes the `pip install -r requirements.txt` command. The full sequence of commands in the README runs successfully from start to finish.",
+            "details": "Create a test file, e.g., `tests/test_loaders.py`. Add sample raw data files (`sample.json`, `sample.csv`). Write tests that use `load_data` to parse these files and assert that the output is a list of valid `UnifiedRecord` objects with the expected content. Include a test case for an unsupported file type.",
             "status": "pending",
-            "testStrategy": "On a clean machine/container, execute the full sequence of commands from the README. Example for Linux: `python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt`. The process must complete without errors."
+            "testStrategy": "Run the test suite and confirm that all tests for `src/data/loaders.py` pass successfully."
           }
         ]
       },
       {
         "id": 4,
-        "title": "Define and Document Baseline & Target Metrics",
-        "description": "Formally define and document the TBD baseline and target values for all success metrics to provide clear goals for evaluation.",
-        "details": "Fulfills FR-8. The README or another results document must be updated to specify the target values for 'Win-rate vs. base', 'Hallucination rate', and 'Training cost & time'.",
-        "testStrategy": "Review the project's README to confirm that the 'Success Metrics' or 'Roadmap' section contains specific, non-TBD values for baselines and targets.",
+        "title": "Implement Dataset Splitting",
+        "description": "Create a script to split the unified dataset into training, validation, and test sets to prevent data leakage and enable robust evaluation.",
+        "details": "The script must support stratified splitting based on metadata tags (e.g., `source`) to ensure representative distributions. The output should be separate files for each split.",
+        "testStrategy": "Verify that the splits are created, their sizes are as expected, and the stratification logic distributes key tags correctly across all splits.",
         "priority": "high",
         "dependencies": [
-          1
+          3
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Add Metric Definitions to README",
-            "description": "Create a 'Success Metrics' section in the README and write clear, formal definitions for 'Win-rate vs. base', 'Hallucination rate', and 'Training cost & time'. Initial values can be placeholders (TBD).",
+            "title": "Create Script Scaffolding and Load Unified Dataset",
+            "description": "Set up the basic Python script file (e.g., `scripts/split_dataset.py`) and implement the logic to load the unified dataset from a specified file path.",
             "dependencies": [],
-            "details": "Deliverable: An updated `README.md` file. Acceptance Criteria: The file contains a new H2 section named 'Success Metrics' with a table or list defining the three key metrics. The definitions must be unambiguous.",
+            "details": "The script should use a library like `pandas` or `datasets` to load the unified dataset (e.g., a JSON or CSV file). It should handle basic argument parsing for the input file path.",
             "status": "pending",
-            "testStrategy": "Review the `README.md` file to confirm the presence and clarity of the new 'Success Metrics' section and its definitions."
+            "testStrategy": "Run the script with a path to a sample unified dataset file. Verify that the script executes without errors and successfully loads the data into memory (e.g., by printing the number of loaded records)."
           },
           {
             "id": 2,
-            "title": "Measure Base Model Performance",
-            "description": "Run the existing evaluation script against the base model to generate its performance metrics, which will serve as the official baseline.",
-            "dependencies": [],
-            "details": "Deliverable: A new JSON file in `results/`. Command: `python eval/run_eval.py --model=base --output=results/baseline_metrics.json`. Acceptance Criteria: The file `results/baseline_metrics.json` is created and contains populated values for `hallucination_rate` and `avg_inference_time`.",
+            "title": "Implement Basic Random Train/Validation/Test Split",
+            "description": "Add core logic to split the loaded dataset into three subsets (training, validation, test) based on specified ratios (e.g., 80-10-10).",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Use a library function like `sklearn.model_selection.train_test_split` twice to create the three splits. The split ratios should be configurable. For now, a simple random shuffle is sufficient.",
             "status": "pending",
-            "testStrategy": "Run `ls results/baseline_metrics.json` to confirm file creation and inspect its contents for the required keys."
+            "testStrategy": "After running the script, check that three distinct data subsets are created in memory. Verify that their combined size equals the original dataset size and that their individual sizes roughly match the target ratios."
           },
           {
             "id": 3,
-            "title": "Document Baseline Values in README",
-            "description": "Update the 'Success Metrics' section in the README with the concrete baseline values obtained from the base model evaluation.",
+            "title": "Add Stratification Logic Based on Metadata Tag",
+            "description": "Enhance the splitting function to perform stratified sampling based on a specified metadata column (e.g., `source`).",
             "dependencies": [
-              "4.1",
               "4.2"
             ],
-            "details": "Deliverable: An updated `README.md`. Using the data from `results/baseline_metrics.json`, replace the 'TBD' baseline placeholders in the README. The baseline 'Win-rate vs. base' is 0% by definition. Acceptance Criteria: The 'Baseline' column/section in the README's metrics table is fully populated with specific numbers.",
+            "details": "Modify the call to `train_test_split` to use the `stratify` parameter. The script should accept a command-line argument to specify which column to stratify on.",
             "status": "pending",
-            "testStrategy": "Review the `README.md` to confirm that no 'TBD' placeholders remain for baseline metrics."
+            "testStrategy": "Run the script on a dataset with known `source` distributions. Verify that the proportion of each `source` value is approximately the same across the training, validation, and test sets."
           },
           {
             "id": 4,
-            "title": "Set and Document Target Values",
-            "description": "Based on the established baseline, determine and document the final target values for all success metrics in the README.",
+            "title": "Implement File Output for Each Split",
+            "description": "Add functionality to save the generated training, validation, and test data splits into separate files in a specified output directory.",
             "dependencies": [
-              "4.3"
+              "4.2"
             ],
-            "details": "Deliverable: An updated `README.md`. Decide on ambitious but achievable targets (e.g., Win-rate > 70%, Hallucination rate < 5%). Update the 'Target' column/section in the README's metrics table. Acceptance Criteria: The 'Target' column/section is populated with specific, non-TBD values.",
+            "details": "The script should take an output directory path as an argument. It should save the splits as separate files (e.g., `train.jsonl`, `validation.jsonl`, `test.jsonl`) in the specified format.",
             "status": "pending",
-            "testStrategy": "Review the `README.md` to confirm that all target metrics have specific, quantitative values."
+            "testStrategy": "Run the script and verify that three files are created in the specified output directory. Check the contents of one file to ensure it has the correct format and data."
           },
           {
             "id": 5,
-            "title": "Create Centralized Metrics Config",
-            "description": "Create a configuration file to store the target metrics, allowing evaluation scripts to programmatically access them for pass/fail checks.",
+            "title": "Finalize CLI for Full Configuration",
+            "description": "Implement a robust command-line interface (CLI) using a library like `argparse` or `typer` to control all script parameters.",
             "dependencies": [
+              "4.3",
               "4.4"
             ],
-            "details": "Deliverable: A new configuration file at `eval/targets.yaml`. This file should contain the target values defined in the README. Acceptance Criteria: The file `eval/targets.yaml` exists and its key-value pairs (e.g., `win_rate_target: 0.7`) match the documented targets.",
+            "details": "The CLI should allow the user to specify: input file path, output directory, split ratios, the column to stratify on, and a random seed for reproducibility.",
             "status": "pending",
-            "testStrategy": "Run `cat eval/targets.yaml` to verify its contents are correct and match the `README.md`."
+            "testStrategy": "Run the script from the command line with various arguments (e.g., changing ratios, specifying a stratification key). Verify that the script behaves as expected and that the output reflects the provided configuration. Check that using the same random seed produces identical splits."
           }
         ]
       },
       {
         "id": 5,
-        "title": "Develop Fine-Tuning Pipeline",
-        "description": "Create the core scripts in the `src/` directory to fine-tune the selected LLM on the chosen dataset using PEFT/LoRA and BitsAndBytes.",
-        "details": "This is the central training logic of the project. The pipeline must be runnable and produce a fine-tuned model adapter that can be used for evaluation and demos.",
-        "testStrategy": "Execute the training script. Verify that it runs to completion and outputs a model artifact (e.g., LoRA adapter weights) to a designated directory.",
+        "title": "Implement Data Tokenization",
+        "description": "Tokenize the text data from the train/val/test splits using the base model's tokenizer to prepare it for training.",
+        "details": "Use the Hugging Face `datasets` library to map a tokenization function over the split datasets. Handle the formatting of inputs and outputs into a single sequence suitable for the model.",
+        "testStrategy": "Inspect a few tokenized samples to ensure inputs and outputs are formatted correctly, special tokens are in place, and padding/truncation is applied as expected.",
         "priority": "high",
         "dependencies": [
-          1,
-          3
+          4
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Implement Data Loading and Preprocessing",
-            "description": "Create a script to load the dataset and prepare it for training by applying a prompt template and tokenizing the text.",
+            "title": "Load Base Model Tokenizer and Raw Datasets",
+            "description": "Instantiate the tokenizer from the specified Hugging Face base model and load the pre-processed train, validation, and test dataset splits from disk into a `DatasetDict` object.",
             "dependencies": [],
-            "details": "Deliverable: `src/data_loader.py`. This script must contain a function that returns a tokenized `datasets.Dataset` object. Acceptance Criteria: The function successfully processes a sample of the dataset into the format required by the Trainer.",
+            "details": "In a new script `src/data/tokenize_data.py`, add logic to load a tokenizer using `AutoTokenizer.from_pretrained()`. Then, use `load_from_disk` to load the datasets prepared by the parsing task.",
             "status": "pending",
-            "testStrategy": "python -c \"from src.data_loader import load_and_prepare_data; ds = load_and_prepare_data(split='train[:1%]'); print(ds[0])\""
+            "testStrategy": "Verify that the script successfully loads a tokenizer object and a `DatasetDict` without errors. Print the tokenizer's vocabulary size and the dataset features to confirm."
           },
           {
             "id": 2,
-            "title": "Configure Model and Tokenizer Loading",
-            "description": "Create a utility to load the base LLM with 4-bit quantization via BitsAndBytes and its corresponding tokenizer.",
+            "title": "Design and Implement Text Formatting Function",
+            "description": "Create a Python function that takes a single data example (a dictionary) and formats its input and output fields into a single string, ready for tokenization. This includes adding any required prompt templates or special tokens.",
             "dependencies": [],
-            "details": "Deliverable: `src/model_loader.py`. This script must provide a function that returns a `model` object loaded in 4-bit and a `tokenizer` object with correct padding settings. Acceptance Criteria: The function successfully loads the model and tokenizer without configuration errors.",
+            "details": "The function should accept a dictionary representing one row of the dataset and return a single string. For example, it might format it as: `<s>[INST] {question} [/INST] {answer} </s>`. This function will be called by the main tokenization mapper.",
             "status": "pending",
-            "testStrategy": "python -c \"from src.model_loader import load_model_and_tokenizer; load_model_and_tokenizer()\""
+            "testStrategy": "Unit test this function with a sample input dictionary to ensure the output string is formatted exactly as expected, including all special tokens and text fields."
           },
           {
             "id": 3,
-            "title": "Define LoRA and Training Configuration",
-            "description": "Define PEFT LoRA settings and Hugging Face `TrainingArguments` in a central configuration script for reusability.",
-            "dependencies": [],
-            "details": "Deliverable: `src/config.py`. This file must contain a `LoraConfig` object and a `TrainingArguments` object. The output directory in `TrainingArguments` must be set to `./model_adapter`. Acceptance Criteria: The configuration objects can be imported and inspected without error.",
+            "title": "Implement Batched Tokenization Mapping Function",
+            "description": "Develop the core function that will be passed to `dataset.map()`. This function will take a batch of examples, apply the text formatting function from subtask 5.2, and then use the tokenizer to convert the batch of formatted strings into `input_ids`, `attention_mask`, etc.",
+            "dependencies": [
+              "5.1",
+              "5.2"
+            ],
+            "details": "This function should accept a batch of examples (a dictionary of lists). It will iterate through the batch, apply the formatting, and then call the tokenizer on the list of formatted strings. Set tokenizer parameters like `padding` and `truncation` as needed.",
             "status": "pending",
-            "testStrategy": "python -c \"from src.config import TRAINING_ARGS; print(TRAINING_ARGS.output_dir)\""
+            "testStrategy": "Create a small, sample batch of data. Pass it to this function along with a loaded tokenizer and verify the output dictionary contains correctly shaped `input_ids` and `attention_mask` tensors."
           },
           {
             "id": 4,
-            "title": "Implement Core Training Script",
-            "description": "Create the main executable script that integrates data, model, and configuration to run the fine-tuning process.",
-            "dependencies": [],
-            "details": "Deliverable: `src/train.py`. This script must use the components from previous subtasks to initialize a `SFTTrainer`, run the training loop, and save the resulting LoRA adapter. Acceptance Criteria: The script runs to completion and saves the adapter weights to the `./model_adapter` directory.",
+            "title": "Apply Tokenization Across All Dataset Splits",
+            "description": "Use the `datasets.map()` method to apply the batched tokenization function to the entire `DatasetDict` (train, validation, and test splits).",
+            "dependencies": [
+              "5.3"
+            ],
+            "details": "Call `loaded_datasets.map(tokenization_function, batched=True, num_proc=...)`. Configure `num_proc` to leverage multiple CPU cores for faster processing. Remove original text columns after tokenization to keep the final dataset clean.",
             "status": "pending",
-            "testStrategy": "python src/train.py --max_steps 10"
+            "testStrategy": "Run the mapping process on a small subset of the data (e.g., `dataset.select(range(100))`). Inspect one of the resulting tokenized samples to ensure `input_ids` and other fields are present and correctly formatted."
           },
           {
             "id": 5,
-            "title": "Add Basic Training Pipeline Test",
-            "description": "Create a simple integration test to verify that the training script executes without crashing and produces an output artifact.",
-            "dependencies": [],
-            "details": "Deliverable: `tests/test_train.py`. The test will execute `src/train.py` for a minimal number of steps (e.g., 2). Acceptance Criteria: The test passes, confirming the script runs successfully and the `./model_adapter` directory is created.",
+            "title": "Save Tokenized Datasets to Disk",
+            "description": "Save the final, tokenized `DatasetDict` to a dedicated directory on disk using the `save_to_disk` method for efficient loading by the training script.",
+            "dependencies": [
+              "5.4"
+            ],
+            "details": "After the `.map()` operation completes, call `tokenized_datasets.save_to_disk('data/processed/tokenized_data')`. This creates a directory with Arrow files and dataset metadata.",
             "status": "pending",
-            "testStrategy": "pytest tests/test_train.py"
+            "testStrategy": "Verify that the target directory and its contents (e.g., `dataset.arrow`, `dataset_info.json`) are created. Write a separate, simple script to test `load_from_disk` on the new directory to ensure it loads without errors."
           }
         ]
       },
       {
         "id": 6,
-        "title": "Develop Evaluation Scripts",
-        "description": "Implement scripts in the `eval/` directory to run the base and fine-tuned models against the evaluation set and generate metrics.",
-        "details": "Fulfills FR-2 and NFR-1. The scripts must be reproducible and save results to the `results/` directory in CSV and/or JSON format. This includes logic for calculating win-rate based on the defined rubric.",
-        "testStrategy": "Execute the documented evaluation script commands. Verify that new result files (CSV/JSON) are created in the `results/` directory and their structure matches the defined format.",
+        "title": "Create Master Data Preparation Script",
+        "description": "Combine parsing, validation, splitting, and tokenization into a single, runnable script for an end-to-end data pipeline.",
+        "details": "Create `scripts/prepare_data.py` that takes an input directory and an output directory, running the full data ingestion and preprocessing pipeline. It should orchestrate the modules for parsing, validation, and splitting.",
+        "testStrategy": "Run the script end-to-end: `python scripts/prepare_data.py --input data/raw --out data/processed`. Verify that the processed and tokenized train/val/test files are created correctly.",
         "priority": "high",
         "dependencies": [
-          1,
+          3,
           4,
           5
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Create Evaluation Runner Skeleton",
-            "description": "Establish the basic structure for the evaluation script. This script will handle argument parsing (e.g., model paths, dataset path) and load the evaluation dataset and a specified model (either base or fine-tuned).",
+            "title": "Implement CLI and Script Skeleton",
+            "description": "Create the `scripts/prepare_data.py` file and set up the command-line interface using `argparse` to accept `--input` and `--output` directory arguments. Establish the main orchestration function.",
             "dependencies": [],
-            "details": "Create `eval/run_eval.py` with argparse for configuration. Implement logic to load the evaluation dataset from `data/processed/` and initialize a model and tokenizer using its Hugging Face ID or local path.",
+            "details": "The script should define a `main` function that parses the command-line arguments. This function will serve as the entrypoint and will orchestrate the calls to subsequent processing functions. Include placeholder function calls for parsing, validation, splitting, and tokenization.",
             "status": "pending",
-            "testStrategy": "Run `python eval/run_eval.py --model_id <base_model_id> --limit 1`. Verify the script executes without error and logs that the model and dataset were loaded successfully."
+            "testStrategy": "Run `python scripts/prepare_data.py --help` to verify the arguments are defined. Execute the script with valid paths (`--input data/raw --output data/processed`) to ensure it runs without errors and correctly captures the paths."
           },
           {
             "id": 2,
-            "title": "Implement Inference Loop",
-            "description": "Add the core logic to the evaluation script to iterate through the evaluation dataset, generate responses from the loaded model for each prompt, and collect the results.",
+            "title": "Integrate Data Parsing Logic",
+            "description": "Implement the logic to discover raw data files in the input directory, invoke the parsing module on them, and aggregate the results into a single dataset.",
             "dependencies": [
               "6.1"
             ],
-            "details": "In `eval/run_eval.py`, write a loop that takes each entry from the evaluation set, formats it into a prompt, and uses the model's `generate()` method to produce a response. Store pairs of (prompt, response) in a list.",
+            "details": "Within the main script, add a function that takes the input directory path, finds all relevant raw data files (e.g., `.jsonl` files), and uses the existing parsing module (from dependency Task 3) to load and combine them into a unified data structure, such as a Hugging Face `Dataset` or a Pandas DataFrame.",
             "status": "pending",
-            "testStrategy": "Run `python eval/run_eval.py --model_id <base_model_id> --limit 5`. Verify that 5 responses are generated and printed to the console."
+            "testStrategy": "Add logging to print the number of files found and the total number of records parsed. Run the script and verify that it correctly reads and aggregates data from the specified input directory."
           },
           {
             "id": 3,
-            "title": "Implement Win-Rate Metric Logic",
-            "description": "Create a separate module to house the metric calculation logic. This includes the function to compare the base and fine-tuned model responses and determine a winner based on the defined rubric.",
-            "dependencies": [],
-            "details": "Create `eval/metrics.py`. Implement a function `calculate_win_rate(base_response, tuned_response)` that returns 'base_win', 'tuned_win', or 'tie'. For now, the rubric can be a simple heuristic (e.g., response length, keyword presence). Create `tests/test_metrics.py` to validate this logic.",
-            "status": "pending",
-            "testStrategy": "Run `pytest -q tests/test_metrics.py`. Verify all unit tests for the win-rate calculation pass."
-          },
-          {
-            "id": 4,
-            "title": "Orchestrate Full Evaluation Run",
-            "description": "Expand the main script to run the evaluation for both the base and fine-tuned models sequentially. The script should now collect responses from both models for each prompt in the evaluation set.",
+            "title": "Integrate Data Validation and Splitting",
+            "description": "Orchestrate the calls to the validation and splitting modules. The script will first validate the entire parsed dataset and then split it into training, validation, and test sets.",
             "dependencies": [
               "6.2"
             ],
-            "details": "Refactor `eval/run_eval.py` to load the base model, run inference, then load the fine-tuned model adapter and run inference again. Store results in a structured list of dictionaries, e.g., `[{'prompt': p, 'base_response': r1, 'tuned_response': r2}, ...]`. This depends on Task 5 providing the fine-tuned adapter path.",
+            "details": "After the parsing step, pass the aggregated dataset to the validation function (from dependency Task 4). If validation succeeds, pass the clean dataset to the splitting function (from dependency Task 5) to create the train/validation/test splits according to the project's defined ratios.",
             "status": "pending",
-            "testStrategy": "Run `python eval/run_eval.py --base_model_id <id> --tuned_model_path <path> --limit 2`. Verify the script logs that it is running inference for both models and collects paired responses."
+            "testStrategy": "Log the outcome of the validation step. After splitting, log the number of examples in the train, validation, and test sets to confirm the split was successful."
+          },
+          {
+            "id": 4,
+            "title": "Implement Tokenization and Save Processed Splits",
+            "description": "Apply tokenization to each data split (train, validation, test) and save the final, processed datasets to the specified output directory.",
+            "dependencies": [
+              "6.3"
+            ],
+            "details": "Initialize the appropriate tokenizer from the `transformers` library. Create a tokenization function and apply it to each of the three data splits using `.map()`. Save the resulting tokenized `Dataset` objects to the output directory using a standard format like Arrow or JSON Lines, with clear filenames (e.g., `train.arrow`, `validation.arrow`).",
+            "status": "pending",
+            "testStrategy": "Execute the script and verify that the tokenized `train`, `validation`, and `test` files are created in the output directory. Load one of the files and inspect its contents to ensure it contains `input_ids` and `attention_mask` columns."
           },
           {
             "id": 5,
-            "title": "Calculate and Save Final Results",
-            "description": "Integrate the win-rate logic into the main script and save the detailed per-example results and a final summary report to the `results/` directory.",
+            "title": "Add End-to-End Logging and Error Handling",
+            "description": "Refine the script with comprehensive logging for each stage and implement robust error handling to ensure pipeline stability and clear reporting.",
             "dependencies": [
-              "6.3",
               "6.4"
             ],
-            "details": "In `eval/run_eval.py`, after generating all responses, iterate through the results, call the `calculate_win_rate` function from `eval/metrics.py` for each pair, and append the outcome. Save the full, detailed list to `results/evaluation_results.json`. Calculate aggregate stats (win-rate, ties) and save them to `results/evaluation_summary.json`.",
+            "details": "Integrate Python's `logging` module to provide status updates for each major step: parsing, validation, splitting, tokenization, and saving. Wrap key operations in `try...except` blocks to catch potential issues like file not found errors, validation failures, or empty directories, and provide informative error messages to the user.",
             "status": "pending",
-            "testStrategy": "Run `python eval/run_eval.py --base_model_id <id> --tuned_model_path <path>`. Verify that `results/evaluation_results.json` and `results/evaluation_summary.json` are created and contain the expected data structures and metrics."
+            "testStrategy": "Run the full end-to-end script and review the logs for clarity and completeness. Test a failure case, such as providing an invalid input path, and confirm that the script exits gracefully with a descriptive error message."
           }
         ]
       },
       {
         "id": 7,
-        "title": "Integrate Cost and Time Observability",
-        "description": "Instrument the fine-tuning and evaluation pipelines to log and report on training cost and wall-clock time.",
-        "details": "Fulfills NFR-3. The logged cost and time data should be saved to the `results/` directory alongside the quality metrics for each run.",
-        "testStrategy": "After running the training and evaluation scripts, inspect the output files in `results/` to confirm that wall-clock time and/or cost metrics are present and correctly formatted.",
+        "title": "Implement Core PEFT/LoRA Training Loop",
+        "description": "Develop the core training logic to fine-tune a small open LLM using PEFT/LoRA with 4/8-bit quantization to reduce compute costs.",
+        "details": "Use `transformers.Trainer` or `trl.SFTTrainer`. Integrate `peft` to create a `LoraConfig` and wrap the model. Use `bitsandbytes` to load the base model in 4/8-bit precision via a `BitsAndBytesConfig`.",
+        "testStrategy": "Run a short training loop on a small subset of the data (a 'smoke test') and ensure it completes without errors and a model adapter is successfully saved.",
         "priority": "high",
         "dependencies": [
-          5,
-          6
+          5
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Add Wall-Clock Timer to Training Script",
-            "description": "Instrument the main training script to measure the total execution time from start to finish.",
+            "title": "Load Quantized Base Model and Tokenizer",
+            "description": "Load the specified pre-trained LLM from the Hugging Face Hub with 4-bit quantization enabled, along with its corresponding tokenizer.",
             "dependencies": [],
-            "details": "In `src/train.py`, use the `time` module to record the start time before the training process begins and the end time after the model adapter is saved. The duration should be calculated and logged to the console.",
+            "details": "Instantiate a `BitsAndBytesConfig` for 4-bit NormalFloat (NF4) quantization. Use this config with `AutoModelForCausalLM.from_pretrained` to load the model. Load the tokenizer using `AutoTokenizer.from_pretrained`, ensuring `padding_side='right'` and a pad token are set.",
             "status": "pending",
-            "testStrategy": "Run `python src/train.py --config <config_file>`. Verify that a message like 'Total training time: HH:MM:SS' is printed to standard output upon completion."
+            "testStrategy": "Verify the loaded model object has the `is_quantized` attribute set to True. Confirm the tokenizer can correctly encode and decode a sample text."
           },
           {
             "id": 2,
-            "title": "Persist Training Time and Cost to Results",
-            "description": "Save the measured training time and an estimated cost to a structured file in the results directory.",
+            "title": "Configure and Apply PEFT LoRA Adapter",
+            "description": "Create a LoRA configuration and apply it to the loaded quantized model to prepare it for parameter-efficient fine-tuning.",
             "dependencies": [
               "7.1"
             ],
-            "details": "Modify `src/train.py` to write a JSON file to `results/training_metrics_<run_id>.json`. This file should contain `wall_time_seconds` (from subtask 7.1) and `estimated_cost_usd`. The cost should be calculated by multiplying the duration by a configurable hourly rate for the target GPU (e.g., $1.10/hr for an A10G).",
+            "details": "Instantiate a `LoraConfig` from the `peft` library, specifying parameters like `r`, `lora_alpha`, `lora_dropout`, and `target_modules`. Use `get_peft_model` to wrap the base model with this configuration.",
             "status": "pending",
-            "testStrategy": "Run the training script. Check for the creation of a new `training_metrics_*.json` file in the `results/` directory. Inspect the file to confirm it contains the correct keys and plausible numeric values."
+            "testStrategy": "Print the model architecture after applying PEFT and verify that `LoraLayer` modules have been inserted. Check the number of trainable parameters to confirm it's a small fraction of the total."
           },
           {
             "id": 3,
-            "title": "Add Wall-Clock Timer to Evaluation Script",
-            "description": "Instrument the main evaluation script to measure the total execution time.",
+            "title": "Configure Training Arguments",
+            "description": "Define the hyperparameters and settings for the training process using the `transformers.TrainingArguments` class.",
             "dependencies": [],
-            "details": "In `eval/run_eval.py`, use the `time` module to record the start time before model loading and the end time after all metrics have been calculated and saved. Log the total duration to the console.",
+            "details": "Instantiate `TrainingArguments`, setting essential parameters like `output_dir`, `num_train_epochs`, `per_device_train_batch_size`, `gradient_accumulation_steps`, `optim` (e.g., 'paged_adamw_32bit'), `learning_rate`, `logging_steps`, and `save_strategy`.",
             "status": "pending",
-            "testStrategy": "Run `python eval/run_eval.py --model_path <path_to_adapter>`. Verify that a message like 'Total evaluation time: MM:SS' is printed to standard output upon completion."
+            "testStrategy": "Create the `TrainingArguments` object and print its representation to verify all parameters are set as intended before passing it to the trainer."
           },
           {
             "id": 4,
-            "title": "Append Evaluation Time to Metrics File",
-            "description": "Incorporate the measured evaluation time directly into the primary evaluation results file.",
+            "title": "Initialize SFTTrainer",
+            "description": "Instantiate the `trl.SFTTrainer` with the prepared model, dataset, tokenizer, and training configurations.",
             "dependencies": [
+              "7.2",
               "7.3"
             ],
-            "details": "Modify `eval/run_eval.py` to add the `wall_time_seconds` measured in subtask 7.3 to the summary section of the main results JSON or as a new column in the results CSV being saved to the `results/` directory.",
+            "details": "Initialize the `SFTTrainer`, passing the PEFT-wrapped model, training dataset, tokenizer, PEFT config, and `TrainingArguments`. Specify the dataset text field or formatting function if needed.",
             "status": "pending",
-            "testStrategy": "Run the evaluation script. Inspect the generated `eval_results_*.json` or `.csv` file in `results/` to confirm the presence and correctness of the `wall_time_seconds` field."
+            "testStrategy": "Successfully instantiate the `SFTTrainer` object without errors. This validates that all components (model, tokenizer, configs, dataset) are compatible."
           },
           {
             "id": 5,
-            "title": "Test Observability Output Generation",
-            "description": "Add unit tests to verify that the observability metrics files are created with the correct format and data types.",
+            "title": "Execute Training Loop (Smoke Test)",
+            "description": "Run a short training loop on a small subset of the data to ensure the entire pipeline is functional.",
             "dependencies": [
-              "7.2",
               "7.4"
             ],
-            "details": "In `tests/test_pipelines.py`, add a new test case. This test should mock the time-consuming training/evaluation functions but call the actual metric-saving logic. Assert that the output files are created in a temporary directory and that their contents (e.g., keys like `wall_time_seconds`, `estimated_cost_usd`) match the expected schema.",
+            "details": "Call the `trainer.train()` method. For the initial test, configure `TrainingArguments` with a low `max_steps` (e.g., 10) to run a quick 'smoke test'.",
             "status": "pending",
-            "testStrategy": "Run `pytest -q tests/test_pipelines.py`. Confirm that all tests, including the new one for observability, pass."
+            "testStrategy": "Execute the training script. Verify that the training loop starts, runs for the specified number of steps without crashing, and the training loss is reported in the logs and shows a decreasing trend."
+          },
+          {
+            "id": 6,
+            "title": "Save the Trained LoRA Adapter",
+            "description": "After the training loop completes, save the trained LoRA adapter weights to the specified output directory.",
+            "dependencies": [
+              "7.5"
+            ],
+            "details": "Call the `trainer.save_model()` method after `trainer.train()` completes. This will save the adapter-specific files (e.g., `adapter_model.bin`, `adapter_config.json`) to the `output_dir`.",
+            "status": "pending",
+            "testStrategy": "After the script runs, check the specified output directory to confirm that the adapter configuration and model weights files have been created."
           }
         ]
       },
       {
         "id": 8,
-        "title": "Implement Baseline Correctness Tests",
-        "description": "Create a test suite in the `tests/` directory that can be run with `pytest` to validate core behaviors.",
-        "details": "Fulfills FR-3. The tests should cover critical functions within the `src/` and `eval/` modules to guard against regressions.",
-        "testStrategy": "Run `pytest -q` from the project's root directory and confirm that the command returns a successful exit code and all tests pass.",
+        "title": "Implement Training Orchestration and Checkpointing",
+        "description": "Ensure training runs are reproducible with deterministic seeds and can be resumed from saved checkpoints to handle interruptions.",
+        "details": "Set deterministic seeds in PyTorch and other libraries. Configure `TrainingArguments` to save checkpoints at regular intervals. Implement logic to resume training from a specified checkpoint path.",
+        "testStrategy": "Start a training run, stop it partway through, and then resume it from the last checkpoint. Verify that the training continues from the correct step by checking logs.",
         "priority": "high",
         "dependencies": [
-          5
+          7
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Initialize Test Suite with Pytest",
-            "description": "Create the initial test file and configuration to ensure the `pytest` framework is operational within the project.",
+            "title": "Implement Deterministic Seeding Function",
+            "description": "Create and apply a function to set deterministic seeds for PyTorch, NumPy, and Python's random module to ensure run-to-run reproducibility.",
             "dependencies": [],
-            "details": "Create a `tests/` directory if one does not exist. Add a `tests/test_sanity.py` file containing a simple passing test, like `def test_assert_true(): assert True`. This confirms that the test runner is discovered and executed correctly.",
+            "details": "In a utility file (e.g., `src/utils/reproducibility.py`), create a function `set_seed(seed: int)`. This function should set `torch.manual_seed`, `np.random.seed`, and `random.seed`. Also, configure CUDA operations for determinism with `torch.backends.cudnn.deterministic = True` and `torch.backends.cudnn.benchmark = False`. Call this function at the beginning of the main training script.",
             "status": "pending",
-            "testStrategy": "Run `pytest -q` from the project root. The command must exit successfully and report that 1 test passed."
+            "testStrategy": "Run the training script twice using the same seed for a single step. Verify that the initial model weights and the first batch's loss are identical."
           },
           {
             "id": 2,
-            "title": "Test Data Loading and Preprocessing",
-            "description": "Verify that the data loading and tokenization functions in the `src/` module work correctly on a sample input.",
+            "title": "Configure Periodic Checkpoint Saving in TrainingArguments",
+            "description": "Set up the Hugging Face `TrainingArguments` to save model checkpoints periodically based on the number of training steps.",
             "dependencies": [],
-            "details": "Create `tests/test_data.py`. Add a test that uses a small, self-contained mock data sample. The test should call the data processing function and assert that the output (e.g., a dictionary or dataset object) has the correct keys (`input_ids`, `attention_mask`) and that the tensor shapes are as expected for a small batch.",
+            "details": "In the script where `TrainingArguments` is instantiated, configure the following parameters: `save_strategy='steps'`, `save_steps` (e.g., 500), and `save_total_limit` (e.g., 3) to manage disk space by keeping only the most recent checkpoints.",
             "status": "pending",
-            "testStrategy": "Run `pytest -q tests/test_data.py` and confirm it passes."
+            "testStrategy": "Start a training run that exceeds the `save_steps` value. Verify that a `checkpoint-<step_number>` directory is created in the specified output directory."
           },
           {
             "id": 3,
-            "title": "Test Core Model Loading",
-            "description": "Ensure the utility function for loading the base model and tokenizer from the `src/` module executes without errors.",
-            "dependencies": [],
-            "details": "Create `tests/test_model.py`. Write a test that calls the model loading utility (e.g., `load_model()`). The test should assert that the returned objects are of the expected Hugging Face `PreTrainedModel` and `PreTrainedTokenizer` (or similar) classes.",
+            "title": "Implement Logic to Detect and Resume from Checkpoints",
+            "description": "Add logic to the training script to automatically detect and resume training from the latest available checkpoint in the output directory.",
+            "dependencies": [
+              "8.2"
+            ],
+            "details": "The Hugging Face `Trainer` can handle this automatically. The implementation involves passing `resume_from_checkpoint=True` to the `trainer.train()` call. The script should be structured to allow this call to find existing checkpoints in the `output_dir` defined in `TrainingArguments`.",
             "status": "pending",
-            "testStrategy": "Run `pytest -q tests/test_model.py` and confirm it passes."
+            "testStrategy": "Start a training run, stop it after the first checkpoint is saved. Restart the same script without any changes. Verify from the logs that the trainer detects and resumes from the saved checkpoint."
           },
           {
             "id": 4,
-            "title": "Test Single Training Step",
-            "description": "Validate the core training logic by running a single forward and backward pass on a mock data batch to ensure mechanics are sound.",
+            "title": "Add Command-Line Argument for Explicit Checkpoint Resumption",
+            "description": "Modify the main training script to accept an optional command-line argument to specify a path to a checkpoint to resume from.",
             "dependencies": [
-              "8.2",
               "8.3"
             ],
-            "details": "Create `tests/test_train.py`. This test will instantiate a model, create a mock batch of data, perform one training step (forward pass, loss calculation, backward pass, optimizer step), and assert that a valid, non-null loss value is returned.",
+            "details": "Use a library like `argparse` to add a `--resume_from_checkpoint` argument. The value of this argument (a path string) should be passed to the `resume_from_checkpoint` parameter in the `trainer.train()` method. If the argument is not provided, the default behavior (from subtask 8.3) should apply.",
             "status": "pending",
-            "testStrategy": "Run `pytest -q tests/test_train.py` and confirm it passes."
+            "testStrategy": "Stop a training run and copy a checkpoint to a new location. Relaunch the training script using the `--resume_from_checkpoint /path/to/new_location` flag and verify it resumes successfully from that specific path."
           },
           {
             "id": 5,
-            "title": "Test Evaluation Logic",
-            "description": "Verify the correctness of the core metric calculation function from the `eval/` module using controlled inputs.",
+            "title": "Integrate Logging for Training State and Resumption Events",
+            "description": "Enhance logging to clearly indicate whether a training run is starting fresh or resuming from a checkpoint, and to track the global step.",
             "dependencies": [
               "8.3"
             ],
-            "details": "Create `tests/test_eval.py`. The test should define mock model predictions and corresponding ground-truth references. Pass these to the core evaluation function (e.g., `calculate_metrics()`) from `eval/run_eval.py` and assert that the resulting score matches a pre-calculated, expected value.",
+            "details": "Before initiating the `Trainer`, add log statements that check if a resume operation is about to occur. Log a clear message, such as 'Starting new training run.' or 'Resuming training from checkpoint: {path}'. Ensure the standard training logs (e.g., from `WandbCallback` or `DefaultFlowCallback`) correctly display the global step continuing from the checkpoint's state.",
             "status": "pending",
-            "testStrategy": "Run `pytest -q tests/test_eval.py` and confirm it passes."
+            "testStrategy": "Run a resumed training job. Check the console output or log file (e.g., `wandb` run page) to confirm that the 'Resuming training...' message is present and that the logged training steps (e.g., 'Step 500/2000') continue from the correct number."
           }
         ]
       },
       {
         "id": 9,
-        "title": "Implement CLI Demo",
-        "description": "Build the interactive command-line Q&A demo as specified in the PRD to allow for quick qualitative checks.",
-        "details": "Fulfills FR-4. The `demo.py` script should launch an interface where a user can input a question and receive a response from the fine-tuned model.",
-        "testStrategy": "Run `python demo.py`, enter at least one question at the prompt, and verify that a model-generated answer is printed to the console.",
-        "priority": "medium",
+        "title": "Implement Configuration Management for Training",
+        "description": "Allow hyperparameters and run settings to be controlled via configuration files and CLI arguments for flexible experimentation.",
+        "details": "Use a library like `PyYAML` and `argparse` to load settings from a YAML file (e.g., `configs/sft.yaml`) and allow overrides from the command line. Expose key hyperparameters like learning rate, LoRA rank/alpha, and epochs.",
+        "testStrategy": "Run training with a config file. Then, run it again with a CLI argument overriding a value from the file. Verify the correct configuration is used in both runs by checking the logs.",
+        "priority": "high",
         "dependencies": [
-          5
+          7
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Create CLI Argument Parser",
-            "description": "Set up the initial `demo.py` script with an argument parser to handle command-line options, specifically for the model path.",
+            "title": "Define Configuration Schema using Data Classes",
+            "description": "Establish a clear, typed structure for all configuration parameters using Python data classes. This schema will act as the single source of truth for settings related to the model, data, and training process.",
             "dependencies": [],
-            "details": "Use Python's `argparse` module to add a required `--model_path` argument. This ensures the demo script knows which fine-tuned model checkpoint to load. The deliverable is the initial version of `demo.py`.",
+            "details": "Create a new module, e.g., `src/config/schema.py`. Define nested data classes for logical groups like `ModelConfig`, `DataConfig`, and `TrainingConfig`. Include fields for key parameters such as `learning_rate`, `num_train_epochs`, `lora_r`, `lora_alpha`, model paths, and data paths.",
             "status": "pending",
-            "testStrategy": "Run `python demo.py --help` and verify that the `--model_path` argument is listed in the usage instructions."
+            "testStrategy": "This is a structural task. It will be implicitly validated by the successful implementation of the loading and parsing subtasks that depend on it."
           },
           {
             "id": 2,
-            "title": "Load Fine-Tuned Model and Tokenizer",
-            "description": "Add logic to `demo.py` to load the fine-tuned PEFT model and its corresponding tokenizer from the path provided via the `--model_path` argument.",
+            "title": "Create Default YAML Configuration File",
+            "description": "Create a baseline YAML configuration file (`configs/sft.yaml`) that contains sensible default values for all parameters defined in the configuration schema.",
             "dependencies": [
               "9.1"
             ],
-            "details": "Implement functions to load the `AutoModelForCausalLM` with the PEFT adapter and the `AutoTokenizer`. The script should print a confirmation message like 'Model loaded successfully.' upon completion. Deliverable is the updated `demo.py`.",
+            "details": "The YAML structure must directly map to the data classes defined in `src/config/schema.py`. Populate this file with initial, working values for all required parameters, ensuring the training script can run successfully using only this file.",
             "status": "pending",
-            "testStrategy": "Run `python demo.py --model_path <path_to_a_valid_model>` and confirm the script executes without errors and prints the success message."
+            "testStrategy": "Manually review the YAML file to ensure it is well-formed, syntactically correct, and its structure perfectly matches the schema from subtask 9.1."
           },
           {
             "id": 3,
-            "title": "Build Interactive Input Loop",
-            "description": "Implement a `while` loop in `demo.py` that continuously prompts the user for input and allows them to exit gracefully.",
+            "title": "Implement YAML File Loading Logic",
+            "description": "Develop a function to parse the YAML configuration file from a given path and load its contents into the corresponding Python data class objects defined in the schema.",
             "dependencies": [
-              "9.1"
+              "9.1",
+              "9.2"
             ],
-            "details": "Create a loop that presents a user prompt (e.g., `Question: `). The loop should break if the user types a specific command like 'exit' or 'quit'. Deliverable is the updated `demo.py` with the interactive loop structure.",
+            "details": "In a new module like `src/config/loader.py`, create a function `load_config_from_yaml(path)`. Use the `PyYAML` library to read and parse the file. The function should return an instance of the main configuration data class, populated with values from the file. Implement error handling for file-not-found scenarios.",
             "status": "pending",
-            "testStrategy": "Run `python demo.py --model_path <path_to_model>`. Verify the prompt appears. Enter text and press Enter; the prompt should reappear. Type 'exit' and press Enter; the script should terminate."
+            "testStrategy": "Write a unit test that loads the default `configs/sft.yaml` and asserts that the resulting Python object has the correct types and values for several key parameters (e.g., learning rate, LoRA rank)."
           },
           {
             "id": 4,
-            "title": "Implement Inference Logic",
-            "description": "Within the input loop, add the core logic to take the user's text input, tokenize it, and pass it to the loaded model to generate a response.",
+            "title": "Implement CLI Argument Parser for Overrides",
+            "description": "Integrate `argparse` to parse command-line arguments and use them to override the settings loaded from the YAML configuration file.",
             "dependencies": [
-              "9.2",
               "9.3"
             ],
-            "details": "Use the loaded tokenizer to encode the user's input string into token IDs. Pass these IDs to the model's `generate()` method to get the output tokens. Deliverable is the updated `demo.py` with generation logic.",
+            "details": "In the main training script or a helper function, use `argparse` to define arguments that mirror the configuration schema. A good practice is to use dot notation for nested parameters (e.g., `--training.learning_rate`). The logic should first load the config from YAML, then iterate through parsed CLI arguments, updating the configuration object with any provided values.",
             "status": "pending",
-            "testStrategy": "Add a temporary `print()` statement to show the raw generated token IDs. Run the demo, enter a question, and verify that a tensor of token IDs is printed to the console."
+            "testStrategy": "Run the training script with a CLI argument like `--learning_rate 0.0005`. Verify by checking the application logs that the overridden value is used by the trainer, not the default value from the YAML file."
           },
           {
             "id": 5,
-            "title": "Display Formatted Response",
-            "description": "Decode the model's generated token IDs back into human-readable text and print the formatted answer to the console.",
+            "title": "Integrate Unified Config into Training Pipeline",
+            "description": "Refactor the main training script to use the loaded and merged configuration object as the sole source for setting up all training components.",
             "dependencies": [
               "9.4"
             ],
-            "details": "Use the tokenizer's `decode()` method on the output from the `generate()` call. Print the resulting string to the console, prefixed with a label like `Answer: `. The final deliverable is the completed `demo.py` script.",
+            "details": "Modify the `main` function of the training script. At the start, call the logic to load the YAML and apply CLI overrides. Pass the resulting config object to all functions that initialize the model, tokenizer, data loaders, and Hugging Face `TrainingArguments`. Remove all hardcoded hyperparameters and replace them with attributes from the config object (e.g., `training_args.learning_rate = config.training.learning_rate`).",
             "status": "pending",
-            "testStrategy": "Run `python demo.py --model_path <path_to_model>`. Enter a question (e.g., 'What is the capital of France?') and verify that a coherent, human-readable answer is printed to the console."
+            "testStrategy": "Execute a full training run using only a configuration file. Confirm that the run completes successfully and that the logs (e.g., from the Hugging Face Trainer) show that the hyperparameters used match the values specified in the `configs/sft.yaml` file."
           }
         ]
       },
       {
         "id": 10,
-        "title": "Implement FastAPI Demo",
-        "description": "Create a FastAPI web service demo to showcase a service-style interface for the fine-tuned model.",
-        "details": "Fulfills FR-5. The application should expose at least one endpoint that accepts a JSON request with a query and returns a JSON response with the model's answer.",
-        "testStrategy": "Start the FastAPI server. Use a tool like `curl` or a web browser to send a request to the documented endpoint and verify that a valid JSON response is received.",
-        "priority": "medium",
+        "title": "Create Master Training Script",
+        "description": "Create the main entrypoint script for launching training runs, tying together data, model, and configuration.",
+        "details": "Create `scripts/train.py` that accepts a configuration file (e.g., `--config configs/sft.yaml`). This script will initialize the model, data, and trainer, and start the fine-tuning process.",
+        "testStrategy": "Execute `python scripts/train.py --config configs/sft.yaml` and confirm a full training run completes, saving checkpoints and the final model adapter to the specified output directory.",
+        "priority": "high",
         "dependencies": [
-          5
+          6,
+          8,
+          9
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Create Basic FastAPI App",
-            "description": "Initialize the FastAPI application file with a root endpoint to confirm the server runs.",
+            "title": "Implement Argument Parsing and Configuration Loading",
+            "description": "Create the main function in `scripts/train.py` that uses `argparse` to accept a `--config` command-line argument. Load the specified YAML file and parse it into a configuration object or dictionary.",
             "dependencies": [],
-            "details": "Create `demo/app.py`. Import `FastAPI` and instantiate the app. Add a simple root GET endpoint that returns `{\"message\": \"OK\"}`. This ensures the basic server setup is correct before adding model logic.",
+            "details": "Use the `argparse` library for command-line argument handling and `PyYAML` to load the configuration file. The script should fail gracefully if the config file is not found or is invalid. The loaded configuration will be used by all subsequent subtasks.",
             "status": "pending",
-            "testStrategy": "Run `uvicorn demo.app:app --reload`. Access `http://127.0.0.1:8000` in a browser or with `curl` to verify the `OK` message is returned."
+            "testStrategy": "Run `python scripts/train.py --config configs/sft.yaml` and print the loaded configuration dictionary to the console to verify it's parsed correctly."
           },
           {
             "id": 2,
-            "title": "Define API Data Models",
-            "description": "Define Pydantic models for the request and response bodies to ensure type safety and auto-generate documentation.",
+            "title": "Initialize Model and Tokenizer",
+            "description": "Using the loaded configuration, initialize the tokenizer and the base model from Hugging Face. This includes applying any specified quantization or PEFT (LoRA) configurations.",
             "dependencies": [
               "10.1"
             ],
-            "details": "In `demo/app.py`, create a `QueryRequest` Pydantic model with a single field `query: str`. Create a `QueryResponse` model with a field `answer: str`. These will structure the API's I/O.",
+            "details": "Use `transformers.AutoTokenizer.from_pretrained` and `transformers.AutoModelForCausalLM.from_pretrained`. The model name, quantization settings (e.g., `load_in_4bit`), and LoRA config (using `peft.get_peft_model`) should be read from the configuration object.",
             "status": "pending",
-            "testStrategy": "Code review and linter pass on `demo/app.py` to confirm valid Pydantic models are defined. No runnable command."
+            "testStrategy": "Add code to load the model and tokenizer, then print the model's architecture to confirm successful initialization and application of LoRA adapters."
           },
           {
             "id": 3,
-            "title": "Implement Prediction Endpoint Stub",
-            "description": "Create the `/predict` POST endpoint using the data models, returning a hardcoded response.",
+            "title": "Load and Prepare Datasets",
+            "description": "Load the pre-tokenized training and validation datasets from the paths specified in the configuration file.",
             "dependencies": [
-              "10.2"
+              "10.1"
             ],
-            "details": "In `demo/app.py`, add a `/predict` endpoint that accepts a POST request with a `QueryRequest` body and returns a `QueryResponse`. For now, the implementation should return a fixed string like `{\"answer\": \"This is a placeholder response.\"}`.",
+            "details": "Use the `datasets` library to load the Arrow-formatted datasets created by the data preparation script (Task 6). The paths for `train_dataset` and `eval_dataset` will be provided in the config.",
             "status": "pending",
-            "testStrategy": "Run `uvicorn demo.app:app`. Send a request using `curl -X POST 'http://127.0.0.1:8000/predict' -H 'Content-Type: application/json' -d '{\"query\": \"test\"}'`. Verify the hardcoded JSON response is returned."
+            "testStrategy": "After loading, print the number of examples in the training and validation sets (e.g., `len(train_dataset)`) to confirm they are loaded correctly."
           },
           {
             "id": 4,
-            "title": "Integrate Model Inference Logic",
-            "description": "Connect the fine-tuned model to the endpoint to generate live predictions.",
+            "title": "Configure and Initialize Trainer",
+            "description": "Instantiate the `transformers.Trainer` class, providing it with the initialized model, datasets, and training arguments. All training hyperparameters should be sourced from the configuration file.",
             "dependencies": [
+              "10.2",
               "10.3"
             ],
-            "details": "Modify the `/predict` endpoint in `demo/app.py`. Add logic to load the fine-tuned model and tokenizer (dependency from Task 5). Use the model to process the input `query` from the request and generate a real answer. The model should be loaded once on startup to avoid reloading on every request.",
+            "details": "Create a `transformers.TrainingArguments` object, populating it with parameters from the config like `output_dir`, `per_device_train_batch_size`, `learning_rate`, `num_train_epochs`, `logging_steps`, and `evaluation_strategy`. Pass this, along with the model and datasets, to the `Trainer` constructor.",
             "status": "pending",
-            "testStrategy": "Run `uvicorn demo.app:app`. Send a request using `curl` as in the previous step. Verify the response contains a plausible, model-generated answer, not the placeholder text."
+            "testStrategy": "Successfully instantiate the `Trainer` object without runtime errors. Log the `TrainingArguments` to verify they match the config file."
           },
           {
             "id": 5,
-            "title": "Add API Test and README",
-            "description": "Create a `pytest` test for the API endpoint and document its usage in the main README.",
+            "title": "Launch Training and Save Artifacts",
+            "description": "Execute the training run by calling the `train()` method on the trainer instance. After training is complete, save the final model adapter to the specified output directory.",
             "dependencies": [
               "10.4"
             ],
-            "details": "Create `tests/test_demo_api.py`. Use FastAPI's `TestClient` to write a test that sends a request to the `/predict` endpoint and asserts a 200 status code and a valid response format. Update `README.md` with a section on how to run the FastAPI demo, including the `uvicorn` and `curl` commands.",
+            "details": "Call `trainer.train()`. Upon completion, call `trainer.save_model()` to ensure the final adapter, configuration, and tokenizer files are written to the `output_dir` specified in the training arguments.",
             "status": "pending",
-            "testStrategy": "Run `pytest -q tests/test_demo_api.py` and confirm it passes. Manually inspect the `README.md` to verify the new instructions are clear and correct."
+            "testStrategy": "Execute the full script with a small dataset or for a few steps. Verify that the training process starts, logs are produced, and the final adapter files (e.g., `adapter_model.safetensors`) are saved in the correct output directory."
           }
         ]
       },
       {
         "id": 11,
-        "title": "Generate and Document Before/After Examples",
-        "description": "Create qualitative examples comparing the base model's answers to the fine-tuned model's answers to visually demonstrate improvements.",
-        "details": "Fulfills FR-6. Add a section to the README or a demo page with at least one clear, side-by-side before/after comparison for a sample tech-support question.",
-        "testStrategy": "Review the repository's README or demo documentation to confirm the presence of at least one before/after example pair.",
-        "priority": "medium",
+        "title": "Develop Evaluation Question Suite",
+        "description": "Create the initial set of 100 evaluation questions for measuring model performance, helpfulness, and hallucination rate.",
+        "details": "Create a JSON file, `eval/suites/support_100.json`, containing 100 questions. These questions should be representative of real user queries. Include ground truth answers where possible for rubric-based scoring.",
+        "testStrategy": "Review the question set with a support lead or analyst to ensure it covers a diverse range of topics and difficulties relevant to the tech-support domain.",
+        "priority": "high",
         "dependencies": [
-          6
+          1
         ],
-        "status": "pending",
+        "status": "todo",
         "subtasks": [
           {
             "id": 1,
-            "title": "Define Sample Prompts",
-            "description": "Create a file containing a curated list of at least 3 diverse tech-support questions to be used for generating before/after examples. These prompts will serve as the input for both the base and fine-tuned models.",
+            "title": "Define Evaluation Categories and Question Distribution",
+            "description": "Identify and define the key topics for the evaluation questions to ensure comprehensive coverage of real user queries. Determine the number of questions to be created for each category.",
             "dependencies": [],
-            "details": "Create a new file `eval/sample_prompts.txt`. Add at least three representative tech-support questions, with each question on a new line. The questions should be realistic and designed to highlight the fine-tuned model's improvements.",
+            "details": "Analyze sources like past support tickets, product documentation, and user forums to identify 5-10 core categories (e.g., Account Management, Billing, API Integration, Product Feature X). Create a plan allocating the 100 questions across these categories to ensure a balanced and representative set.",
             "status": "pending",
-            "testStrategy": "Run `cat eval/sample_prompts.txt` and verify it contains at least three non-empty lines."
+            "testStrategy": "Review the defined categories and distribution plan with a support lead to confirm they are representative of common user issues."
           },
           {
             "id": 2,
-            "title": "Script Base Model Inference",
-            "description": "Create a script that loads the base model, reads prompts from `eval/sample_prompts.txt`, and saves the generated, un-tuned answers to a markdown file.",
+            "title": "Draft 100 Raw Evaluation Questions",
+            "description": "Write the initial text for 100 evaluation questions based on the categories and distribution plan defined in the previous subtask.",
             "dependencies": [
               "11.1"
             ],
-            "details": "Implement `eval/generate_base_output.py`. This script will iterate through `eval/sample_prompts.txt`, pass each prompt to the base model, and write the output to `results/base_model_examples.md`.",
+            "details": "For each category, create questions that vary in difficulty and phrasing to mimic real user queries. The focus is on generating realistic prompts. The output at this stage is a simple list or document of the questions themselves, ready for annotation.",
             "status": "pending",
-            "testStrategy": "Run `python eval/generate_base_output.py`. Check that `results/base_model_examples.md` is created and contains answers corresponding to the sample prompts."
+            "testStrategy": "A quick peer review to check for clarity, realism, and diversity in the drafted questions."
           },
           {
             "id": 3,
-            "title": "Script Fine-Tuned Model Inference",
-            "description": "Create a script that loads the fine-tuned model, reads prompts from `eval/sample_prompts.txt`, and saves the generated, tuned answers to a markdown file.",
+            "title": "Author Ground Truth Answers and Assign Metadata",
+            "description": "For each of the 100 drafted questions, write a definitive 'ground truth' answer and assign relevant metadata.",
             "dependencies": [
-              "11.1"
+              "11.2"
             ],
-            "details": "Implement `eval/generate_tuned_output.py`. This script will iterate through `eval/sample_prompts.txt`, pass each prompt to the fine-tuned model (from Task 6), and write the output to `results/tuned_model_examples.md`.",
+            "details": "Review each question and write the ideal, correct answer that will serve as the benchmark for rubric-based scoring. Assign the corresponding category tag and a unique ID to each question-answer pair. This step is critical for measuring accuracy and hallucination.",
             "status": "pending",
-            "testStrategy": "Run `python eval/generate_tuned_output.py`. Check that `results/tuned_model_examples.md` is created and contains answers corresponding to the sample prompts."
+            "testStrategy": "Spot-check 10-15 ground truth answers for factual accuracy and completeness. Ensure all questions have been assigned a category."
           },
           {
             "id": 4,
-            "title": "Assemble Comparison Table",
-            "description": "Create a script that reads the outputs from the base and fine-tuned models and assembles them into a single, side-by-side markdown table for easy comparison.",
+            "title": "Assemble and Validate the Final JSON Evaluation File",
+            "description": "Compile the questions, ground truth answers, and metadata into the final JSON file and conduct a final review with stakeholders.",
             "dependencies": [
-              "11.2",
               "11.3"
             ],
-            "details": "Implement `eval/create_comparison.py`. This script will read `results/base_model_examples.md` and `results/tuned_model_examples.md` and generate a new file, `results/before_after_comparison.md`, containing a markdown table with columns: 'Prompt', 'Base Model Answer', 'Fine-Tuned Model Answer'.",
+            "details": "Create the `eval/suites/support_100.json` file. Structure it as a JSON array where each object contains fields like `id`, `category`, `prompt` (the question), and `ground_truth` (the answer). Validate the JSON syntax to ensure it is machine-readable.",
             "status": "pending",
-            "testStrategy": "Run `python eval/create_comparison.py`. Verify that `results/before_after_comparison.md` exists and contains a well-formatted markdown table."
-          },
-          {
-            "id": 5,
-            "title": "Update Project README",
-            "description": "Add a new 'Model Performance Examples' section to the main `README.md` and embed the content from the generated comparison file.",
-            "dependencies": [
-              "11.4"
-            ],
-            "details": "Manually edit `README.md` to add a new H2 section titled 'Model Performance Examples'. Copy and paste the markdown table from `results/before_after_comparison.md` into this new section.",
-            "status": "pending",
-            "testStrategy": "Review the `README.md` file in a markdown viewer to confirm the new section and side-by-side comparison table are present and correctly formatted."
+            "testStrategy": "Perform the full review of the complete question set with a support lead as specified in the parent task. Validate the file by parsing it with a script to ensure it's well-formed."
           }
         ]
       },
       {
         "id": 12,
-        "title": "Setup CI Pipeline",
-        "description": "Configure a Continuous Integration (CI) workflow to automatically run tests and linters on code changes.",
-        "details": "Fulfills FR-9. The CI pipeline should be configured to run on pull requests to the main branch and report a pass/fail status, for example, as a status check in GitHub.",
-        "testStrategy": "Create a pull request with a minor change. Verify that the CI pipeline is triggered automatically and that it reports a 'success' status after running the tests.",
-        "priority": "medium",
+        "title": "Implement Automated Evaluation Script",
+        "description": "Create a script to run a fine-tuned model and a base model against the evaluation suite to generate comparable outputs.",
+        "details": "Create `scripts/eval.py`. It should load a fine-tuned model (adapter + base) and a base model, run inference for every question in the suite for both models, and save the generated answers.",
+        "testStrategy": "Run the script with a trained model and a base model. Verify that it generates outputs for all 100 questions for both models and saves them to a structured file.",
+        "priority": "high",
         "dependencies": [
-          8
+          10,
+          11
         ],
-        "status": "pending",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Create CI Workflow File",
-            "description": "Create the basic GitHub Actions workflow file at `.github/workflows/ci.yml`. The workflow must trigger on pull requests targeting the `main` branch and include placeholder jobs for linting and testing that check out the repository code.",
-            "dependencies": [],
-            "details": "Create the directory `.github/workflows/` if it doesn't exist. Add a `ci.yml` file with an `on: pull_request: branches: [ main ]` trigger. Define `lint` and `test` jobs that use `actions/checkout@v4`.",
-            "status": "pending",
-            "testStrategy": "Open a new pull request against the `main` branch. Verify that the 'CI' workflow is automatically triggered in the GitHub 'Actions' tab and shows the two defined jobs."
-          },
-          {
-            "id": 2,
-            "title": "Implement Linting Job",
-            "description": "Flesh out the 'lint' job in `.github/workflows/ci.yml`. This job must install dependencies from `requirements.txt` and run a linter (e.g., ruff) across the codebase. The CI pipeline must fail if any linting errors are found.",
-            "dependencies": [
-              "12.1"
-            ],
-            "details": "In the `lint` job, add steps to set up Python, install dependencies via `pip install -r requirements.txt`, and then run the linter. Use the command: `ruff check .`",
-            "status": "pending",
-            "testStrategy": "Run the linter locally to ensure it passes before pushing: `ruff check .`. Intentionally introduce a style error, push to a PR, and verify the CI job fails as expected."
-          },
-          {
-            "id": 3,
-            "title": "Implement Testing Job",
-            "description": "Flesh out the 'test' job in `.github/workflows/ci.yml`. This job must install dependencies from `requirements.txt` and execute the project's test suite located in the `tests/` directory. The CI pipeline must fail if any test fails.",
-            "dependencies": [
-              "12.1"
-            ],
-            "details": "In the `test` job, add steps to set up Python, install dependencies from `requirements.txt`, and run the test suite using the command: `pytest tests/`.",
-            "status": "pending",
-            "testStrategy": "Run the test suite locally to ensure it passes before pushing: `pytest tests/`. Create a temporary failing test in a new file under `tests/`, push to a PR, and verify the CI job fails."
-          },
-          {
-            "id": 4,
-            "title": "Configure Dependency Caching",
-            "description": "Update the 'lint' and 'test' jobs in `.github/workflows/ci.yml` to cache Python package dependencies. This will speed up subsequent workflow runs by avoiding re-downloading packages from PyPI.",
-            "dependencies": [
-              "12.2",
-              "12.3"
-            ],
-            "details": "Before the 'Install dependencies' step in each job, add a step using the `actions/cache@v4` action. Configure it to cache the `pip` cache directory, using a key based on the runner's OS and the hash of `requirements.txt`.",
-            "status": "pending",
-            "testStrategy": "After merging, trigger the workflow twice on the same branch. Check the logs for the 'Cache Dependencies' step. The first run should report a cache miss, and the second run should report a cache hit, resulting in a faster job execution time."
-          },
-          {
-            "id": 5,
-            "title": "Enforce PR Status Checks",
-            "description": "Configure a branch protection rule for `main` to require that the 'lint' and 'test' CI jobs pass before a pull request can be merged. This ensures code quality and correctness on the main branch.",
-            "dependencies": [
-              "12.2",
-              "12.3"
-            ],
-            "details": "In the GitHub repository settings, navigate to Branches > Branch protection rules. Add a rule for the `main` branch. Enable 'Require status checks to pass before merging' and select the 'lint' and 'test' jobs from the list of available checks.",
-            "status": "pending",
-            "testStrategy": "Open a pull request that fails one of the CI jobs (e.g., a test fails). Verify that the GitHub UI shows a red 'X' for the status check and that the 'Merge pull request' button is disabled with a message indicating the required check has failed."
-          }
-        ]
+        "status": "todo",
+        "subtasks": []
       },
       {
         "id": 13,
-        "title": "Add License and Compliance Documentation",
-        "description": "Add the MIT LICENSE file and ensure any required notices for upstream dependencies are included for legal compliance.",
-        "details": "Fulfills FR-11 and NFR-5. A `LICENSE` file containing the MIT License text must be present in the repository root. The README should also state the license.",
-        "testStrategy": "Check for the existence of a `LICENSE` file in the repository root and verify its content is the MIT license. Check the README for the license statement.",
+        "title": "Implement Win-Rate Comparison",
+        "description": "Add logic to the evaluation script to perform a side-by-side win-rate test between the fine-tuned model and the base model.",
+        "details": "The evaluation script should produce a structured output (e.g., CSV or JSON) with columns for the question, base model answer, and fine-tuned model answer, to facilitate side-by-side review and scoring.",
+        "testStrategy": "Generate a side-by-side comparison file. Manually review a sample of 10 comparisons to ensure the format is clear and the correct model outputs are being compared.",
         "priority": "high",
         "dependencies": [
-          2
+          12
         ],
-        "status": "pending",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Create MIT LICENSE File",
-            "description": "Generate the standard MIT License text and place it in a `LICENSE` file at the project root.",
-            "dependencies": [],
-            "details": "Create a new file named `LICENSE` in the repository's root directory. Copy the full, standard text of the MIT License into this file, replacing '[year]' and '[fullname]' with the appropriate project details.",
-            "status": "pending",
-            "testStrategy": "Run `ls -a | grep LICENSE` to confirm file existence. Run `cat LICENSE` to verify its content is the standard MIT license text."
-          },
-          {
-            "id": 2,
-            "title": "Update README with License Section",
-            "description": "Add a 'License' section to the main `README.md` file to declare the project's license.",
-            "dependencies": [
-              "13.1"
-            ],
-            "details": "Edit `README.md` to include a new top-level section titled '## License'. The section should state that the project is licensed under the MIT License and include a link to the `LICENSE` file, e.g., `[MIT License](LICENSE)`.",
-            "status": "pending",
-            "testStrategy": "Review the rendered `README.md` to confirm the 'License' section exists and the link to the `LICENSE` file is functional."
-          },
-          {
-            "id": 3,
-            "title": "Scan Dependencies for Licenses",
-            "description": "Identify all upstream dependencies from `requirements.txt` and document their respective licenses to assess compliance obligations.",
-            "dependencies": [],
-            "details": "Use a license scanning tool to generate a report of all packages listed in `requirements.txt` and their licenses. The output should be saved for review.",
-            "status": "pending",
-            "testStrategy": "Run `pip-licenses --from=mixed --format=markdown --output-file=docs/DEPENDENCY_LICENSES.md`. Verify the generated file `docs/DEPENDENCY_LICENSES.md` lists all dependencies and their license types."
-          },
-          {
-            "id": 4,
-            "title": "Create NOTICES File for Attributions",
-            "description": "Based on the dependency scan, create a `NOTICES.md` file to include any required copyright notices and license texts from upstream dependencies.",
-            "dependencies": [
-              "13.3"
-            ],
-            "details": "Create a `NOTICES.md` file in the repository root. For any dependency whose license requires attribution (e.g., Apache 2.0, BSD), copy its license and/or copyright notice into this file. If no dependencies require notices, the file should state that.",
-            "status": "pending",
-            "testStrategy": "Review `NOTICES.md` to confirm it contains the necessary attributions as identified in the dependency scan from subtask 13.3."
-          },
-          {
-            "id": 5,
-            "title": "Add License Check to CI Pipeline",
-            "description": "Update the CI workflow to automatically verify the presence and content of license-related files.",
-            "dependencies": [
-              "13.1",
-              "13.4"
-            ],
-            "details": "Modify the CI configuration file (e.g., `.github/workflows/ci.yml`) to add a new step or job. This step will check that the `LICENSE` and `NOTICES.md` files exist and are not empty.",
-            "status": "pending",
-            "testStrategy": "Commit the updated CI configuration and push to a new branch. Create a pull request and verify that the new 'License Check' job runs and passes successfully."
-          }
-        ]
+        "status": "todo",
+        "subtasks": []
       },
       {
         "id": 14,
-        "title": "Document Project Limitations and Future Work",
-        "description": "Write the 'Limitations & Next Steps' section in the README to transparently communicate the project's scope and potential future directions.",
-        "details": "Fulfills FR-10. This section should clearly outline what the project does not do and suggest areas for future improvement or expansion.",
-        "testStrategy": "Review the `README.md` file to confirm that a section titled 'Limitations & Next Steps' or similar exists and contains relevant content.",
+        "title": "Implement Metrics Reporting",
+        "description": "Calculate and report key metrics like win rate, hallucination rate, and training cost/time to provide clear success criteria.",
+        "details": "Aggregate the results from the evaluation script. Implement a stub for a hallucination rubric. Print a summary table to the console and write a detailed CSV/JSON report to the `results/` directory.",
+        "testStrategy": "Run the full eval pipeline and check that a summary table is printed to the console and a results file (e.g., `results/eval_summary.json`) is created with the correct structure and metrics.",
+        "priority": "high",
+        "dependencies": [
+          13
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 15,
+        "title": "Create CLI Demo for Interactive Q&A",
+        "description": "Provide a simple command-line interface for users to quickly validate and interact with the fine-tuned model.",
+        "details": "Create `demo.py` that loads the fine-tuned model and enters a read-eval-print loop, accepting user input and printing the model's generation. Ensure it can be run in under 60 seconds from a fresh checkout.",
+        "testStrategy": "Run `python demo.py`, ask a question, and verify that a coherent answer is generated from the loaded model.",
+        "priority": "high",
+        "dependencies": [
+          10
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 16,
+        "title": "Develop FastAPI Inference Endpoint",
+        "description": "Create a web service for programmatic access to the model's generation capabilities, enabling integration with other tools.",
+        "details": "In the `api/` directory, create a FastAPI application with a `POST /generate` endpoint that accepts a prompt and returns a generation, and a `GET /healthz` endpoint that returns a status.",
+        "testStrategy": "Run `uvicorn api.app:app`. Send a `GET` request to `/healthz` and verify a 200 OK response. Send a `POST` request to `/generate` with a prompt and verify a JSON response with the generated text is returned.",
+        "priority": "high",
+        "dependencies": [
+          10
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 17,
+        "title": "Implement Model Packaging Utility",
+        "description": "Create a utility to save the final model artifacts (adapter, config, tokenizer) for consistent deployment and sharing.",
+        "details": "The utility should save the trained LoRA adapter weights, the adapter configuration, and the tokenizer files in the standard Hugging Face format. Create a simple loader utility to demonstrate loading these artifacts for inference.",
+        "testStrategy": "Package a trained model. Use the loader utility in a separate script to load the packaged artifacts and run a sample inference to ensure it works correctly.",
+        "priority": "high",
+        "dependencies": [
+          10
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 18,
+        "title": "Write Unit Tests for Data Pipeline",
+        "description": "Create unit tests for the data loading, validation, and splitting components to guard against regressions.",
+        "details": "Using `pytest`, write tests in the `tests/` directory for the schema validator, data parsers, and splitting logic. Use small, self-contained data fixtures.",
+        "testStrategy": "Run `pytest tests/test_data.py` and ensure all tests pass.",
+        "priority": "high",
+        "dependencies": [
+          6
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 19,
+        "title": "Write Smoke Tests for Training and Inference",
+        "description": "Create fast-running smoke tests for the main training and inference workflows to ensure core functionality remains intact.",
+        "details": "In `tests/`, create a test that runs `scripts/train.py` for a single step on a tiny dataset. Create another test that loads a mock model and tests the CLI demo and FastAPI endpoint for basic functionality.",
+        "testStrategy": "Run `pytest tests/test_smoke.py` and ensure the tests complete quickly and successfully.",
+        "priority": "high",
+        "dependencies": [
+          10,
+          15,
+          16
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 20,
+        "title": "Setup Basic CI Checks",
+        "description": "Integrate the tests and style checks into a Continuous Integration pipeline to automate quality control.",
+        "details": "Create a GitHub Actions or similar CI configuration file that triggers on push/pull_request. The CI job should install dependencies, run `pytest`, and run style checkers like `black` or `ruff`.",
+        "testStrategy": "Make a small change and push it to a branch. Verify that the CI pipeline triggers and all checks pass successfully.",
+        "priority": "high",
+        "dependencies": [
+          18,
+          19
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 21,
+        "title": "Add Configurable Training Recipes (SFT/DPO)",
+        "description": "Extend the training script to support different training objectives, such as Supervised Fine-Tuning (SFT) and Direct Preference Optimization (DPO).",
+        "details": "Refactor the training script to allow selection of a trainer (e.g., `SFTTrainer` or `DPOTrainer` from TRL) based on a configuration setting. This may require adjustments to the data preparation pipeline to support preference data for DPO.",
+        "testStrategy": "Create a config for an SFT recipe and a DPO recipe (with mock preference data). Run a smoke test for each to ensure the correct trainer is initialized and runs without error.",
         "priority": "medium",
         "dependencies": [
-          11,
-          12
+          10
         ],
-        "status": "pending",
-        "subtasks": [
-          {
-            "id": 1,
-            "title": "Add Section Header to README",
-            "description": "Create the 'Limitations & Next Steps' section in the main project documentation file to serve as a container for the subsequent content.",
-            "dependencies": [],
-            "details": "Edit the `README.md` file and add a new H2 markdown header: `## Limitations & Next Steps`. This establishes the section's location and title.",
-            "status": "pending",
-            "testStrategy": "Visually inspect the `README.md` file to confirm the new header exists."
-          },
-          {
-            "id": 2,
-            "title": "List Current Project Limitations",
-            "description": "Document the known boundaries and constraints of the current implementation to set clear expectations for users and contributors.",
-            "dependencies": [
-              "14.1"
-            ],
-            "details": "Under the new header in `README.md`, create a sub-header `### Limitations` and add a bulleted list of at least three specific limitations. Examples: model's knowledge is restricted to the training data's scope, it only handles single-turn interactions, or it has a known hallucination rate based on evaluation.",
-            "status": "pending",
-            "testStrategy": "Review `README.md` to confirm a 'Limitations' subsection exists and contains at least three distinct, clearly explained points."
-          },
-          {
-            "id": 3,
-            "title": "Outline Potential Future Work",
-            "description": "Suggest concrete areas for improvement and expansion to guide future development efforts and showcase the project's potential.",
-            "dependencies": [
-              "14.1"
-            ],
-            "details": "In `README.md`, create a sub-header `### Next Steps` and add a bulleted list of at least three actionable ideas for future work. Examples: training on a larger, more diverse dataset; experimenting with a larger base model (e.g., Llama-3 70B); or implementing a continuous evaluation pipeline.",
-            "status": "pending",
-            "testStrategy": "Review `README.md` to confirm a 'Next Steps' subsection exists and contains at least three specific, forward-looking suggestions."
-          },
-          {
-            "id": 4,
-            "title": "Connect Limitations to Evaluation Data",
-            "description": "Ground the documented limitations in concrete data by referencing the project's evaluation results and qualitative examples.",
-            "dependencies": [
-              "14.2"
-            ],
-            "details": "Update the text within the 'Limitations' subsection in `README.md`. Explicitly reference the metrics defined in Task 4 (e.g., 'Hallucination rate') and the qualitative comparisons from Task 11 to provide evidence for the stated limitations. This makes the documentation more credible and data-driven.",
-            "status": "pending",
-            "testStrategy": "Verify that the 'Limitations' text in `README.md` contains at least one reference to a specific metric (e.g., 'win-rate') or a before/after example."
-          },
-          {
-            "id": 5,
-            "title": "Review and Format Final Section",
-            "description": "Perform a final review of the entire 'Limitations & Next Steps' section to ensure it is clear, concise, and well-formatted.",
-            "dependencies": [
-              "14.3",
-              "14.4"
-            ],
-            "details": "Proofread the completed section in `README.md` for grammatical errors and typos. Ensure consistent and readable markdown formatting (e.g., bullet points, bolding). Confirm the final text transparently communicates the project's scope and fulfills functional requirement FR-10.",
-            "status": "pending",
-            "testStrategy": "Read the final section in `README.md` from the perspective of a new user to check for clarity, accuracy, and professional presentation."
-          }
-        ]
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 22,
+        "title": "Implement Best Model Selection",
+        "description": "Automatically save the best model checkpoint based on a specified evaluation metric to improve model quality.",
+        "details": "Configure `TrainingArguments` with `load_best_model_at_end=True` and `metric_for_best_model`. The evaluation loop must be integrated into the training process to compute the metric on the validation set periodically.",
+        "testStrategy": "Run a training job with evaluation enabled. Verify that the logs show the evaluation metric being tracked and that the final saved model corresponds to the checkpoint with the best score.",
+        "priority": "medium",
+        "dependencies": [
+          14
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 23,
+        "title": "Implement Robust Input Length Handling",
+        "description": "Add strategies for handling inputs that exceed the model's maximum sequence length, such as truncation or sliding window.",
+        "details": "Implement a simple truncation strategy as the default. Add an optional sliding-window strategy for handling long contexts, configurable via the data preparation script.",
+        "testStrategy": "Create a test case with a document longer than the max sequence length. Verify that the truncation strategy shortens it correctly. If implementing sliding window, verify it creates multiple overlapping chunks as expected.",
+        "priority": "medium",
+        "dependencies": [
+          7
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 24,
+        "title": "Enhance Logging and Error Handling",
+        "description": "Improve logging throughout the application for better traceability and add graceful failure paths for robustness.",
+        "details": "Use Python's `logging` module to provide clear, structured logs with run IDs and output paths. Add `try...except` blocks around critical I/O and compute operations to provide informative error messages.",
+        "testStrategy": "Manually inspect logs from a full run to ensure clarity. Intentionally cause an error (e.g., point to a missing file) and verify that the application exits gracefully with a helpful message.",
+        "priority": "medium",
+        "dependencies": [
+          10,
+          14,
+          16
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 25,
+        "title": "Add Mixed-Precision and Gradient Accumulation Presets",
+        "description": "Provide configuration presets for common optimization techniques to reduce memory usage and effectively increase batch size.",
+        "details": "Add configuration options in the YAML file for `fp16`/`bf16` mixed-precision training and `gradient_accumulation_steps`. Provide comments in the default config file explaining their use cases.",
+        "testStrategy": "Run a smoke test with `fp16=True` and `gradient_accumulation_steps=2`. Verify from the logs that these settings are active and the run completes successfully.",
+        "priority": "low",
+        "dependencies": [
+          10
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 26,
+        "title": "Implement Hyperparameter Sweeps and Early Stopping",
+        "description": "Enable automated hyperparameter tuning and early stopping to find optimal settings and prevent overfitting.",
+        "details": "Integrate with a library like Weights & Biases Sweeps or Optuna to run automated sweeps for parameters like LoRA rank/alpha. Implement early stopping by configuring `EarlyStoppingCallback` in the trainer.",
+        "testStrategy": "Configure and run a small sweep over 2-3 trials. Verify that the runs are logged and a best model is identified. Configure early stopping and verify it stops training prematurely when the validation metric plateaus.",
+        "priority": "low",
+        "dependencies": [
+          22
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 27,
+        "title": "Create Lightweight Model Registry",
+        "description": "Create a simple file-based model registry to track trained models and their associated metadata and performance.",
+        "details": "When a model is packaged, also write a metadata JSON file to a `registry/` directory. The metadata should include the run ID, base model, performance metrics, and path to the artifacts.",
+        "testStrategy": "Run a training and packaging job. Verify that a corresponding metadata file is created in the `registry/` directory with the correct information.",
+        "priority": "low",
+        "dependencies": [
+          17
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 28,
+        "title": "Implement Prompt Templating System",
+        "description": "Allow users to define and select different prompt templates for inference to easily experiment with prompting strategies.",
+        "details": "Create a system where prompt templates (e.g., using f-strings or Jinja2) can be stored in a configuration file. The inference code (CLI, FastAPI) should be able to load a named template and format the user's input.",
+        "testStrategy": "Define two different prompt templates. Test the demo and API by specifying each template and verifying that the final prompt sent to the model is formatted correctly.",
+        "priority": "low",
+        "dependencies": [
+          15,
+          16
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 29,
+        "title": "Add Optional Guardrail Hooks",
+        "description": "Implement a mechanism to check model outputs against safety and topical guardrails to prevent undesirable responses.",
+        "details": "In the inference pipeline, add a configurable post-processing step that can apply checks to the generated text. This could include regex/keyword matching for unsafe content or out-of-scope topics.",
+        "testStrategy": "Define a simple guardrail (e.g., block a specific keyword). Send a prompt that is likely to elicit that keyword and verify the output is blocked or replaced with a canned response.",
+        "priority": "low",
+        "dependencies": [
+          15,
+          16
+        ],
+        "status": "todo",
+        "subtasks": []
+      },
+      {
+        "id": 30,
+        "title": "Create Dockerfile for Packaging",
+        "description": "Create a Dockerfile to package the FastAPI application and its dependencies for portable and scalable deployment.",
+        "details": "The Dockerfile should start from a Python base image, copy the `requirements.txt` and source code, install dependencies, and define the `CMD` to run the `uvicorn` server. It should also handle downloading a default model.",
+        "testStrategy": "Build the Docker image using `docker build`. Run the container and test the `/healthz` and `/generate` endpoints from the host machine to ensure the service is running correctly inside the container.",
+        "priority": "low",
+        "dependencies": [
+          16,
+          17
+        ],
+        "status": "todo",
+        "subtasks": []
       }
     ],
     "metadata": {
-      "created": "2025-08-24T17:48:18.562Z",
-      "updated": "2025-08-24T17:48:18.562Z",
-      "description": "Tasks for master context"
+      "created": "2025-08-25T19:15:46.883Z",
+      "updated": "2025-08-25T19:15:46.883Z",
+      "description": "Tasks for default context"
     }
   }
 }
