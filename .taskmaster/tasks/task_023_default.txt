@@ -1,0 +1,11 @@
+# Task ID: 23
+# Title: Add Mixed-Precision and Gradient Accumulation Presets
+# Status: pending
+# Dependencies: 8
+# Priority: low
+# Description: Provide pre-configured settings for common performance optimization techniques.
+# Details:
+Add options to the training config (YAML) to easily enable/disable mixed-precision (`fp16`/`bf16`) and set the number of gradient accumulation steps.
+
+# Test Strategy:
+Run training with `gradient_accumulation_steps=4` and verify from the logs that the effective batch size is 4x the per-device batch size.

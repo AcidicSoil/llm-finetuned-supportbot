@@ -1,0 +1,11 @@
+# Task ID: 24
+# Title: Add Hyperparameter Sweeps and Early Stopping
+# Status: pending
+# Dependencies: 8, 11
+# Priority: low
+# Description: Integrate logic for hyperparameter optimization and early stopping to prevent overfitting.
+# Details:
+Integrate with a library like Optuna or Ray Tune for sweeping LoRA rank/alpha. Implement early stopping callback in the `Trainer` to halt training if the validation metric stops improving.
+
+# Test Strategy:
+Configure an early stopping callback with `patience=2`. Run a training job where the validation loss plateaus and verify that training stops early.

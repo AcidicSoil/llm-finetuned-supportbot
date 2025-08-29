@@ -1,0 +1,11 @@
+# Task ID: 28
+# Title: Create Dockerfile for API Service
+# Status: pending
+# Dependencies: 14, 15
+# Priority: low
+# Description: Package the FastAPI application and its dependencies into a Docker image for deployment.
+# Details:
+Write a multi-stage `Dockerfile`. The first stage installs dependencies. The final stage copies the application code and model artifacts, exposing the API port. The entrypoint should run `uvicorn`.
+
+# Test Strategy:
+Build the Docker image using `docker build`. Run the container and test the `/healthz` and `/generate` endpoints from the host machine.

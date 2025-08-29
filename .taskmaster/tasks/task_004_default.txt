@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Implement Stratified Train/Val/Test Splitting
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Create a script to split the unified dataset into training, validation, and test sets to prevent data leakage.
+# Details:
+The splitting logic should be deterministic and allow for stratification based on metadata fields like `source` or `tags` to ensure balanced representation across splits.
+
+# Test Strategy:
+Verify that the script produces distinct train, validation, and test files. Check the distribution of stratified keys across the splits to ensure it's balanced.

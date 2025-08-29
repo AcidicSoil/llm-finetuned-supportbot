@@ -1,0 +1,11 @@
+# Task ID: 27
+# Title: Add Optional Guardrail Hooks
+# Status: pending
+# Dependencies: 14
+# Priority: low
+# Description: Implement hooks to check for and filter unsafe or out-of-scope queries and responses.
+# Details:
+In the inference logic, add an optional pre-processing hook for input queries and a post-processing hook for model responses. These hooks can apply simple checks like regex or keyword matching.
+
+# Test Strategy:
+Enable a guardrail that blocks a specific keyword. Send a request containing that keyword to the API and verify that it is rejected or handled appropriately.

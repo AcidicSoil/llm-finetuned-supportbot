@@ -1,8 +1,4 @@
----
-description: Guidelines for continuously improving Cursor rules based on emerging code patterns and best practices.
-globs: **/*
-alwaysApply: true
----
+
 
 - **Rule Improvement Triggers:**
   - New code patterns not covered by existing rules
@@ -32,13 +28,14 @@ alwaysApply: true
     - Implementation details have changed
 
 - **Example Pattern Recognition:**
+
   ```typescript
   // If you see repeated patterns like:
   const data = await prisma.user.findMany({
     select: { id: true, email: true },
     where: { status: 'ACTIVE' }
   });
-  
+
   // Consider adding to [prisma.mdc](mdc:.cursor/rules/prisma.mdc):
   // - Standard select fields
   // - Common where conditions

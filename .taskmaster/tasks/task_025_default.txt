@@ -1,0 +1,11 @@
+# Task ID: 25
+# Title: Create Lightweight Model Registry
+# Status: pending
+# Dependencies: 15
+# Priority: low
+# Description: Implement a simple file-based model registry to track experiments and artifacts.
+# Details:
+Create a top-level `registry/` directory. After each successful evaluation, write a metadata JSON file to this directory containing the run ID, metrics, and path to the packaged model artifacts.
+
+# Test Strategy:
+Run a full train-and-eval pipeline. Verify that a new metadata file is created in the `registry/` directory with the correct information.

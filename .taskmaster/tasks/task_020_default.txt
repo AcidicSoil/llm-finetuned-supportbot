@@ -1,0 +1,11 @@
+# Task ID: 20
+# Title: Implement Best Model Selection
+# Status: pending
+# Dependencies: 9, 11
+# Priority: medium
+# Description: Automatically save the best model checkpoint based on a specified evaluation metric.
+# Details:
+Configure the Hugging Face `Trainer` with `load_best_model_at_end=True` and specify `metric_for_best_model` (e.g., 'eval_loss' or a custom win-rate metric).
+
+# Test Strategy:
+Run a training and evaluation job. Verify that the final saved checkpoint corresponds to the epoch with the best score on the specified evaluation metric.

@@ -1,0 +1,11 @@
+# Task ID: 13
+# Title: Create Interactive CLI Demo
+# Status: pending
+# Dependencies: 7
+# Priority: high
+# Description: Build a simple command-line interface for quick Q&A with the fine-tuned model.
+# Details:
+Create `demo.py` that loads a trained model and enters a loop, prompting the user for a question and printing the model's generated answer.
+
+# Test Strategy:
+Run `uv run demo.py`, enter a question, and verify that the model generates a response. Ensure a clean exit path exists.

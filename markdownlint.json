@@ -11,6 +11,7 @@
   "MD026": { "punctuation": ".,;:!?" },
   "MD033": false,
   "MD034": false,
+  "MD036": false,
   "MD041": false,
   "MD046": { "style": "fenced" },
   "MD048": { "style": "backtick" }

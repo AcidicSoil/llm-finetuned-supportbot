@@ -1,0 +1,11 @@
+# Task ID: 12
+# Title: Implement Results Exporter and Summary Table
+# Status: pending
+# Dependencies: 11
+# Priority: high
+# Description: Save detailed evaluation results to a file and print a summary table to the console.
+# Details:
+The evaluation script should output detailed per-question results to a CSV or JSON file in the `results/` directory. It should also print a formatted summary table to the console showing win rate, hallucination rate, and other key metrics.
+
+# Test Strategy:
+Run the evaluation script and check that a correctly formatted CSV/JSON file is created in `results/` and that a summary table is printed to standard output.

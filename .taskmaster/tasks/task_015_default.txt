@@ -1,0 +1,11 @@
+# Task ID: 15
+# Title: Implement Model Packaging Utility
+# Status: pending
+# Dependencies: 7
+# Priority: high
+# Description: Create a utility to save the trained model artifacts for deployment.
+# Details:
+The utility should save the LoRA adapter weights, the tokenizer configuration, and any other necessary model config files in the standard Hugging Face format. Create a corresponding simple loader function.
+
+# Test Strategy:
+Package a trained model. Then, use the loader utility in a separate script (like the demo or API) to load the packaged artifacts and confirm it can perform inference.

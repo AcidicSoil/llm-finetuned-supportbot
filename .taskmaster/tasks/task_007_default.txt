@@ -1,0 +1,43 @@
+# Task ID: 7
+# Title: Implement PEFT/LoRA Fine-Tuning Loop
+# Status: pending
+# Dependencies: 5
+# Priority: high
+# Description: Set up the core training logic to fine-tune a small open LLM using LoRA with quantization.
+# Details:
+Use the Hugging Face `Trainer` or TRL's `SFTTrainer`. Integrate `peft` to create a LoRA model and `bitsandbytes` for 4/8-bit quantization. Ensure the training loop is reproducible using deterministic seeds.
+
+# Test Strategy:
+Run a short training job (1-2 steps) on a small data sample. Verify that it completes without errors and a model checkpoint is saved.
+
+# Subtasks:
+## 1. Load Base Model and Tokenizer with Quantization [pending]
+### Dependencies: None
+### Description: Load the specified small open LLM and its tokenizer from the Hugging Face Hub, applying 4/8-bit quantization during model instantiation.
+### Details:
+Use `transformers.AutoTokenizer.from_pretrained` to load the tokenizer. Use `transformers.AutoModelForCausalLM.from_pretrained` with a `bitsandbytes.BitsAndBytesConfig` to load the model in 4-bit (e.g., NF4) or 8-bit mode. This combines the model selection and quantization steps.
+
+## 2. Configure and Apply LoRA Adapters [pending]
+### Dependencies: 7.1
+### Description: Define the LoRA configuration and apply it to the quantized base model to make it trainable.
+### Details:
+Create a `peft.LoraConfig` object, specifying the rank (`r`), `lora_alpha`, `target_modules` (e.g., `['q_proj', 'v_proj']`), and `task_type`. Use `peft.get_peft_model` to wrap the quantized model from the previous step.
+
+## 3. Set Up Training Arguments for Reproducibility and Checkpointing [pending]
+### Dependencies: None
+### Description: Configure the `transformers.TrainingArguments` to ensure the training loop is deterministic and saves checkpoints periodically.
+### Details:
+Instantiate `TrainingArguments`, setting a fixed `seed` for reproducibility. Configure `output_dir`, `per_device_train_batch_size`, `num_train_epochs`, `logging_steps`, and `save_strategy` (e.g., 'steps') along with `save_steps` to enable checkpointing.
+
+## 4. Initialize and Run the SFTTrainer Loop [pending]
+### Dependencies: 7.2, 7.3
+### Description: Instantiate the TRL `SFTTrainer` with the PEFT model, dataset, and training arguments, then start the training process.
+### Details:
+Initialize `trl.SFTTrainer`, passing the PEFT model, training/evaluation datasets (from Task 5), the tokenizer, and the configured `TrainingArguments`. Call the `trainer.train()` method to start the fine-tuning loop.
+
+## 5. Implement Logic to Resume from a Checkpoint [pending]
+### Dependencies: 7.4
+### Description: Modify the training script to handle a command-line argument that allows resuming training from a specified checkpoint directory.
+### Details:
+Add logic (e.g., using `argparse`) to detect a `--resume-from-checkpoint` argument. If present, pass its value (the path to a checkpoint) to the `resume_from_checkpoint` parameter of the `trainer.train()` method.
+

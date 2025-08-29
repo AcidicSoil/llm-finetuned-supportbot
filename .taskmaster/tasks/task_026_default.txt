@@ -1,0 +1,43 @@
+# Task ID: 26
+# Title: Implement Prompt Templating System
+# Status: pending
+# Dependencies: 13, 14
+# Priority: low
+# Description: Allow the use of different prompt templates for inference to guide model behavior.
+# Details:
+Create a system (e.g., using Jinja2) that allows users to define and select prompt templates. The inference endpoints (CLI and API) should apply the selected template to the user's input.
+
+# Test Strategy:
+Use the CLI demo with a specific prompt template and verify the final prompt sent to the model is formatted correctly.
+
+# Subtasks:
+## 1. Add Jinja2 as a dependency [pending]
+### Dependencies: None
+### Description: Introduce templating support for prompts.
+### Details:
+Add `jinja2` to project dependencies (pyproject/requirements) and lock. Verify import and simple template render.
+
+## 2. Create prompt templates directory [pending]
+### Dependencies: None
+### Description: Provide example templates for common formats.
+### Details:
+Add `templates/` with `chatml.j2` and `alpaca.j2`. Include variables for `{question}` and optional `{context}`. Document usage in `templates/README.md`.
+
+## 3. Implement apply_template utility [pending]
+### Dependencies: None
+### Description: Helper to render a named template with data.
+### Details:
+Create `src/templates.py` with `apply_template(name: str, data: dict) -> str` that loads from `templates/` and renders via Jinja2. Add simple caching and error handling for missing templates.
+
+## 4. Integrate templating into CLI demo [pending]
+### Dependencies: None
+### Description: Allow selecting a template for prompt formatting in the CLI.
+### Details:
+Update `demo.py` to accept `--template` and apply `apply_template` with `{question, context?}` before generation. Fallback to raw prompt when omitted.
+
+## 5. Integrate templating into FastAPI endpoint [pending]
+### Dependencies: None
+### Description: Support optional template parameter in `/generate`.
+### Details:
+Extend `api` service request model to include optional `template`. Use `apply_template` to build the final prompt for both single and batch requests.
+

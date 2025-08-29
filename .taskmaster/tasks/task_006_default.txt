@@ -1,0 +1,11 @@
+# Task ID: 6
+# Title: Create Master Data Preparation Script
+# Status: pending
+# Dependencies: 3, 4, 5
+# Priority: high
+# Description: Orchestrate the entire data ingestion and preprocessing pipeline with a single command.
+# Details:
+Create `scripts/prepare_data.py` that takes input/output paths as arguments. This script will call the parsers, validator, splitter, and tokenizer in sequence to generate the final processed datasets.
+
+# Test Strategy:
+Run the script with sample raw data and verify that the final processed and tokenized `train`, `val`, and `test` datasets are created in the specified output directory.

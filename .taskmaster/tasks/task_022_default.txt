@@ -1,0 +1,11 @@
+# Task ID: 22
+# Title: Implement Advanced Input Length Handling
+# Status: pending
+# Dependencies: 5, 7
+# Priority: medium
+# Description: Add strategies for handling inputs that are longer than the model's context window.
+# Details:
+Implement an optional sliding-window strategy for long contexts as an alternative to simple truncation. This can be configured in the data processing step.
+
+# Test Strategy:
+Process a document longer than the max sequence length and verify that the sliding window approach generates multiple overlapping chunks.

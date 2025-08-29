@@ -23,3 +23,12 @@ node_modules/
 
 # OS specific
 .DS_Store
+
+
+# others
+.archive
+.continue
+.rulesync
+.mcp.json
+.venv
+memory-bank/
