@@ -1,0 +1,11 @@
+# Task ID: 19
+# Title: Add Configurable Training Recipes (SFT/DPO)
+# Status: pending
+# Dependencies: 8
+# Priority: medium
+# Description: Extend the training script to support different training objectives like DPO.
+# Details:
+Refactor the training script to allow selection of a trainer (e.g., `SFTTrainer`, `DPOTrainer` from TRL) via the YAML configuration. This requires adapting the data format for preference data.
+
+# Test Strategy:
+Run a short training job using a new `dpo.yaml` config and verify it uses the `DPOTrainer`.

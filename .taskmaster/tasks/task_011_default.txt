@@ -1,0 +1,11 @@
+# Task ID: 11
+# Title: Implement Automated Metrics Calculation
+# Status: pending
+# Dependencies: 10
+# Priority: high
+# Description: Calculate win-rate and hallucination rate based on the evaluation harness outputs.
+# Details:
+For side-by-side comparison, implement a win-rate test (can be manual review initially or use a stronger LLM as a judge). Create a stub for a rubric-based hallucination scoring system. The script should aggregate these scores.
+
+# Test Strategy:
+Provide sample model outputs to the metric script and verify that it calculates and aggregates the scores correctly.

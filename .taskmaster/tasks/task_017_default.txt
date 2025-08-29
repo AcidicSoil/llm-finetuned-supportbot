@@ -1,0 +1,11 @@
+# Task ID: 17
+# Title: Write Smoke Tests for Training and Inference
+# Status: pending
+# Dependencies: 7, 13
+# Priority: high
+# Description: Create fast-running tests to ensure the main training and inference paths are not broken.
+# Details:
+Create a `tests/smoke` directory. The training smoke test should run for a single step on a tiny dataset. The inference smoke test should load a model and generate one response.
+
+# Test Strategy:
+Run the smoke tests as part of the main test suite. They should complete in under 60 seconds and pass.

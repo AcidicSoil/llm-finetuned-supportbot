@@ -1,10 +1,237 @@
 {
 	"meta": {
-		"generatedAt": "2025-08-25T19:20:25.668Z",
-		"tasksAnalyzed": 0,
-		"thresholdScore": 6,
+		"generatedAt": "2025-08-29T17:15:09.781Z",
+		"tasksAnalyzed": 28,
+		"totalTasks": 28,
+		"analysisCount": 28,
+		"thresholdScore": 5,
 		"projectName": "llm-finetune-supportbot",
-		"usedResearch": false
+		"usedResearch": true
 	},
-	"complexityAnalysis": []
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Setup Project Repository and Environment",
+			"complexityScore": 2,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Setup Project Repository and Environment' into subtasks. The subtasks should cover creating the directory structure, initializing the `uv` virtual environment, creating and populating the `requirements.txt` file with pinned versions, and creating a simple `setup.sh` script to automate these steps.",
+			"reasoning": "This task is foundational but not technically complex. It involves running a series of standard command-line operations and creating a dependency file. The low complexity score reflects that it's primarily boilerplate setup with little to no logical implementation."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Implement Stratified Train/Val/Test Splitting",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Implement Stratified Train/Val/Test Splitting' into subtasks. The breakdown should include: 1. A function to load the unified dataset from a file. 2. The core logic for performing a deterministic, stratified split using a library like `scikit-learn`'s `train_test_split`. 3. A main script with argument parsing for input/output files and the stratification key. 4. Logic to save the resulting train, validation, and test sets as separate files.",
+			"reasoning": "This task involves data manipulation and statistical concepts (stratification). While libraries like scikit-learn simplify the core logic, it still requires careful implementation to ensure determinism, handle different stratification keys, and manage data I/O correctly, placing it at a medium complexity."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Implement Data Tokenization",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Implement Data Tokenization' into subtasks. The subtasks should cover: 1. Loading the specified pre-trained tokenizer. 2. Creating a processing function that takes a data record, formats it into a single string (e.g., using a prompt template), and applies the tokenizer with correct padding and truncation settings. 3. Developing a script that uses `datasets.map()` to apply this function to the train/val/test splits and saves the tokenized datasets.",
+			"reasoning": "The task relies heavily on the Hugging Face `transformers` library, which handles the most complex parts of tokenization. The main effort is in writing the wrapper script, correctly formatting the data for the model, and managing the dataset processing workflow, making it a low-to-medium complexity task."
+		},
+		{
+			"taskId": 21,
+			"taskTitle": "Expand Evaluation Suite and Error Analysis",
+			"complexityScore": 6,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Expand Evaluation Suite and Error Analysis' into subtasks. The expansion should include: 1. Curating and formatting at least two new evaluation sets in JSON format for different domains. 2. Defining and implementing an error classification schema (e.g., an Enum for 'Refusal', 'Hallucination', 'Stylistic Error'). 3. Modifying the evaluation script to capture and store the error category for each evaluated response. 4. Updating the results summary to aggregate and display statistics based on these error categories.",
+			"reasoning": "This task moves beyond simple script execution into more qualitative and analytical work. Curating evaluation sets requires domain knowledge, and implementing a robust error categorization system requires defining a clear rubric and logic to apply it, which can be an iterative and subjective process."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Develop Evaluation Harness",
+			"complexityScore": 7,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Develop Evaluation Harness' into subtasks. The plan should cover: 1. A utility function to load a base model and tokenizer. 2. A separate utility function to load a PEFT adapter and apply it to a base model. 3. A main script (`scripts/eval.py`) with argument parsing for model paths and the evaluation suite file. 4. The core evaluation loop that iterates through questions, generates responses from both the base and fine-tuned models. 5. Logic to save the paired generations, question, and context into a structured output file (e.g., JSONL).",
+			"reasoning": "This task is complex because it orchestrates model loading (for both base and PEFT-adapted models), inference, and data handling. It requires careful management of model objects, tokenizers, and device placement, and forms the foundation for all subsequent evaluation and metrics tasks."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Implement Model Packaging Utility",
+			"complexityScore": 3,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Implement Model Packaging Utility' into subtasks. The subtasks should be: 1. Create a script that accepts a path to a trained PEFT model and an output directory, then saves the adapter weights and tokenizer using their respective `.save_pretrained()` methods. 2. Create a corresponding loader function that can take the path to the packaged artifacts and the base model name, and returns a fully assembled, inference-ready model. 3. Add a simple test to verify that a saved and reloaded model produces the same output for a given input.",
+			"reasoning": "The complexity is low because the core functionality is provided by the Hugging Face `peft` and `transformers` libraries (`model.save_pretrained`). The task is primarily about creating a simple, reusable script wrapper around these existing, well-documented functions."
+		},
+		{
+			"taskId": 20,
+			"taskTitle": "Implement Best Model Selection",
+			"complexityScore": 3,
+			"recommendedSubtasks": 2,
+			"expansionPrompt": "Expand the task 'Implement Best Model Selection' into subtasks. The plan should be: 1. Modify the training script to configure `TrainingArguments` with `load_best_model_at_end=True`, `metric_for_best_model` (e.g., 'eval_loss'), and an appropriate `evaluation_strategy`. 2. Ensure the `compute_metrics` function passed to the `Trainer` returns a dictionary containing the key specified in `metric_for_best_model`.",
+			"reasoning": "This is a low-complexity task as it primarily involves setting a few boolean flags and string values in the `TrainingArguments` object. The underlying complex logic is entirely handled by the Hugging Face `Trainer` class, making it a configuration-focused task."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Implement Configuration Management for Training",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Implement Configuration Management for Training' into subtasks. The subtasks should detail: 1. Integrating a configuration library like `jsonargparse` or `hydra`. 2. Creating a hierarchical YAML configuration file (`configs/sft.yaml`) that organizes parameters for the model, data, and training arguments. 3. Refactoring the main training script to load this configuration and accept CLI overrides. 4. Implementing a logging step at the beginning of a run to print the final, resolved configuration.",
+			"reasoning": "This task is of medium complexity because it involves architectural decisions (choosing a library) and requires refactoring existing code to be config-driven. Properly handling nested configurations and CLI overrides requires careful implementation to be robust and maintainable."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Implement Checkpoint Saving and Resuming",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Expand the task 'Implement Checkpoint Saving and Resuming' into subtasks. The breakdown should be: 1. In the training script, configure the `TrainingArguments` to enable periodic checkpointing (e.g., `save_strategy='epoch'`). 2. Use `argparse` to add a `--resume-from-checkpoint` argument to the script. 3. Implement the logic to pass the value of this argument to the `trainer.train()` call, ensuring training can resume from a specific checkpoint directory.",
+			"reasoning": "The core checkpointing mechanism is built into the Hugging Face `Trainer`. The developer's work is to expose this functionality through configuration and command-line arguments, which is a medium-low complexity task involving argument parsing and conditional logic."
+		},
+		{
+			"taskId": 26,
+			"taskTitle": "Implement Prompt Templating System",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Expand the task 'Implement Prompt Templating System' into subtasks. The plan should include: 1. Adding `Jinja2` to the project dependencies. 2. Creating a `templates` directory with a few example prompt template files (e.g., `chatml.j2`, `alpaca.j2`). 3. Implementing a helper function `apply_template(template_name, data)` that loads and renders the specified template. 4. Modifying the interactive CLI demo to accept a `--template` argument. 5. Modifying the FastAPI `/generate` endpoint to accept an optional `template` field in the request body.",
+			"reasoning": "The complexity comes from designing a flexible system and integrating it into multiple, disparate parts of the codebase (CLI, API, evaluation). While using a library like Jinja2 is simple, the architectural work to make it a clean, reusable component across the project elevates the complexity."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Define Data Schema and Validation Logic",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on define data schema and validation logic.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Implement Data Parsers for Various Sources",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on implement data parsers for various sources.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Create Master Data Preparation Script",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on create master data preparation script.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Implement PEFT/LoRA Fine-Tuning Loop",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on implement peft/lora fine-tuning loop.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Implement Automated Metrics Calculation",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on implement automated metrics calculation.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Implement Results Exporter and Summary Table",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on implement results exporter and summary table.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 13,
+			"taskTitle": "Create Interactive CLI Demo",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on create interactive cli demo.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Develop FastAPI Inference Service",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on develop fastapi inference service.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 16,
+			"taskTitle": "Write Unit Tests for Data Pipeline",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on write unit tests for data pipeline.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 17,
+			"taskTitle": "Write Smoke Tests for Training and Inference",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on write smoke tests for training and inference.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 18,
+			"taskTitle": "Setup Basic CI Pipeline",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on setup basic ci pipeline.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 19,
+			"taskTitle": "Add Configurable Training Recipes (SFT/DPO)",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on add configurable training recipes (sft/dpo).",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 22,
+			"taskTitle": "Implement Advanced Input Length Handling",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on implement advanced input length handling.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 23,
+			"taskTitle": "Add Mixed-Precision and Gradient Accumulation Presets",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on add mixed-precision and gradient accumulation presets.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 24,
+			"taskTitle": "Add Hyperparameter Sweeps and Early Stopping",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on add hyperparameter sweeps and early stopping.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 25,
+			"taskTitle": "Create Lightweight Model Registry",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on create lightweight model registry.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 27,
+			"taskTitle": "Add Optional Guardrail Hooks",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on add optional guardrail hooks.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		},
+		{
+			"taskId": 28,
+			"taskTitle": "Create Dockerfile for API Service",
+			"complexityScore": 5,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down this task with a focus on create dockerfile for api service.",
+			"reasoning": "Automatically added due to missing analysis in AI response."
+		}
+	]
 }

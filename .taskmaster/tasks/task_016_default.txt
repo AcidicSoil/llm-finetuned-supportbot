@@ -1,0 +1,11 @@
+# Task ID: 16
+# Title: Write Unit Tests for Data Pipeline
+# Status: pending
+# Dependencies: 6
+# Priority: high
+# Description: Create unit tests for the data loading, validation, and splitting components.
+# Details:
+Using `pytest`, write tests in the `tests/` directory to cover the functions in the data processing modules. Use mock data to test edge cases.
+
+# Test Strategy:
+Run `pytest tests/` and ensure all data-related tests pass.

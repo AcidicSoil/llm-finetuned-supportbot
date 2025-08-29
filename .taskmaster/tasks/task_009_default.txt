@@ -1,0 +1,11 @@
+# Task ID: 9
+# Title: Implement Checkpoint Saving and Resuming
+# Status: pending
+# Dependencies: 7
+# Priority: high
+# Description: Enable saving model checkpoints during training and resuming training from a saved checkpoint.
+# Details:
+Configure the `Trainer` to save checkpoints periodically. Implement logic in the training script (`scripts/train.py`) to handle a `--resume-from-checkpoint` argument.
+
+# Test Strategy:
+Start a training run, stop it after one epoch, then resume it from the saved checkpoint. Verify that the training continues from the correct step/epoch.

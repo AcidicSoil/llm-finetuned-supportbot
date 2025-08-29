@@ -1,0 +1,11 @@
+# Task ID: 18
+# Title: Setup Basic CI Pipeline
+# Status: pending
+# Dependencies: 16, 17
+# Priority: high
+# Description: Configure a continuous integration pipeline to run checks on code changes.
+# Details:
+Create a GitHub Actions workflow (or similar) that triggers on push/pull_request. The pipeline should install dependencies, run linters/style checkers (e.g., ruff), and execute the `pytest` suite including unit and smoke tests.
+
+# Test Strategy:
+Push a commit or open a pull request and verify that the CI pipeline runs and passes successfully.

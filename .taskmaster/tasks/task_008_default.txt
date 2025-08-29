@@ -1,0 +1,11 @@
+# Task ID: 8
+# Title: Implement Configuration Management for Training
+# Status: pending
+# Dependencies: 7
+# Priority: high
+# Description: Allow training hyperparameters to be specified via configuration files and command-line arguments.
+# Details:
+Use YAML files (e.g., `configs/sft.yaml`) to define training parameters like learning rate, epochs, LoRA rank/alpha, etc. Use a library like `argparse` or `jsonargparse` to parse the config and allow CLI overrides.
+
+# Test Strategy:
+Launch a training run using a config file. Override a parameter (e.g., `num_train_epochs`) via the CLI and check the console logs to confirm the override was applied.
