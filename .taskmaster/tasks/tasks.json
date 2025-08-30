@@ -5,11 +5,11 @@
         "id": 1,
         "title": "Setup Project Repository and Environment",
         "description": "Initialize the project structure, virtual environment, and core dependencies.",
-        "details": "Create the repository structure including directories like `src/`, `scripts/`, `configs/`, `eval/`, `results/`, `tests/`, and `api/`. Set up a `uv` virtual environment and create a `requirements.txt` file with pinned versions of `transformers`, `datasets`, `peft`, `trl`, `bitsandbytes`, and `pytorch`.",
-        "testStrategy": "Verify that the directory structure is created, `uv venv` and `uv pip install -r requirements.txt` complete successfully.",
+        "details": "Create the repository structure including directories like `src/`, `scripts/`, `configs/`, `eval/`, `results/`, `tests/`, and `api/`. Initialize a uv project with `pyproject.toml` declaring runtime dependencies (`transformers`, `datasets`, `peft`, `trl`, `accelerate`, `bitsandbytes`, `torch`) and a `dev` dependency group containing `pytest`.",
+        "testStrategy": "Verify that the directory structure is created, `pyproject.toml` exists, and `uv sync --dev` completes successfully.",
         "priority": "high",
         "dependencies": [],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -22,7 +22,7 @@
         "dependencies": [
           1
         ],
-        "status": "pending",
+        "status": "in-progress",
         "subtasks": [
           {
             "id": 1,
@@ -41,7 +41,7 @@
               "2.1"
             ],
             "details": "Use Pydantic's `@validator` decorator to add validation logic. Ensure that string fields like `id`, `question`, `answer`, and `source` are not empty or just whitespace. Validate that the `tags` list, if not empty, contains only non-empty strings.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Using `pytest`, create tests that attempt to initialize the `DataRecord` model with invalid data (e.g., an empty `question`, a `tag` with an empty string) and assert that a `ValidationError` is raised."
           },
           {
@@ -53,7 +53,7 @@
               "2.2"
             ],
             "details": "Implement a function `validate_dataset(records: List[DataRecord])` that iterates through a list of records. This function should check for duplicate `id` values. Add a placeholder for a PII scan on text fields. If a controlled vocabulary for tags is required, validate that all tags conform to the allowed set.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Create a sample list of `DataRecord` objects containing a duplicate ID and another list with a disallowed tag. Write unit tests to confirm that the `validate_dataset` function correctly identifies and flags these issues."
           },
           {
@@ -64,7 +64,7 @@
               "2.1"
             ],
             "details": "Add a `schema_version: str` field to the main `DataRecord` model, setting a default value like \"1.0\". This allows data parsers and other downstream processes to identify the schema version they are handling.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify through unit tests that newly created `DataRecord` objects are automatically assigned the correct default `schema_version`. Test that data with a missing or different version can be identified."
           },
           {
@@ -77,7 +77,7 @@
               "2.4"
             ],
             "details": "Use the Pydantic model's `.schema_json()` method to generate a formal `data_schema.json` file. Create a `SCHEMA.md` markdown file that explains each field, its type, and validation rules. Include clear JSON examples of one valid and one invalid record to illustrate usage.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Manually review the generated `data_schema.json` to ensure it accurately reflects the Pydantic model. Review `SCHEMA.md` for clarity, correctness, and the utility of its examples."
           }
         ]
@@ -331,7 +331,7 @@
         "title": "Develop FastAPI Inference Service",
         "description": "Create a web service for model inference.",
         "details": "In the `api/` directory, create a minimal FastAPI application. Implement a `POST /generate` endpoint that accepts a prompt and returns a generated text, and a `GET /healthz` endpoint that returns a status.",
-        "testStrategy": "Run the app with `uvicorn`. Send a `GET` request to `/healthz` and a `POST` request to `/generate` using `curl` or another client. Verify the responses are correct.",
+        "testStrategy": "Run the app with `uv run uvicorn`. Send a `GET` request to `/healthz` and a `POST` request to `/generate` using `curl` or another client. Verify the responses are correct.",
         "priority": "high",
         "dependencies": [
           7
@@ -345,7 +345,7 @@
             "dependencies": [],
             "details": "Initialize the FastAPI app object. Implement the `/healthz` endpoint to return `{\"status\": \"ok\"}`. The `/generate` endpoint can initially return a static JSON object like `{\"generated_text\": \"placeholder response\"}`.",
             "status": "pending",
-            "testStrategy": "Run `uvicorn api.main:app` and send a GET request to `/healthz` to verify the status response. Send a POST request to `/generate` to verify the placeholder response."
+            "testStrategy": "Run `uv run uvicorn api.main:app` and send a GET request to `/healthz` to verify the status response. Send a POST request to `/generate` to verify the placeholder response."
           },
           {
             "id": 2,
@@ -387,7 +387,7 @@
             "dependencies": [
               "14.1"
             ],
-            "details": "Create a `run.sh` script containing the command `uvicorn api.main:app --host 0.0.0.0 --port 8000`. Create an `api/README.md` file detailing how to install dependencies (e.g., `pip install -r requirements.txt`), how to run the service using the script, and providing `curl` examples for both the `/healthz` and `/generate` endpoints.",
+            "details": "Create a `run.sh` script containing the command `uv run uvicorn api.main:app --host 0.0.0.0 --port 8000`. Create an `api/README.md` file detailing how to install dependencies (e.g., `uv sync --dev`), how to run the service using the script, and providing `curl` examples for both the `/healthz` and `/generate` endpoints.",
             "status": "pending",
             "testStrategy": "Execute the `run.sh` script and verify the server starts. Follow the instructions in the new `README.md` to test the endpoints with `curl` and confirm they work as documented."
           }
@@ -668,7 +668,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-08-29T17:28:44.861Z",
+      "updated": "2025-08-30T14:05:52.204Z",
       "description": "Tasks for default context"
     }
   }

@@ -5,7 +5,7 @@
 # Priority: high
 # Description: Initialize the project structure, virtual environment, and core dependencies.
 # Details:
-Create the repository structure including directories like `src/`, `scripts/`, `configs/`, `eval/`, `results/`, `tests/`, and `api/`. Set up a `uv` virtual environment and create a `requirements.txt` file with pinned versions of `transformers`, `datasets`, `peft`, `trl`, `bitsandbytes`, and `pytorch`.
+Create the repository structure including directories like `src/`, `scripts/`, `configs/`, `eval/`, `results/`, `tests/`, and `api/`. Initialize a uv project with `pyproject.toml` declaring runtime dependencies (`transformers`, `datasets`, `peft`, `trl`, `accelerate`, `bitsandbytes`, `torch`) and a `dev` dependency group containing `pytest`.
 
 # Test Strategy:
-Verify that the directory structure is created, `uv venv` and `uv pip install -r requirements.txt` complete successfully.
+Verify that the directory structure is created, `pyproject.toml` exists, and `uv sync --dev` completes successfully.

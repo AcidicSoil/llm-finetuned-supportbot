@@ -1,0 +1,22 @@
+[project]
+name = "llm-finetune-supportbot"
+version = "0.1.0"
+description = "Fine-tune a small LLM on support data"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "torch",
+    "transformers",
+    "datasets",
+    "peft",
+    "trl",
+    "accelerate",
+    "bitsandbytes",
+    "evaluate",
+    "pydantic>2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]

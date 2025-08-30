@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DataRecord",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "schema_version": { "type": "string", "default": "1.0" },
+    "inputs": {
+      "type": "object",
+      "properties": {
+        "question": { "type": "string", "minLength": 1 },
+        "context": { "type": ["string", "null"] }
+      },
+      "required": ["question"],
+      "additionalProperties": false
+    },
+    "outputs": {
+      "type": "object",
+      "properties": {
+        "answer": { "type": "string", "minLength": 1 }
+      },
+      "required": ["answer"],
+      "additionalProperties": false
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string", "minLength": 1 },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "tags": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      },
+      "required": ["source", "timestamp"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["id", "inputs", "outputs", "meta"],
+  "additionalProperties": false
+}
+

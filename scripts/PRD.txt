@@ -65,7 +65,7 @@ Key flows
 1. Prepare data → `uv run scripts/prepare_data.py --input data/ --out data/processed/`
 2. Train → `uv run scripts/train.py --config configs/sft.yaml`
 3. Evaluate → `uv run scripts/eval.py --model runs/last/ --base <base_id> --suite eval/suites/support_100.json`
-4. Demo → `uv run demo.py` or `uvicorn api.app:app`
+4. Demo → `uv run demo.py` or `uv run uvicorn api.app:app`
 5. Package/ship → export adapters and config for inference.
 
 UI/UX considerations
@@ -191,10 +191,10 @@ Research and references (implementation‑level)
 Example commands
 
 * Create env: `uv venv .venv && source .venv/bin/activate`
-* Install: `uv pip install -r requirements.txt`
+* Install: `uv pip sync requirements.txt`
 * Train: `uv run scripts/train.py --config configs/sft.yaml`
 * Eval: `uv run scripts/eval.py --model runs/last --base <base_id> --suite eval/suites/support_100.json`
-* Demo: `uv run demo.py` or `uvicorn api.app:app`
+* Demo: `uv run demo.py` or `uv run uvicorn api.app:app`
 
 Repository structure (reference)
 

@@ -23,14 +23,11 @@ transformers, datasets, peft, trl
 ## 🚀 Quickstart
 
 ```bash
-# 1) Create and activate env
-python -m venv .venv && source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# 1) Install project deps (incl. dev)
+uv sync --dev
 
-# 2) Install
-pip install -r requirements.txt
-
-# 3) Run demo
-python demo.py
+# 2) Run demo in the project env
+uv run demo.py
 ```
 
 ## 📊 Evaluation
@@ -41,7 +38,7 @@ python demo.py
 ## 🧪 Tests
 
 ```bash
-pytest -q
+uv run pytest -q
 ```
 
 ## 📦 Structure
@@ -53,9 +50,15 @@ llm-finetune-supportbot/
   ├─ eval/
   ├─ results/
   ├─ tests/
-  ├─ requirements.txt
+  ├─ pyproject.toml
   └─ README.md
 ```
+
+## 🧩 Managing Dependencies
+
+- Add runtime dep: `uv add fastapi`
+- Add dev dep: `uv add --dev ruff`
+- Sync env (incl. dev): `uv sync --dev`
 
 ## 📸 Demos
 
