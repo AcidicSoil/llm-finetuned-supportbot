@@ -8,7 +8,7 @@
 In the `api/` directory, create a minimal FastAPI application. Implement a `POST /generate` endpoint that accepts a prompt and returns a generated text, and a `GET /healthz` endpoint that returns a status.
 
 # Test Strategy:
-Run the app with `uvicorn`. Send a `GET` request to `/healthz` and a `POST` request to `/generate` using `curl` or another client. Verify the responses are correct.
+Run the app with `uv run uvicorn`. Send a `GET` request to `/healthz` and a `POST` request to `/generate` using `curl` or another client. Verify the responses are correct.
 
 # Subtasks:
 ## 1. Scaffold FastAPI App with Health and Generate Endpoints [pending]
@@ -39,5 +39,4 @@ Modify the `GenerateRequest` model to accept either a single string or a list of
 ### Dependencies: 14.1
 ### Description: Create a simple run script to start the service and add a README file in the `api/` directory with setup and usage instructions.
 ### Details:
-Create a `run.sh` script containing the command `uvicorn api.main:app --host 0.0.0.0 --port 8000`. Create an `api/README.md` file detailing how to install dependencies (e.g., `pip install -r requirements.txt`), how to run the service using the script, and providing `curl` examples for both the `/healthz` and `/generate` endpoints.
-
+Create a `run.sh` script containing the command `uv run uvicorn api.main:app --host 0.0.0.0 --port 8000`. Create an `api/README.md` file detailing how to install dependencies (e.g., `uv pip sync requirements.txt`), how to run the service using the script, and providing `curl` examples for both the `/healthz` and `/generate` endpoints.
