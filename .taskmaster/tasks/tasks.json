@@ -22,15 +22,15 @@
         "dependencies": [
           1
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Define Core Pydantic Models for the Data Schema",
             "description": "Create the fundamental, nested Pydantic models for the unified data structure, including `Inputs`, `Outputs`, `Meta`, and the main `DataRecord`.",
             "dependencies": [],
-            "details": "Implement the Pydantic models as specified: `Inputs` with `question` (str) and optional `context` (str). `Outputs` with `answer` (str). `Meta` with `source` (str), `timestamp` (datetime), and `tags` (List[str]). Combine these into a main `DataRecord` model with a unique `id` (str).",
-            "status": "pending",
+            "details": "Implement the Pydantic models as specified: `Inputs` with `question` (str) and optional `context` (str). `Outputs` with `answer` (str). `Meta` with `source` (str), `timestamp` (datetime), and `tags` (List[str]). Combine these into a main `DataRecord` model with a unique `id` (str).\n<info added on 2025-08-30T16:10:06.818Z>\nVerification complete: Core Pydantic models (`Inputs`, `Outputs`, `Meta`, `DataRecord`) are implemented in `src/models.py` as specified. Basic non-empty validators using Pydantic v2's `field_validator` are included. Auto-generated documentation (`SCHEMA.md`) and a JSON schema (`schema/data_schema.json`) have been created. Unit tests are written in `tests/test_models.py`, but were only statically inspected as the environment currently lacks the `pytest` dependency.\n</info added on 2025-08-30T16:10:06.818Z>",
+            "status": "done",
             "testStrategy": "Write a basic unit test to ensure a dictionary with the correct structure and types can be successfully parsed into a `DataRecord` object without errors."
           },
           {
@@ -92,7 +92,7 @@
         "dependencies": [
           2
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -105,7 +105,7 @@
         "dependencies": [
           3
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -118,7 +118,7 @@
         "dependencies": [
           4
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -668,7 +668,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-08-30T14:05:52.204Z",
+      "updated": "2025-08-30T16:44:31.142Z",
       "description": "Tasks for default context"
     }
   }

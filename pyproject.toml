@@ -19,4 +19,9 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest",
+    "pytest-pythonpath>=0.7.3",
 ]
+
+[tool.pytest.ini_options]
+# Ensure tests can import from the src/ layout without editable install
+pythonpath = ["src"]

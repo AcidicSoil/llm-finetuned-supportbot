@@ -13,9 +13,9 @@
       "temperature": 0.1
     },
     "fallback": {
-      "provider": "ollama",
-      "modelId": "gpt-oss:20b",
-      "maxTokens": 128000,
+      "provider": "gemini-cli",
+      "modelId": "gemini-2.5-flash",
+      "maxTokens": 65536,
       "temperature": 0.2
     }
   },
