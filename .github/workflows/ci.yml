@@ -1,4 +1,4 @@
-name: CI
+name: 'llm-finetune-supportbot'
 
 on:
   push:
