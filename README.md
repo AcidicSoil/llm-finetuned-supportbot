@@ -1,6 +1,6 @@
 # Fine-tune a Small LLM on Support Data
 
-[![llm-finetune-supportbot CI](https://github.com/acidicsoil/llm-finetune-supportbot/actions/workflows/ci.yml/badge.svg)](https://github.com/acidicsoil/llm-finetune-supportbot/actions/workflows/ci.yml)
+[![llm-finetune-supportbot](https://github.com/AcidicSoil/llm-finetuned-supportbot/actions/workflows/ci.yml/badge.svg)](https://github.com/AcidicSoil/llm-finetuned-supportbot/actions/workflows/ci.yml)
 
 **Repo:** `llm-finetune-supportbot` • **Last Updated:** 2025-08-19
 
