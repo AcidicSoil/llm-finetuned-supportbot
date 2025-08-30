@@ -1,5 +1,7 @@
 # Fine-tune a Small LLM on Support Data
 
+[![llm-finetune-supportbot CI](https://github.com/acidicsoil/llm-finetune-supportbot/actions/workflows/ci.yml/badge.svg)](https://github.com/acidicsoil/llm-finetune-supportbot/actions/workflows/ci.yml)
+
 **Repo:** `llm-finetune-supportbot` • **Last Updated:** 2025-08-19
 
 ## 🎯 Goal
