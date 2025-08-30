@@ -133,7 +133,7 @@
           4,
           5
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -146,7 +146,7 @@
         "dependencies": [
           5
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -154,7 +154,7 @@
             "description": "Load the specified small open LLM and its tokenizer from the Hugging Face Hub, applying 4/8-bit quantization during model instantiation.",
             "dependencies": [],
             "details": "Use `transformers.AutoTokenizer.from_pretrained` to load the tokenizer. Use `transformers.AutoModelForCausalLM.from_pretrained` with a `bitsandbytes.BitsAndBytesConfig` to load the model in 4-bit (e.g., NF4) or 8-bit mode. This combines the model selection and quantization steps.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify that the model object is an instance of a quantized model and the tokenizer can process a sample string."
           },
           {
@@ -165,7 +165,7 @@
               "7.1"
             ],
             "details": "Create a `peft.LoraConfig` object, specifying the rank (`r`), `lora_alpha`, `target_modules` (e.g., `['q_proj', 'v_proj']`), and `task_type`. Use `peft.get_peft_model` to wrap the quantized model from the previous step.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Inspect the model's parameters and confirm that only the LoRA adapter weights are marked as trainable."
           },
           {
@@ -174,7 +174,7 @@
             "description": "Configure the `transformers.TrainingArguments` to ensure the training loop is deterministic and saves checkpoints periodically.",
             "dependencies": [],
             "details": "Instantiate `TrainingArguments`, setting a fixed `seed` for reproducibility. Configure `output_dir`, `per_device_train_batch_size`, `num_train_epochs`, `logging_steps`, and `save_strategy` (e.g., 'steps') along with `save_steps` to enable checkpointing.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Review the arguments object to ensure the seed and checkpointing parameters are correctly set before passing to the trainer."
           },
           {
@@ -186,7 +186,7 @@
               "7.3"
             ],
             "details": "Initialize `trl.SFTTrainer`, passing the PEFT model, training/evaluation datasets (from Task 5), the tokenizer, and the configured `TrainingArguments`. Call the `trainer.train()` method to start the fine-tuning loop.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run the training script for a small number of steps (e.g., 1-2) on a tiny dataset sample. Verify it completes without errors and a checkpoint directory is created."
           },
           {
@@ -197,7 +197,7 @@
               "7.4"
             ],
             "details": "Add logic (e.g., using `argparse`) to detect a `--resume-from-checkpoint` argument. If present, pass its value (the path to a checkpoint) to the `resume_from_checkpoint` parameter of the `trainer.train()` method.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Start a training run for 2 steps, stop it, then restart it with the `--resume-from-checkpoint` flag pointing to the 'checkpoint-2' directory. Verify from the logs that training resumes from step 3."
           }
         ]
@@ -668,7 +668,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-08-30T16:44:31.142Z",
+      "updated": "2025-08-30T17:46:31.426Z",
       "description": "Tasks for default context"
     }
   }

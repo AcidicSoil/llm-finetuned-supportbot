@@ -44,16 +44,16 @@
 
 - Context only:
 
-  - `codex-cli run "Analyze these examples @{examples/*.md}"`
+  - `gemini run "Analyze these examples @{examples/*.md}"`
 - Single extension:
 
-  - `codex-cli run "Draft a PRD for X @ext{prd_generator.md}"`
+  - `gemini run "Draft a PRD for X @ext{prd_generator.md}"`
 - Multiple extensions (ordered):
 
-  - `codex-cli run "Harden auth flow @ext{security/guardrails.md} @ext{framework/fastapi.md}"`
+  - `gemini run "Harden auth flow @ext{security/guardrails.md} @ext{framework/fastapi.md}"`
 - Mixed (context + extensions):
 
-  - `codex-cli run "Prepare release notes @{changelog.md} @ext{docs/release/notes_template.md}"`
+  - `gemini run "Prepare release notes @{changelog.md} @ext{docs/release/notes_template.md}"`
 
 ### Execution Flow (Docs Integration)
 
