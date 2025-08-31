@@ -98,18 +98,20 @@ When tags are used, add:
 
 **Goal:** Ensure the assistant retrieves and considers the *latest relevant docs* before planning, acting, or finalizing.
 
-**Primary/Fallback Order (consolidated):**
+**Providers Whitelist & Order (strict):**
 
 1. **docfork mcp** (primary)
-2. **contex7-mcp** (fallback if docfork fails)
-3. **gitmcp** (last-resort fallback if both above fail)
+2. **gitmcp** (fallback if docfork fails or is unavailable)
+3. **exa** (targeted web search; use only for **official docs** or primary sources when the first two do not cover the topic)
+
+> **Policy:** Prefer canonical docs and source-of-truth references. When using **exa**, restrict to official documentation, standards, or the project’s source repositories. Record exact URLs and versions/commits.
 
 **What to do:**
 
 - For every task that could touch code, configuration, APIs, tooling, or libraries:
 
   - Call **docfork mcp** to fetch the latest documentation or guides.
-  - If the call **fails**, immediately retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
+  - If the call **fails** (error, unavailable, or insufficient coverage), retry with **gitmcp**; if that also **fails or is insufficient**, use **exa** to retrieve official docs.
 - Each successful call **MUST** capture:
 
   - Tool name, query/topic, retrieval timestamp (UTC), and source refs/URLs (or repo refs/commits).
@@ -120,7 +122,7 @@ When tags are used, add:
 
 **Failure handling:**
 
-- If **all** three providers fail for a required area, **do not finalize**. Return a minimal plan that includes:
+- If **all** providers above fail to produce adequate coverage for a required area, **do not finalize**. Return a minimal plan that includes:
 
   - The attempted providers and errors
   - The specific topics/areas still uncovered
@@ -136,7 +138,7 @@ When tags are used, add:
   "DocFetchReport": {
     "status": "OK | PARTIAL | FAILED",
     "tools_called": [
-      {"name": "docfork|contex7-mcp|gitmcp", "time_utc": "<ISO8601>", "query": "<topic/ids>"}
+      {"name": "docfork|gitmcp|exa", "time_utc": "<ISO8601>", "query": "<topic/ids>"}
     ],
     "sources": [
       {"url_or_ref": "<doc url or repo ref>", "kind": "api|guide|spec|code", "commit_or_version": "<hash|tag|n/a>"}
@@ -153,7 +155,7 @@ When tags are used, add:
 
 **Override Path (explicit, logged):**
 
-- Allowed only for outages/ambiguous scope/timeboxed spikes. Must include:
+- Allowed for outages/ambiguous scope/timeboxed spikes. Must include:
 
 ```json
 {
@@ -207,7 +209,7 @@ When tags are used, add:
 
 - **Use consolidated docs-first flow** before touching any files or finalizing:
 
-  - Try **docfork mcp** → if fail, **contex7-mcp** → if fail, **gitmcp**.
+  - Try **docfork mcp** → if fail, **gitmcp** → if fail or insufficient, **exa** (official docs only).
   - Record results in `DocFetchReport`.
 
 ## 1) Startup memory bootstrap (mem0)
@@ -250,7 +252,7 @@ When tags are used, add:
 
 - When a task or a user requires **code**, **setup/config**, or **library/API documentation**:
 
-  - **MUST** run the **Preflight** (§A) using the consolidated order (docfork → contex7 → gitmcp).
+  - **MUST** run the **Preflight** (§A) using the provider order (docfork → gitmcp → exa).
   - Only proceed to produce diffs or create files after `DocFetchReport.status == "OK"`.
 
 ## 6) Handling Pydantic-specific questions
@@ -266,19 +268,16 @@ When tags are used, add:
 
 - For project-specific stack work (FastAPI, Starlette, httpx, respx, pydantic-settings, pytest-asyncio, sqlite3, etc.):
 
-  - **MUST** run the **Preflight** (§A) with the consolidated order.
-  - If a library isn’t found or coverage is weak after docfork → contex7 → gitmcp, fall back to **exa** (targeted web search) and mark gaps.
+  - **MUST** run the **Preflight** (§A) with the provider order above.
+  - If a library isn’t found or coverage is weak after **docfork → gitmcp**, use **exa** to target official docs or repo sources; if still inadequate, **stop and return a Docs Missing report**. You may invoke the **Override Path** if justified and approved.
 
 ## 8) Library docs retrieval (topic-focused)
 
 - Use **docfork mcp** first to fetch current docs before code changes.
-- If docfork fails, use **contex7-mcp**:
-
-  - `resolve-library-id(libraryName)` → choose best match by name similarity, trust score, snippet coverage.
-  - `get-library-docs(context7CompatibleLibraryID, topic, tokens)` → request focused topics (e.g., "exception handlers", "lifespan", "request/response", "async client", "retry", "mocking", "markers", "sqlite schema/init").
-- If contex7-mcp also fails, use **gitmcp** (repo docs/source) to retrieve equivalents.
+- If docfork fails or is insufficient, use **gitmcp** (repo docs/source) to retrieve equivalents.
+- If gitmcp is insufficient, use **exa** to query official docs with focused topics (e.g., "exception handlers", "lifespan", "request/response", "async client", "retry", "mocking", "markers", "sqlite schema/init").
 - Summarize key guidance inline in `DocFetchReport.key_guidance` and map each planned change to a guidance line.
-- Always note in the task preamble that docs were fetched and which topics/IDs were used.
+- Always note in the task preamble which providers/topics were used.
 
 ---
 
@@ -287,7 +286,7 @@ When tags are used, add:
 ```
 SYSTEM: You operate under a blocking docs-first policy.
 1) Preflight (§A):
-   - Call docfork → contex7-mcp → gitmcp as needed.
+   - Call docfork → gitmcp → exa (official docs only) as needed.
    - Build DocFetchReport (status must be OK).
 2) Planning:
    - Map each planned change to key_guidance items in DocFetchReport.

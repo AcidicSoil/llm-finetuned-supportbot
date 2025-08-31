@@ -98,18 +98,20 @@ When tags are used, add:
 
 **Goal:** Ensure the assistant retrieves and considers the *latest relevant docs* before planning, acting, or finalizing.
 
-**Primary/Fallback Order (consolidated):**
+**Providers Whitelist & Order (strict):**
 
 1. **docfork mcp** (primary)
-2. **contex7-mcp** (fallback if docfork fails)
+2. **contex7-mcp** (fallback if docfork fails or is unavailable)
 3. **gitmcp** (last-resort fallback if both above fail)
+
+> **Strict policy:** No other providers (e.g., generic web search, `exa`, `serpapi`, or ad‑hoc scraping) are permitted unless the **Override Path** (§A → *Override Path*) is explicitly invoked and logged. `DocFetchReport.sources` must list only sources retrieved via **docfork**, **contex7-mcp**, or **gitmcp**.
 
 **What to do:**
 
 - For every task that could touch code, configuration, APIs, tooling, or libraries:
 
   - Call **docfork mcp** to fetch the latest documentation or guides.
-  - If the call **fails**, immediately retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
+  - If the call **fails** (error, unavailable, or insufficient coverage), immediately retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
 - Each successful call **MUST** capture:
 
   - Tool name, query/topic, retrieval timestamp (UTC), and source refs/URLs (or repo refs/commits).
@@ -250,7 +252,7 @@ When tags are used, add:
 
 - When a task or a user requires **code**, **setup/config**, or **library/API documentation**:
 
-  - **MUST** run the **Preflight** (§A) using the consolidated order (docfork → contex7 → gitmcp).
+  - **MUST** run the **Preflight** (§A) using the strict provider order (docfork → contex7 → gitmcp).
   - Only proceed to produce diffs or create files after `DocFetchReport.status == "OK"`.
 
 ## 6) Handling Pydantic-specific questions
@@ -266,8 +268,8 @@ When tags are used, add:
 
 - For project-specific stack work (FastAPI, Starlette, httpx, respx, pydantic-settings, pytest-asyncio, sqlite3, etc.):
 
-  - **MUST** run the **Preflight** (§A) with the consolidated order.
-  - If a library isn’t found or coverage is weak after docfork → contex7 → gitmcp, fall back to **exa** (targeted web search) and mark gaps.
+  - **MUST** run the **Preflight** (§A) with the strict provider order.
+  - If a library isn’t found or coverage is weak **after docfork → contex7 → gitmcp**, **stop and return a Docs Missing report** (do **not** use other providers). You may invoke the **Override Path** if justified and approved.
 
 ## 8) Library docs retrieval (topic-focused)
 

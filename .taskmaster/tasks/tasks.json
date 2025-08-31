@@ -212,7 +212,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -225,7 +225,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -238,14 +238,14 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Base model and tokenizer loader util",
             "description": "Utility to load a base model and tokenizer for evaluation.",
             "details": "Create `src/eval_utils.py:load_base(model_name_or_path: str, device: str)` that returns `(model, tokenizer)` using `AutoModelForCausalLM` and `AutoTokenizer`. Ensure `torch_dtype`, `device_map`, and `padding_side='left'` are set appropriately for generation. Test with a tiny model.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           },
@@ -254,7 +254,7 @@
             "title": "PEFT adapter load/apply util",
             "description": "Utility to load a PEFT adapter and apply to a base model.",
             "details": "Extend `src/eval_utils.py` with `load_with_adapter(base_model_name: str, adapter_path: str, device: str)` that loads base, applies `PeftModel.from_pretrained` (or `get_peft_model` + `PeftConfig.from_pretrained`), and returns `(model, tokenizer)`. Validate weights are loaded and set to eval.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           },
@@ -263,7 +263,7 @@
             "title": "CLI entrypoint scripts/eval.py",
             "description": "Main evaluation script with argparse for paths and options.",
             "details": "Create `scripts/eval.py` with arguments: `--base`, `--adapter`, `--suite`, `--out`, `--max-new-tokens`, `--temperature`, `--device`. Select loader based on presence of `--adapter`. Use tqdm logging.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           },
@@ -272,7 +272,7 @@
             "title": "Evaluation loop for base vs adapter",
             "description": "Generate responses from base and fine-tuned models over the suite.",
             "details": "Implement a loop that reads JSON/JSONL suite entries `{question, context?}`; formats prompts; runs `generate` on base and adapter models with fixed seeds; collects outputs with latency. Keep batch size small and handle device placement.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           },
@@ -281,7 +281,7 @@
             "title": "Save paired generations to JSONL/CSV",
             "description": "Write structured outputs with question/context, base, fine-tuned, and timing.",
             "details": "Add writers to emit JSONL (one record per item) and optional CSV. Fields: `id`, `question`, `context`, `base.text`, `adapter.text`, `base.latency_ms`, `adapter.latency_ms`. Validate files exist and contain expected keys.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           }
@@ -297,7 +297,7 @@
         "dependencies": [
           10
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -310,7 +310,7 @@
         "dependencies": [
           11
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -323,7 +323,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -458,7 +458,44 @@
           8
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add DPO data loader/mapper",
+            "description": "Extend data pipeline to load preference data with fields {prompt, chosen, rejected} and map to TRL DPOTrainer expected format.",
+            "details": "Implement loader that reads JSON/JSONL preference items and returns a Dataset with columns ['prompt','chosen','rejected']. Provide a small utility to validate records and to convert from our existing schema if needed.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 2,
+            "title": "Select trainer via config (SFT vs DPO)",
+            "description": "Update training entry to choose SFTTrainer or DPOTrainer based on a config flag.",
+            "details": "Add a config key like recipe: sft|dpo. When dpo, instantiate TRL DPOTrainer and DPOConfig (wire beta and shared args). Keep SFT path unchanged.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 3,
+            "title": "Add DPO config file",
+            "description": "Create configs/dpo.yaml with DPO-specific fields and doc differences vs sft.yaml.",
+            "details": "Include fields: recipe: dpo, model/splits/output, beta, max_length, batch sizes, logging/eval settings. Add README snippet on switching recipes.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 4,
+            "title": "DPO smoke test in CI",
+            "description": "Create tiny DPO dataset and minimal config to run a single training step and assert DPO path executes.",
+            "details": "Add a pytest that launches `scripts/train.py --config configs/dpo.yaml` on a tiny preference set, 1 step, asserting logs mention DPOTrainer and job completes.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 19
+          }
+        ]
       },
       {
         "id": 20,
@@ -563,7 +600,44 @@
           11
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integrate EarlyStoppingCallback",
+            "description": "Wire EarlyStoppingCallback into training and expose patience/metric in config.",
+            "details": "Add config fields {early_stopping_patience, metric_for_best_model, greater_is_better}. Pass load_best_model_at_end=True and register EarlyStoppingCallback with patience.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 2,
+            "title": "Create sweep runner (Optuna)",
+            "description": "Add scripts/sweep.py with Optuna objective that launches training and returns selected metric.",
+            "details": "Define objective sampling space for lr, lora_r, lora_dropout, gradient_accumulation_steps. Run N trials and write the best params/score to results/sweeps/.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 3,
+            "title": "Define search space via config",
+            "description": "Allow search ranges in YAML to drive sweep (e.g., learning_rate:[1e-5,1e-3], lora_r:[4,64])",
+            "details": "Update config parsing to accept a sweep section with ranges/choices; sweep runner reads it to build the Optuna search space.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 4,
+            "title": "Docs for sweeps + early stopping",
+            "description": "Document how to run a local sweep and interpret results; include early stopping usage.",
+            "details": "README section with example commands for scripts/sweep.py, environment tips, and how to read best trial output; note patience/metric config and CI-friendly defaults.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          }
+        ]
       },
       {
         "id": 25,
@@ -668,7 +742,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-08-30T17:46:31.426Z",
+      "updated": "2025-08-31T16:33:50.999Z",
       "description": "Tasks for default context"
     }
   }

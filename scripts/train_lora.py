@@ -13,9 +13,10 @@ Features
 """
 
 import argparse
+import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Tuple, Any, Dict
 
 import torch
 from datasets import Dataset
@@ -27,6 +28,7 @@ from transformers import (
 )
 from trl import SFTConfig, SFTTrainer
 from peft import LoraConfig, TaskType, get_peft_model
+import yaml
 
 from src.models import DataRecord
 from src.parsers import load_jsonl_records
@@ -84,7 +86,16 @@ def _default_lora_targets() -> List[str]:
 
 
 def parse_args() -> argparse.Namespace:
+    """Parse CLI args with optional YAML config defaults.
+
+    Flow:
+    1) Parse once to detect --config
+    2) If provided, load YAML and set as parser defaults
+    3) Parse again so explicit CLI flags override YAML
+    """
     p = argparse.ArgumentParser(description="LoRA SFT training with quantization")
+    # Config file (YAML) support
+    p.add_argument("--config", type=Path, default=None, help="Path to YAML config with training params")
     p.add_argument("--model", required=True, help="Base HF model id (e.g., 'mistralai/Mistral-7B-Instruct-v0.3')")
     p.add_argument("--splits-dir", type=Path, required=True, help="Directory containing train.jsonl and val.jsonl (from prepare_data)")
     p.add_argument("--output-dir", type=Path, required=True, help="Training output directory for checkpoints")
@@ -126,7 +137,34 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Path to checkpoint dir to resume training from",
     )
-    return p.parse_args()
+    # First pass: get --config if present
+    prelim, _ = p.parse_known_args()
+    if prelim.config is not None:
+        if not prelim.config.exists():
+            raise SystemExit(f"config file not found: {prelim.config}")
+        with open(prelim.config, "r", encoding="utf-8") as f:
+            loaded: Dict[str, Any] = yaml.safe_load(f) or {}
+        if not isinstance(loaded, dict):
+            raise SystemExit("config file must parse to a mapping/dict")
+        # Accept flat keys that match argparse dest names
+        # Example keys: model, splits_dir, output_dir, quant, bnb_compute_dtype, lora_r, epochs, learning_rate, etc.
+        # NOTE: CLI flags will override these defaults on the final parse.
+        p.set_defaults(**loaded)
+
+    args = p.parse_args()
+    # Echo effective config for reproducibility
+    try:
+        # Serialize Path objects to str for printing
+        snapshot = {
+            k: (str(v) if isinstance(v, Path) else v)
+            for k, v in vars(args).items()
+            if k != "config"
+        }
+        print("[train_lora] Effective arguments:")
+        print(json.dumps(snapshot, indent=2, sort_keys=True))
+    except Exception:
+        pass
+    return args
 
 
 def main() -> None:
@@ -229,4 +267,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

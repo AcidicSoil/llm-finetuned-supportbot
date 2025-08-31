@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Implement Data Tokenization
-# Status: pending
+# Status: done
 # Dependencies: 4
 # Priority: high
 # Description: Convert the preprocessed text data into tokenized format suitable for the model.

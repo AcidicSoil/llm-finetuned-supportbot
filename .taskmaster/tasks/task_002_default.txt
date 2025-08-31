@@ -1,6 +1,6 @@
 # Task ID: 2
 # Title: Define Data Schema and Validation Logic
-# Status: pending
+# Status: done
 # Dependencies: 1
 # Priority: high
 # Description: Establish a unified schema for all input data and implement validators to ensure data quality.
@@ -11,31 +11,34 @@ Implement a data model class or Pydantic model for the schema: `{id, inputs:{que
 Write unit tests using `pytest` to check that the validator correctly accepts valid data and rejects invalid or incomplete data.
 
 # Subtasks:
-## 1. Define Core Pydantic Models for the Data Schema [pending]
+## 1. Define Core Pydantic Models for the Data Schema [done]
 ### Dependencies: None
 ### Description: Create the fundamental, nested Pydantic models for the unified data structure, including `Inputs`, `Outputs`, `Meta`, and the main `DataRecord`.
 ### Details:
 Implement the Pydantic models as specified: `Inputs` with `question` (str) and optional `context` (str). `Outputs` with `answer` (str). `Meta` with `source` (str), `timestamp` (datetime), and `tags` (List[str]). Combine these into a main `DataRecord` model with a unique `id` (str).
+<info added on 2025-08-30T16:10:06.818Z>
+Verification complete: Core Pydantic models (`Inputs`, `Outputs`, `Meta`, `DataRecord`) are implemented in `src/models.py` as specified. Basic non-empty validators using Pydantic v2's `field_validator` are included. Auto-generated documentation (`SCHEMA.md`) and a JSON schema (`schema/data_schema.json`) have been created. Unit tests are written in `tests/test_models.py`, but were only statically inspected as the environment currently lacks the `pytest` dependency.
+</info added on 2025-08-30T16:10:06.818Z>
 
-## 2. Implement Advanced Field-Level Pydantic Validators [pending]
+## 2. Implement Advanced Field-Level Pydantic Validators [done]
 ### Dependencies: 2.1
 ### Description: Enhance the Pydantic models with custom validators to enforce stricter data quality rules beyond basic type checking.
 ### Details:
 Use Pydantic's `@validator` decorator to add validation logic. Ensure that string fields like `id`, `question`, `answer`, and `source` are not empty or just whitespace. Validate that the `tags` list, if not empty, contains only non-empty strings.
 
-## 3. Develop Dataset-Level Validation Logic [pending]
+## 3. Develop Dataset-Level Validation Logic [done]
 ### Dependencies: 2.1, 2.2
 ### Description: Create functions to validate an entire collection of data records, checking for inter-record consistency and potential issues like duplicates or PII.
 ### Details:
 Implement a function `validate_dataset(records: List[DataRecord])` that iterates through a list of records. This function should check for duplicate `id` values. Add a placeholder for a PII scan on text fields. If a controlled vocabulary for tags is required, validate that all tags conform to the allowed set.
 
-## 4. Establish and Integrate Schema Versioning [pending]
+## 4. Establish and Integrate Schema Versioning [done]
 ### Dependencies: 2.1
 ### Description: Incorporate a versioning system into the schema to manage future changes and ensure long-term maintainability and backward compatibility.
 ### Details:
 Add a `schema_version: str` field to the main `DataRecord` model, setting a default value like "1.0". This allows data parsers and other downstream processes to identify the schema version they are handling.
 
-## 5. Generate Schema Documentation with Examples [pending]
+## 5. Generate Schema Documentation with Examples [done]
 ### Dependencies: 2.1, 2.2, 2.4
 ### Description: Produce both machine-readable and human-readable documentation for the schema to guide developers, especially those working on data parsers (Task 3).
 ### Details:

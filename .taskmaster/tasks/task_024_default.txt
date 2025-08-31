@@ -9,3 +9,29 @@ Integrate with a library like Optuna or Ray Tune for sweeping LoRA rank/alpha. I
 
 # Test Strategy:
 Configure an early stopping callback with `patience=2`. Run a training job where the validation loss plateaus and verify that training stops early.
+
+# Subtasks:
+## 1. Integrate EarlyStoppingCallback [pending]
+### Dependencies: None
+### Description: Wire EarlyStoppingCallback into training and expose patience/metric in config.
+### Details:
+Add config fields {early_stopping_patience, metric_for_best_model, greater_is_better}. Pass load_best_model_at_end=True and register EarlyStoppingCallback with patience.
+
+## 2. Create sweep runner (Optuna) [pending]
+### Dependencies: None
+### Description: Add scripts/sweep.py with Optuna objective that launches training and returns selected metric.
+### Details:
+Define objective sampling space for lr, lora_r, lora_dropout, gradient_accumulation_steps. Run N trials and write the best params/score to results/sweeps/.
+
+## 3. Define search space via config [pending]
+### Dependencies: None
+### Description: Allow search ranges in YAML to drive sweep (e.g., learning_rate:[1e-5,1e-3], lora_r:[4,64])
+### Details:
+Update config parsing to accept a sweep section with ranges/choices; sweep runner reads it to build the Optuna search space.
+
+## 4. Docs for sweeps + early stopping [pending]
+### Dependencies: None
+### Description: Document how to run a local sweep and interpret results; include early stopping usage.
+### Details:
+README section with example commands for scripts/sweep.py, environment tips, and how to read best trial output; note patience/metric config and CI-friendly defaults.
+

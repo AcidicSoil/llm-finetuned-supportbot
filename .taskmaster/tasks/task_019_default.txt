@@ -9,3 +9,29 @@ Refactor the training script to allow selection of a trainer (e.g., `SFTTrainer`
 
 # Test Strategy:
 Run a short training job using a new `dpo.yaml` config and verify it uses the `DPOTrainer`.
+
+# Subtasks:
+## 1. Add DPO data loader/mapper [pending]
+### Dependencies: None
+### Description: Extend data pipeline to load preference data with fields {prompt, chosen, rejected} and map to TRL DPOTrainer expected format.
+### Details:
+Implement loader that reads JSON/JSONL preference items and returns a Dataset with columns ['prompt','chosen','rejected']. Provide a small utility to validate records and to convert from our existing schema if needed.
+
+## 2. Select trainer via config (SFT vs DPO) [pending]
+### Dependencies: None
+### Description: Update training entry to choose SFTTrainer or DPOTrainer based on a config flag.
+### Details:
+Add a config key like recipe: sft|dpo. When dpo, instantiate TRL DPOTrainer and DPOConfig (wire beta and shared args). Keep SFT path unchanged.
+
+## 3. Add DPO config file [pending]
+### Dependencies: None
+### Description: Create configs/dpo.yaml with DPO-specific fields and doc differences vs sft.yaml.
+### Details:
+Include fields: recipe: dpo, model/splits/output, beta, max_length, batch sizes, logging/eval settings. Add README snippet on switching recipes.
+
+## 4. DPO smoke test in CI [pending]
+### Dependencies: None
+### Description: Create tiny DPO dataset and minimal config to run a single training step and assert DPO path executes.
+### Details:
+Add a pytest that launches `scripts/train.py --config configs/dpo.yaml` on a tiny preference set, 1 step, asserting logs mention DPOTrainer and job completes.
+

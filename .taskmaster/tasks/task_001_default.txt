@@ -1,6 +1,6 @@
 # Task ID: 1
 # Title: Setup Project Repository and Environment
-# Status: pending
+# Status: done
 # Dependencies: None
 # Priority: high
 # Description: Initialize the project structure, virtual environment, and core dependencies.

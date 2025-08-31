@@ -32,6 +32,31 @@ uv sync --dev
 uv run demo.py
 ```
 
+## 🛠️ Training (Config Usage)
+
+Use a YAML config to keep runs reproducible and override any value via CLI:
+
+```bash
+# Base run using YAML
+uv run scripts/train.py --config configs/sft.yaml
+
+# Override a few knobs at the CLI
+uv run scripts/train.py --config configs/sft.yaml \
+  --epochs 3 \
+  --learning-rate 1e-4 \
+  --lora-r 8
+
+# Resume from a prior checkpoint
+uv run scripts/train.py --config configs/sft.yaml \
+  --resume-from-checkpoint runs/sft_mistral_lora/checkpoint-500
+```
+
+Notes:
+
+- YAML keys map directly to CLI flags (flat mapping).
+- CLI overrides always take precedence over YAML defaults.
+- See `configs/sft.yaml` for a complete example.
+
 ## 📊 Evaluation
 
 - Scripts in `eval/` reproduce metrics.

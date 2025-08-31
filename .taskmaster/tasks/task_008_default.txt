@@ -1,6 +1,6 @@
 # Task ID: 8
 # Title: Implement Configuration Management for Training
-# Status: pending
+# Status: done
 # Dependencies: 7
 # Priority: high
 # Description: Allow training hyperparameters to be specified via configuration files and command-line arguments.
