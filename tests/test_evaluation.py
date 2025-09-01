@@ -129,4 +129,3 @@ def test_load_peft_model_missing():
         evalmod.load_peft_model(object(), "/tmp/x")
     except ImportError as e:
         assert "PEFT is not installed" in str(e)
-

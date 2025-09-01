@@ -53,4 +53,3 @@ def test_end_to_end_small_pipeline():
     split = split_records(data, seed=7, stratify_by="source")
     total = len(split.train) + len(split.val) + len(split.test)
     assert total == 10
-

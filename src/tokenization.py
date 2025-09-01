@@ -5,12 +5,6 @@ from typing import Any, Iterable, List, Sequence, Tuple, Union
 
 from src.models import DataRecord
 
-try:  # soft dependency; allow injection/mocking in tests
-    from transformers import AutoTokenizer, PreTrainedTokenizerBase
-except Exception:  # pragma: no cover - import-time guard for environments without transformers
-    AutoTokenizer = None  # type: ignore[assignment]
-    PreTrainedTokenizerBase = object  # type: ignore[assignment]
-
 
 TextPair = Tuple[str, str]
 
@@ -32,10 +26,19 @@ class TokenizedPairs:
 
 
 def _ensure_tokenizer(tokenizer_or_id: Union[str, "PreTrainedTokenizerBase"]) -> "PreTrainedTokenizerBase":
+    # Accept an already-initialized tokenizer-like object
     if hasattr(tokenizer_or_id, "__call__") and not isinstance(tokenizer_or_id, str):
         return tokenizer_or_id  # type: ignore[return-value]
-    if AutoTokenizer is None:  # pragma: no cover
-        raise RuntimeError("transformers is required to load a tokenizer by id")
+
+    # Lazy import to avoid inserting real transformers into sys.modules during tests
+    import importlib
+
+    try:
+        transformers = importlib.import_module("transformers")
+    except Exception as e:  # pragma: no cover
+        raise RuntimeError("transformers is required to load a tokenizer by id") from e
+
+    AutoTokenizer = getattr(transformers, "AutoTokenizer")
     return AutoTokenizer.from_pretrained(str(tokenizer_or_id))
 
 
@@ -82,5 +85,4 @@ def tokenize_pairs(
         answer_input_ids=list(enc_a["input_ids"]),
         answer_attention_mask=list(enc_a["attention_mask"]),
     )
-
 

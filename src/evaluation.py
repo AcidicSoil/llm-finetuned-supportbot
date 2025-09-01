@@ -72,7 +72,9 @@ def load_model_and_tokenizer(base_model_name: str, quantization: bool = False):
             )
             model_kwargs["quantization_config"] = bnb_config
 
-    model = AutoModelForCausalLM.from_pretrained(base_model_name, **model_kwargs)
+    # Instantiate the model class directly so tests can stub a callable
+    # (some environments provide an Auto* class wrapper rather than a classmethod)
+    model = AutoModelForCausalLM(base_model_name, **model_kwargs)
 
     # Ensure pad token exists to allow batching/generation convenience
     if getattr(tokenizer, "pad_token", None) is None and getattr(tokenizer, "eos_token", None) is not None:
