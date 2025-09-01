@@ -35,6 +35,41 @@ uv sync --dev
 uv run demo.py
 ```
 
+### Inference API (FastAPI)
+
+Run a minimal web service that exposes `/healthz` and `/generate`.
+
+```bash
+# Start the API (defaults API_KEY=devkey)
+./run.sh
+
+# Or explicitly:
+uv run uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+
+Example requests:
+
+```bash
+# Health
+curl -s http://localhost:8000/healthz
+
+# Single prompt
+curl -s \
+  -H 'Content-Type: application/json' \
+  -H 'X-API-Key: devkey' \
+  -d '{"prompt":"hello"}' \
+  http://localhost:8000/generate | jq
+
+# Batch prompts
+curl -s \
+  -H 'Content-Type: application/json' \
+  -H 'X-API-Key: devkey' \
+  -d '{"prompt":["hello","world"]}' \
+  http://localhost:8000/generate | jq
+```
+
+See `api/README.md` for details.
+
 ## 🛠️ Training (Config Usage)
 
 Use a YAML config to keep runs reproducible and override any value via CLI:
@@ -71,13 +106,39 @@ Notes:
 uv run pytest -q
 ```
 
+## 📦 Packaging (Task #15)
+
+Use the packaging utility to export either a PEFT adapter-only bundle or a merged-weights model suitable for standalone deployment.
+
+```bash
+# Adapter-only (copies adapter files and optional tokenizer)
+uv run scripts/package_model.py \
+  --base-model mistralai/Mistral-7B-Instruct-v0.3 \
+  --adapter-dir runs/sft_mistral_lora/checkpoint-500 \
+  --output-dir packages/mistral_sft_adapter \
+  --include-tokenizer
+
+# Merged weights (applies LoRA and saves full model)
+uv run scripts/package_model.py \
+  --base-model mistralai/Mistral-7B-Instruct-v0.3 \
+  --adapter-dir runs/sft_mistral_lora/checkpoint-500 \
+  --output-dir packages/mistral_sft_merged \
+  --mode merged \
+  --include-tokenizer
+```
+
+Outputs include a `package_info.json` with metadata. Tokenizer files are saved under `tokenizer/` when `--include-tokenizer` is provided.
+
 ## 📦 Structure
 
 ```text
 llm-finetune-supportbot/
   ├─ src/
+  ├─ api/
   ├─ demo.py
   ├─ eval/
+  ├─ scripts/
+  │   └─ package_model.py
   ├─ results/
   ├─ tests/
   ├─ pyproject.toml
@@ -93,7 +154,7 @@ llm-finetune-supportbot/
 ## 📸 Demos
 
 - CLI Q&A
-- FastAPI endpoint
+- FastAPI endpoint (see `api/README.md`)
 - Before/after qualitative examples
 
 ## 🗺️ Roadmap

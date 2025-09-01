@@ -1,6 +1,7 @@
 # Inference API (FastAPI)
 
 Minimal service exposing:
+
 - `GET /healthz` → `{ "status": "ok" }`
 - `POST /generate` → `{ "generated_text": str | list[str] }`
 

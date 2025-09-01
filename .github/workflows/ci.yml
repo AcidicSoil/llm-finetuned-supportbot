@@ -1,14 +1,29 @@
-name: 'llm-finetune-supportbot'
+name: 'llm-finetune-supportbot CI'
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  # Manual trigger can enable the online job via input
+  workflow_dispatch:
+    inputs:
+      online:
+        description: 'Run online smoke tests (pull tiny model)'
+        required: false
+        default: false
+        type: boolean
+  # Optional scheduled run executes the online job
+  schedule:
+    - cron: '0 6 * * 1'  # Mondays at 06:00 UTC
 
 jobs:
-  test:
+  test-offline:
+    # Only run the offline job on push/PR (not on schedule or explicit online dispatch)
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    env:
+      HF_HUB_OFFLINE: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,7 +37,32 @@ jobs:
         uses: astral-sh/setup-uv@v6
 
       - name: Install project dependencies
-        run: uv sync --locked --all-extras --dev
+        run: uv sync --locked --all-extras --group dev
 
-      - name: Run tests
-        run: uv run pytest -q
+      - name: Run tests (offline; smoke skipped)
+        run: uv run -m pytest -q
+
+  test-online:
+    # Run only on schedule or when manually requested via workflow_dispatch with online=true
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.online == 'true')
+    runs-on: ubuntu-latest
+    env:
+      HF_HUB_OFFLINE: '0'
+      TEST_TINY_MODEL_ID: 'sshleifer/tiny-gpt2'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install project dependencies
+        run: uv sync --locked --all-extras --group dev
+
+      - name: Run smoke tests (online; pulls tiny model)
+        run: uv run -m pytest -q -m smoke tests/smoke
