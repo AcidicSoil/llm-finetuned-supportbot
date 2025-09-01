@@ -40,6 +40,14 @@
 3. **Order of precedence** (only among extensions): left-to-right; when two extensions conflict in the same scope, the **rightmost** wins.
 4. Files tagged via plain **`@{...}`** are **context-only** and never contribute instructions.
 
+### MCP Servers & Aliases (runtime)
+
+- **mem0** — free-form checkpoints & notes (alias: `mem0`)
+- **Knowledge Graph** — structured entities/relations/observations (alias: `knowledge-graph-mcp`)
+
+  - Primary ops: `create_entities`, `create_relations`, `add_observations`, `read_graph`, `search_nodes`
+  - Namespace: `project:${PROJECT_TAG}`
+
 ### Example Usage
 
 - Context only:
@@ -87,6 +95,9 @@ When tags are used, add:
     ],
     "tagged_context": [
       {"path": "changelog.md", "loaded": true}
+    ],
+    "kg_ops": [
+      {"tool": "knowledge-graph-mcp", "op": "create_entities|create_relations|add_observations|read_graph|search_nodes", "time_utc": "<ISO8601>", "scope": "project:${PROJECT_TAG}"}
     ]
   }
 }
@@ -98,20 +109,18 @@ When tags are used, add:
 
 **Goal:** Ensure the assistant retrieves and considers the *latest relevant docs* before planning, acting, or finalizing.
 
-**Providers Whitelist & Order (strict):**
+**Primary/Fallback Order (consolidated):**
 
-1. **docfork mcp** (primary)
-2. **contex7-mcp** (fallback if docfork fails or is unavailable)
+1. **sourcebot** (primary)
+2. **contex7-mcp** (fallback if sourcebot fails)
 3. **gitmcp** (last-resort fallback if both above fail)
-
-> **Strict policy:** No other providers (e.g., generic web search, `exa`, `serpapi`, or ad‑hoc scraping) are permitted unless the **Override Path** (§A → *Override Path*) is explicitly invoked and logged. `DocFetchReport.sources` must list only sources retrieved via **docfork**, **contex7-mcp**, or **gitmcp**.
 
 **What to do:**
 
 - For every task that could touch code, configuration, APIs, tooling, or libraries:
 
-  - Call **docfork mcp** to fetch the latest documentation or guides.
-  - If the call **fails** (error, unavailable, or insufficient coverage), immediately retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
+  - Call **sourcebot** to fetch the latest documentation or guides.
+  - If the call **fails**, immediately retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
 - Each successful call **MUST** capture:
 
   - Tool name, query/topic, retrieval timestamp (UTC), and source refs/URLs (or repo refs/commits).
@@ -138,10 +147,10 @@ When tags are used, add:
   "DocFetchReport": {
     "status": "OK | PARTIAL | FAILED",
     "tools_called": [
-      {"name": "docfork|contex7-mcp|gitmcp", "time_utc": "<ISO8601>", "query": "<topic/ids>"}
+      {"name": "sourcebot|contex7-mcp|gitmcp", "time_utc": "<ISO8601>", "query": "<topic/ids>"}
     ],
     "sources": [
-      {"url_or_ref": "<doc url or repo ref>", "kind": "api|guide|spec|code", "commit_or_version": "<hash|tag|n/a>"}
+      {"url_or_ref": "<doc url or repo ref>", "kind": "api|guide|code|spec", "commit_or_version": "<hash|tag|n/a>"}
     ],
     "coverage": "Which parts of the task these sources cover.",
     "key_guidance": [
@@ -209,18 +218,28 @@ When tags are used, add:
 
 - **Use consolidated docs-first flow** before touching any files or finalizing:
 
-  - Try **docfork mcp** → if fail, **contex7-mcp** → if fail, **gitmcp**.
+  - Try **sourcebot** → if fail, **contex7-mcp** → if fail, **gitmcp**.
   - Record results in `DocFetchReport`.
 
-## 1) Startup memory bootstrap (mem0)
+## 1) Startup memory bootstrap (mem0 + KG-MCP)
 
-- On chat/session start: **mem0**
+- On chat/session start: initialize **mem0** and the **Knowledge Graph MCP (KG-MCP)**.
 - Retrieve (project-scoped):
 
   - **mem0** → latest `memory_checkpoints` and recent task completions.
+  - **KG-MCP** → ensure a graph namespace exists for this project and load prior nodes/edges.
+
+    - **Server alias**: `knowledge-graph-mcp` (e.g., Smithery "Knowledge Graph Memory Server" such as `@jlia0/servers`).
+    - **Bootstrap ops** (idempotent):
+
+      - `create_entities` (or `upsert_entities`) for: `project:${PROJECT_TAG}`.
+      - `create_relations` to link existing tasks/files if present.
+      - `read_graph` / `search_nodes` to hydrate working context.
 - Read/write rules:
 
-  - On task completion write checkpoints to **mem0**.
+  - Prefer **mem0** for free-form notes and checkpoints.
+  - Prefer **KG-MCP** for **structured** facts/relations (entities, edges, observations).
+  - If KG-MCP is unavailable, continue with mem0 and record `kg_unavailable: true` in the session preamble.
 
 ## 2) On task completion (status → done)
 
@@ -230,14 +249,18 @@ When tags are used, add:
   - Files touched
   - Commit/PR link (if applicable)
   - Test results (if applicable)
-- Seed/Update the knowledge graph (mcp-think-tank):
+- **Update the Knowledge Graph (KG-MCP)**:
 
-  - If this is a **new project** (detected auto-skip in §1), **create a seed node** `project:${PROJECT_TAG}` and initial edges:
+  - Ensure base entity `project:${PROJECT_TAG}` exists.
+  - Upsert `task:${task_id}` and any `file:<path>` entities touched.
+  - Create/refresh relations:
 
     - `project:${PROJECT_TAG}` —\[owns]→ `task:${task_id}`
     - `task:${task_id}` —\[touches]→ `file:<path>`
     - `task:${task_id}` —\[status]→ `<status>`
-  - Else, upsert edges for who/what/why/depends-on and recent changes.
+    - Optional: `task:${task_id}` —\[depends\_on]→ `<entity>`
+  - Attach `observations` capturing key outcomes (e.g., perf metrics, regressions, decisions).
+- Seed/Update the knowledge graph **before** exiting the task so subsequent sessions can leverage it.
 - Do **NOT** write to `GEMINI.md` beyond these standing instructions.
 
 ## 3) Status management
@@ -247,12 +270,13 @@ When tags are used, add:
 ## 4) Tagging for retrieval
 
 - Use tags: `${PROJECT_TAG}`, `project:${PROJECT_TAG}`, `memory_checkpoint`, `completion`, `agents`, `routine`, `instructions`, plus task-specific tags (e.g., `fastapi`, `env-vars`).
+- For KG-MCP entities/relations, mirror tags on observations (e.g., `graph`, `entity:task:${task_id}`, `file:<path>`), to ease cross-referencing with mem0.
 
 ## 5) Handling user requests for code or docs
 
 - When a task or a user requires **code**, **setup/config**, or **library/API documentation**:
 
-  - **MUST** run the **Preflight** (§A) using the strict provider order (docfork → contex7 → gitmcp).
+  - **MUST** run the **Preflight** (§A) using the consolidated order (**sourcebot → contex7-mcp → gitmcp**).
   - Only proceed to produce diffs or create files after `DocFetchReport.status == "OK"`.
 
 ## 6) Handling Pydantic-specific questions
@@ -268,17 +292,17 @@ When tags are used, add:
 
 - For project-specific stack work (FastAPI, Starlette, httpx, respx, pydantic-settings, pytest-asyncio, sqlite3, etc.):
 
-  - **MUST** run the **Preflight** (§A) with the strict provider order.
-  - If a library isn’t found or coverage is weak **after docfork → contex7 → gitmcp**, **stop and return a Docs Missing report** (do **not** use other providers). You may invoke the **Override Path** if justified and approved.
+  - **MUST** run the **Preflight** (§A) with the consolidated order.
+  - If a library isn’t found or coverage is weak after **sourcebot → contex7-mcp → gitmcp**, fall back to **exa** (targeted web search) and mark gaps.
 
 ## 8) Library docs retrieval (topic-focused)
 
-- Use **docfork mcp** first to fetch current docs before code changes.
-- If docfork fails, use **contex7-mcp**:
+- Use **sourcebot** first to fetch current docs before code changes.
+- If **sourcebot** fails, use **contex7-mcp**:
 
   - `resolve-library-id(libraryName)` → choose best match by name similarity, trust score, snippet coverage.
   - `get-library-docs(context7CompatibleLibraryID, topic, tokens)` → request focused topics (e.g., "exception handlers", "lifespan", "request/response", "async client", "retry", "mocking", "markers", "sqlite schema/init").
-- If contex7-mcp also fails, use **gitmcp** (repo docs/source) to retrieve equivalents.
+- If **contex7-mcp** also fails, use **gitmcp** (repo docs/source) to retrieve equivalents.
 - Summarize key guidance inline in `DocFetchReport.key_guidance` and map each planned change to a guidance line.
 - Always note in the task preamble that docs were fetched and which topics/IDs were used.
 
@@ -289,7 +313,7 @@ When tags are used, add:
 ```
 SYSTEM: You operate under a blocking docs-first policy.
 1) Preflight (§A):
-   - Call docfork → contex7-mcp → gitmcp as needed.
+   - Call sourcebot → contex7-mcp → gitmcp as needed.
    - Build DocFetchReport (status must be OK).
 2) Planning:
    - Map each planned change to key_guidance items in DocFetchReport.
