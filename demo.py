@@ -7,6 +7,7 @@ import argparse
 import torch
 from src.evaluation import load_model_and_tokenizer, load_peft_model
 
+
 def main():
     parser = argparse.ArgumentParser(description="Interactive CLI demo.")
     parser.add_argument("--base_model_name", type=str, required=True, help="Name of the base model.")
@@ -29,6 +30,7 @@ def main():
             output = model.generate(**inputs, max_new_tokens=100, temperature=0.7)
         response = tokenizer.decode(output[0], skip_special_tokens=True)
         print(f"Response: {response}")
+
 
 if __name__ == "__main__":
     main()

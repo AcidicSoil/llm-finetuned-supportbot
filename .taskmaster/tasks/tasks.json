@@ -336,7 +336,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -344,7 +344,7 @@
             "description": "Create the initial file structure in the `api/` directory. Set up a minimal FastAPI application in `api/main.py` with two endpoints: a `GET /healthz` that returns a 200 OK status, and a placeholder `POST /generate` that returns a hardcoded response.",
             "dependencies": [],
             "details": "Initialize the FastAPI app object. Implement the `/healthz` endpoint to return `{\"status\": \"ok\"}`. The `/generate` endpoint can initially return a static JSON object like `{\"generated_text\": \"placeholder response\"}`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run `uv run uvicorn api.main:app` and send a GET request to `/healthz` to verify the status response. Send a POST request to `/generate` to verify the placeholder response."
           },
           {
@@ -355,7 +355,7 @@
               "14.1"
             ],
             "details": "In `api/main.py` or a new `api/models.py`, define a `GenerateRequest` model with a `prompt` field (string). Define a `GenerateResponse` model with a `generated_text` field (string). Update the `/generate` endpoint to use these models in its signature.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "With the app running, send a POST request to `/generate` with a valid JSON body (`{\"prompt\": \"hello\"}`). Verify it succeeds. Send a request with an invalid body (e.g., wrong field name) and verify FastAPI returns a 422 Unprocessable Entity error."
           },
           {
@@ -366,7 +366,7 @@
               "14.1"
             ],
             "details": "Create a dependency function that checks for an `X-API-Key` header. If the header is missing or its value doesn't match a predefined static key (e.g., from an environment variable), raise an `HTTPException` with a 401 status. Apply this dependency to the `/generate` endpoint.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Send a request to `/generate` without the `X-API-Key` header and verify a 401/403 error. Send a request with the correct header and verify a 200 OK response."
           },
           {
@@ -377,7 +377,7 @@
               "14.2"
             ],
             "details": "Modify the `GenerateRequest` model to accept either a single string or a list of strings for the `prompt` field (e.g., using `Union[str, List[str]]`). Update the `GenerateResponse` to return a corresponding single string or list of strings. The endpoint logic should handle both cases, iterating through prompts if a list is provided.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the `/generate` endpoint with a single prompt request. Then, test it with a batch request containing multiple prompts in a list and verify the response contains a corresponding list of generated texts."
           },
           {
@@ -388,7 +388,7 @@
               "14.1"
             ],
             "details": "Create a `run.sh` script containing the command `uv run uvicorn api.main:app --host 0.0.0.0 --port 8000`. Create an `api/README.md` file detailing how to install dependencies (e.g., `uv sync --dev`), how to run the service using the script, and providing `curl` examples for both the `/healthz` and `/generate` endpoints.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Execute the `run.sh` script and verify the server starts. Follow the instructions in the new `README.md` to test the endpoints with `curl` and confirm they work as documented."
           }
         ]
@@ -742,7 +742,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-08-31T16:33:50.999Z",
+      "updated": "2025-09-01T17:38:33.471Z",
       "description": "Tasks for default context"
     }
   }

@@ -5,100 +5,130 @@
 
 ---
 
-## Instruction Layering & Extensions
+## Instruction Loading Model (Simplified)
 
 - **Baseline:** This file (**AGENTS.md**) is the canonical baseline for all assistant behavior.
-- **Extensions:** Additional instruction files may be layered in using a **dedicated extension tag** (see below). Plain `@{...}` remains **context-only** and does **not** change behavior.
+- **Auto-discovered extensions (no tags):** At **session start**, the assistant **scans** the repository’s `instructions/` directory and proposes any instruction files it finds for inclusion. **User confirmation is required** before they affect behavior.
 
-### Tagging Syntax (context vs. extensions)
+  - Valid instruction files: `instructions/**/*.md` or `instructions/**/*.txt` (recursive).
+  - Ignored by default: files or folders prefixed with `_` (e.g., `instructions/_drafts/`), and files with `.archive.` in the name.
+  - **Order:** By default, files are ordered **lexicographically** by path. The user may **reorder** during confirmation; rightmost/last-loaded wins on ties within the same scope.
+- **Context-only includes remain available** via `@{...}` (see below). These do **not** alter behavior.
 
-**Context tag — `@{file}` (no behavior change)**
+### Startup confirmation flow
+
+1. **Discover** candidate instruction files under `instructions/`.
+2. **Summarize** each candidate (title = first `# H1` if present, else filename) and show a checklist.
+3. **Ask for confirmation**:
+
+   - Options: **Apply all**, **Apply none**, or **Select subset & order**.
+   - If the user does not choose, default to **Apply none** (baseline only) and proceed.
+4. **Record** the approved set and final order in the session preamble and in `DocFetchReport.approved_instructions`.
+
+### Conflict resolution
+
+- **Baseline vs. extension:** The **more specific extension** (approved instruction file) wins within its scope; otherwise the **baseline** holds.
+- **Extension vs. extension:** When two approved files conflict in the **same scope**, the **later-loaded** file wins (i.e., by the final order confirmed by the user; lexicographic if unchanged).
+
+---
+
+## Tagging Syntax (context only)
+
+**Context tag — **`@{file}`** (no behavior change)**
 
 - Purpose: Include files in retrieval/context only (e.g., for grounding, examples, specs). *Does not* add rules.
 - Syntax: `@{path/to/file.md}` (absolute or relative to repo root). Globs allowed, e.g., `@{docs/*.md}`.
 - Order: Irrelevant for behavior; these are not layered.
 
-**Extension tag — `@ext{file}` (adds rules)**
+---
 
-- Purpose: Declare instruction **Extensions** that layer on top of **AGENTS.md**.
-- Syntax: `@ext{path/to/instruction.md}`. Globs allowed: `@ext{docs/roles/*.md}`.
-- Multiple allowed and **ordered** left → right: `@ext{prd_generator.md} @ext{guardrails.md}`.
-- Inline comments are ignored after either tag form: `@ext{ops_playbook.md}  # ops guidance`.
+## Resolution & Loading
 
-### Resolution & Loading
-
-1. Resolve each tag to a file path:
-
-   - Prefer repo root; if not found, try relative to the caller’s cwd.
-   - Expand globs to a **lexicographically sorted** file list.
-2. Treat each **`@ext{...}`** file as an **Extension** layered on **AGENTS.md**:
+1. **Discovery** (session start): scan `instructions/` for candidates, ignoring `_`-prefixed paths and `.archive.` files.
+2. **Confirmation:** present the list; user selects and orders; default = none.
+3. **Loading model:**
 
    - **Baseline** = AGENTS.md
-   - **Extension** = tagged file’s instructions, scoped to its role/task
+   - **Extensions** = user-approved files from `instructions/` (loaded left → right in the confirmed order)
    - **Conflict rule** = The more specific **extension** wins within its scope; otherwise baseline holds.
-   - **File validity rule**: Instruction files must either (a) live under `instructions/` or (b) end with `.instr.md` to be valid for `@ext{...}`.
-3. **Order of precedence** (only among extensions): left-to-right; when two extensions conflict in the same scope, the **rightmost** wins.
-4. Files tagged via plain **`@{...}`** are **context-only** and never contribute instructions.
+4. **Context files:** Any `@{...}` references are added to retrieval only and are reported under `DocFetchReport.context_files`.
 
-### MCP Servers & Aliases (runtime)
+---
+
+## MCP Servers & Aliases (runtime)
 
 - **mem0** — free-form checkpoints & notes (alias: `mem0`)
 - **Knowledge Graph** — structured entities/relations/observations (alias: `knowledge-graph-mcp`)
+- **gitmcp** — remote docs for any GitHub repo via `npx mcp-remote` (alias: `gitmcp`)
+- **sourcebot** — polyglot docs retrieval/search across official docs, guides, and APIs (alias: `sourcebot`)
+- **docfork** — ephemeral docs workspace for snapshotting, annotating, and composing fetched docs (alias: `docfork`)
 
   - Primary ops: `create_entities`, `create_relations`, `add_observations`, `read_graph`, `search_nodes`
-  - Namespace: `project:${PROJECT_TAG}`
+  - Namespace for KG: `project:${PROJECT_TAG}`
 
-### Example Usage
+---
 
-- Context only:
+## Example Usage
+
+- **Baseline only** (no extra behavior files applied):
+
+  - `codex-cli run "Summarize the repo structure"`
+- **Context only (no behavior change):**
 
   - `codex-cli run "Analyze these examples @{examples/*.md}"`
-- Single extension:
+- **Add/modify behavior for this run:**
 
-  - `codex-cli run "Draft a PRD for X @ext{prd_generator.md}"`
-- Multiple extensions (ordered):
+  - Place/modify files under `instructions/`, then start a new session; confirm which to apply and in what order when prompted.
 
-  - `codex-cli run "Harden auth flow @ext{security/guardrails.md} @ext{framework/fastapi.md}"`
-- Mixed (context + extensions):
+---
 
-  - `codex-cli run "Prepare release notes @{changelog.md} @ext{docs/release/notes_template.md}"`
+## Execution Flow (Docs Integration)
 
-### Execution Flow (Docs Integration)
+- **Preflight (§A)** must include both:
 
-- **Preflight (§A)** must include **both** context (`@{...}`) and extension (`@ext{...}`) files in the retrieval coverage set and list them in `DocFetchReport.sources`.
+  - **Context files** discovered via `@{...}` (if any), and
+  - **Approved instruction files** from `instructions/` (the final confirmed set and order).
 - **Compose instructions**
 
   1. Apply AGENTS.md (baseline)
-  2. Layer **only** the `@ext{...}` extensions (left → right)
+  2. Layer the **approved **`instructions/`** files** (left → right, final order)
   3. Resolve conflicts per rules above
 - Proceed only when `DocFetchReport.status == "OK"` (Decision Gate §B).
 
-### Failure Handling
+---
 
-- If any `@ext{...}` file cannot be resolved:
+## Failure Handling
 
-  - **Do not finalize.** Return a minimal “Docs Missing” plan listing the missing paths and suggested fix.
-- If a `@{...}` context file cannot be resolved:
+- If any **approved instruction file** cannot be loaded/resolved at runtime:
 
-  - Continue, but record it under `DocFetchReport.gaps.context_missing[]` with the attempted providers; suggest a fix in the plan section.
+  - **Do not finalize.** Return a minimal **“Docs Missing”** plan listing missing paths and suggested fix.
+- If a **context** file referenced via `@{...}` cannot be resolved:
 
-### DocFetchReport Addendum
+  - Continue, but record under `DocFetchReport.gaps.context_missing[]` with the attempted providers; suggest a fix in the plan section.
 
-When tags are used, add:
+---
+
+## DocFetchReport Addendum
+
+When discovery/confirmation is used, add:
 
 ```json
 {
   "DocFetchReport": {
-    "tagged_extensions": [
-      {"path": "prd_generator.md", "loaded": true},
-      {"path": "security/guardrails.md", "loaded": true}
+    "approved_instructions": [
+      {"path": "instructions/prd_generator.md", "loaded": true, "order": 1},
+      {"path": "instructions/security/guardrails.md", "loaded": true, "order": 2}
     ],
-    "tagged_context": [
-      {"path": "changelog.md", "loaded": true}
+    "context_files": [
+      {"path": "docs/changelog.md", "loaded": true}
     ],
     "kg_ops": [
       {"tool": "knowledge-graph-mcp", "op": "create_entities|create_relations|add_observations|read_graph|search_nodes", "time_utc": "<ISO8601>", "scope": "project:${PROJECT_TAG}"}
-    ]
+    ],
+    "proposed_mcp_servers": [
+      {"name": "<lib> Docs", "url": "https://gitmcp.io/{OWNER}/{REPO}", "source": "techstack-bootstrap", "status": "proposed"}
+    ],
+    "techstack_toml": "<fenced TOML emitted in §A.2>"
   }
 }
 ```
@@ -111,16 +141,16 @@ When tags are used, add:
 
 **Primary/Fallback Order (consolidated):**
 
-1. **sourcebot** (primary)
-2. **contex7-mcp** (fallback if sourcebot fails)
+1. **sourcebot** (primary) **or** **docfork** (if configured for direct retrieval)
+2. **contex7-mcp** (fallback if the primary fails)
 3. **gitmcp** (last-resort fallback if both above fail)
 
 **What to do:**
 
 - For every task that could touch code, configuration, APIs, tooling, or libraries:
 
-  - Call **sourcebot** to fetch the latest documentation or guides.
-  - If the call **fails**, immediately retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
+  - Call **sourcebot** **or** **docfork** to fetch the latest documentation or guides.
+  - If the chosen primary call **fails**, immediately retry with the other primary (**docfork** ⇄ **sourcebot**); if that also **fails**, retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
 - Each successful call **MUST** capture:
 
   - Tool name, query/topic, retrieval timestamp (UTC), and source refs/URLs (or repo refs/commits).
@@ -131,7 +161,7 @@ When tags are used, add:
 
 **Failure handling:**
 
-- If **all** three providers fail for a required area, **do not finalize**. Return a minimal plan that includes:
+- If **all** providers fail for a required area, **do not finalize**. Return a minimal plan that includes:
 
   - The attempted providers and errors
   - The specific topics/areas still uncovered
@@ -147,7 +177,7 @@ When tags are used, add:
   "DocFetchReport": {
     "status": "OK | PARTIAL | FAILED",
     "tools_called": [
-      {"name": "sourcebot|contex7-mcp|gitmcp", "time_utc": "<ISO8601>", "query": "<topic/ids>"}
+      {"name": "sourcebot|docfork|contex7-mcp|gitmcp", "time_utc": "<ISO8601>", "query": "<topic/ids>"}
     ],
     "sources": [
       {"url_or_ref": "<doc url or repo ref>", "kind": "api|guide|code|spec", "commit_or_version": "<hash|tag|n/a>"}
@@ -204,6 +234,82 @@ When tags are used, add:
 
 ---
 
+## A.2) **One-time Tech Stack MCP Bootstrap (TOML emitter)**
+
+**Goal:** On the **first session for a new project**, generate a **ready-to-paste TOML** block that wires detected tech-stack docs into **GitMCP** servers for use by codex-cli (or any MCP-compatible client).
+
+**When:** Run **after** §A.1 (tech stack identified) and **before** §A (Preflight) proceeds. This step is **idempotent** and **one-time per project**.
+
+**Idempotency / Guard:**
+
+- Only generate if **both** are true:
+
+  - No file exists at `config/mcp_servers.generated.toml`, **and**
+  - `DocFetchReport.techstack_toml` is empty for this project.
+- Otherwise, **skip** generation.
+
+**Detection → Proposal:**
+
+1. Take the stack from §A.1 (`DocFetchReport.tech_stack`).
+2. For each library/tool `X`, propose an MCP server entry named `"X Docs"` using the **GitMCP** URL template `https://gitmcp.io/{OWNER}/{REPO}`.
+3. We do **not** guess owners by default — placeholders `{OWNER}` and `{REPO}` are emitted for user fill-in. (Optionally, we may suggest likely repos inside comments when confidently known.)
+
+**Generated artifact (fenced TOML + file):**
+
+- Emit a fenced **TOML** block into the chat and write an identical file at:
+
+  - `config/mcp_servers.generated.toml` (created, not overwritten unless user approves).
+- The TOML follows codex-cli conventions:
+
+```toml
+# Auto-generated by TechStackBootstrap (first-run). Safe to copy into your codex-cli config.
+# Replace {OWNER}/{REPO} for each entry, or delete lines you don't want.
+
+[mcp_servers]
+
+# Example for FastAPI
+[mcp_servers.fastapi_docs]
+command = "npx"
+args = [
+  "mcp-remote",
+  "https://gitmcp.io/{OWNER}/{REPO}" # e.g., tiangolo/fastapi
+]
+
+# Template for each detected library
+# [mcp_servers.<slug>_docs]
+# command = "npx"
+# args = ["mcp-remote", "https://gitmcp.io/{OWNER}/{REPO}"]
+```
+
+**Concrete example (if `fastapi` detected):**
+
+```toml
+[mcp_servers.fastapi_docs]
+command = "npx"
+args = ["mcp-remote", "https://gitmcp.io/{OWNER}/{REPO}"]
+```
+
+**Also support a generic docs server:**
+
+```toml
+[mcp_servers.gitmcp_docs]
+command = "npx"
+args = ["mcp-remote", "https://gitmcp.io/docs"]
+```
+
+**Acceptance Flow:**
+
+- After emission, prompt the user: **“Insert into codex-cli `config.toml` now?”**
+
+  - If **yes**: append the generated block under `[mcp_servers]` (or merge keys if already present).
+  - If **no**: leave `config/mcp_servers.generated.toml` for manual review.
+
+**Reporting:**
+
+- Add `proposed_mcp_servers[]` and `techstack_toml` to `DocFetchReport` (see earlier Addendum) with the exact names/URLs proposed.
+
+---
+
 ## B) Decision Gate: No Finalize Without Proof (**MUST**)
 
 - The assistant **MUST NOT**: finalize, apply diffs, modify files, or deliver a definitive answer **unless** `DocFetchReport.status == "OK"`.
@@ -218,7 +324,7 @@ When tags are used, add:
 
 - **Use consolidated docs-first flow** before touching any files or finalizing:
 
-  - Try **sourcebot** → if fail, **contex7-mcp** → if fail, **gitmcp**.
+  - Try **sourcebot** → **docfork** (if configured) → **contex7-mcp** → **gitmcp**.
   - Record results in `DocFetchReport`.
 
 ## 1) Startup memory bootstrap (mem0 + KG-MCP)
@@ -260,6 +366,15 @@ When tags are used, add:
     - `task:${task_id}` —\[status]→ `<status>`
     - Optional: `task:${task_id}` —\[depends\_on]→ `<entity>`
   - Attach `observations` capturing key outcomes (e.g., perf metrics, regressions, decisions).
+- **Documentation maintenance (auto)** — when a task **changes user-facing behavior**, **APIs**, **setup**, **CLI**, or **examples**:
+
+  - **README.md** — keep **Install**, **Quickstart**, and **Usage/CLI** sections current. Add/adjust new flags, env vars, endpoints, and examples introduced by the task.
+  - **docs/CHANGELOG.md** — append an entry with **UTC date**, `task_id`, short summary, **breaking changes**, and **migration steps**. Create the file if missing.
+  - **docs/** pages — update or add topic pages. If present, refresh **`index.md`**/**`SUMMARY.md`**/**MkDocs/Sphinx nav** to include new pages (alphabetical within section unless a numbered order exists).
+  - **Build check** — run the project’s docs build (`npm run docs:build` | `mkdocs build` | `sphinx-build`) if available. Record the result under `DocFetchReport.observations.docs_build`.
+  - **Sync scripts** — run `docs:sync`/`docs-sync` if defined; otherwise propose a TODO in the completion note.
+  - **Commit style** — use commit prefix `[docs] <scope>: <summary>` and link PR/issue.
+  - **Scope guard** — never edit `AGENTS.md` as part of docs maintenance.
 - Seed/Update the knowledge graph **before** exiting the task so subsequent sessions can leverage it.
 - Do **NOT** write to `AGENTS.md` beyond these standing instructions.
 
@@ -276,7 +391,7 @@ When tags are used, add:
 
 - When a task or a user requires **code**, **setup/config**, or **library/API documentation**:
 
-  - **MUST** run the **Preflight** (§A) using the consolidated order (**sourcebot → contex7-mcp → gitmcp**).
+  - **MUST** run the **Preflight** (§A) using the consolidated order (**sourcebot | docfork → contex7-mcp → gitmcp**).
   - Only proceed to produce diffs or create files after `DocFetchReport.status == "OK"`.
 
 ## 6) Handling Pydantic-specific questions
@@ -293,12 +408,12 @@ When tags are used, add:
 - For project-specific stack work (FastAPI, Starlette, httpx, respx, pydantic-settings, pytest-asyncio, sqlite3, etc.):
 
   - **MUST** run the **Preflight** (§A) with the consolidated order.
-  - If a library isn’t found or coverage is weak after **sourcebot → contex7-mcp → gitmcp**, fall back to **exa** (targeted web search) and mark gaps.
+  - If a library isn’t found or coverage is weak after **sourcebot → docfork → contex7-mcp → gitmcp**, fall back to **exa** (targeted web search) and mark gaps.
 
 ## 8) Library docs retrieval (topic-focused)
 
-- Use **sourcebot** first to fetch current docs before code changes.
-- If **sourcebot** fails, use **contex7-mcp**:
+- Use **sourcebot** first to fetch current docs before code changes. If configured and suitable for your workflow, **docfork** may be used to assemble or snapshot the retrieved docs.
+- If the primary retrieval tool fails, use **contex7-mcp**:
 
   - `resolve-library-id(libraryName)` → choose best match by name similarity, trust score, snippet coverage.
   - `get-library-docs(context7CompatibleLibraryID, topic, tokens)` → request focused topics (e.g., "exception handlers", "lifespan", "request/response", "async client", "retry", "mocking", "markers", "sqlite schema/init").
@@ -313,7 +428,7 @@ When tags are used, add:
 ```
 SYSTEM: You operate under a blocking docs-first policy.
 1) Preflight (§A):
-   - Call sourcebot → contex7-mcp → gitmcp as needed.
+   - Call sourcebot → docfork (if configured) → contex7-mcp → gitmcp as needed.
    - Build DocFetchReport (status must be OK).
 2) Planning:
    - Map each planned change to key_guidance items in DocFetchReport.

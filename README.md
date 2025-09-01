@@ -1,8 +1,11 @@
-# Fine-tune a Small LLM on Support Data
-
 [![llm-finetune-supportbot](https://github.com/AcidicSoil/llm-finetuned-supportbot/actions/workflows/ci.yml/badge.svg)](https://github.com/AcidicSoil/llm-finetuned-supportbot/actions/workflows/ci.yml)
-
+[![GitMCP](https://img.shields.io/endpoint?url=https://gitmcp.io/badge/acidicsoil/llm-finetune-supportbot)](https://gitmcp.io/acidicsoil/llm-finetune-supportbot)
 **Repo:** `llm-finetune-supportbot` • **Last Updated:** 2025-08-19
+
+
+# llm-finetune-supportbot
+
+## Fine-tune a Small LLM on Support Data
 
 ## 🎯 Goal
 

@@ -16,7 +16,9 @@ dependencies = [
     "pydantic>2",
     "black",
     "ruff",
-    "pre-commit"
+    "pre-commit",
+    "fastapi[standard]",
+    "uvicorn"
 ]
 
 [dependency-groups]
