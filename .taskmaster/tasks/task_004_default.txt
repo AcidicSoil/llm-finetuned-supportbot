@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Implement Stratified Train/Val/Test Splitting
-# Status: pending
+# Status: done
 # Dependencies: 3
 # Priority: high
 # Description: Create a script to split the unified dataset into training, validation, and test sets to prevent data leakage.

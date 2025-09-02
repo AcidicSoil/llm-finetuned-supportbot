@@ -1,0 +1,90 @@
+.github file-by-file overview
+Actions
+.github/actions/post-coverage-comment/action.yml
+Purpose: Composite action that merges coverage reports from CLI and Core packages and posts a markdown comment on the PR.
+Secrets / env: Requires github_token; expects paths to four coverage files, plus node_version and os inputs.
+Transplant notes: Update input file locations, Node version, and OS strings to match the new project’s artifacts; pass secrets.GITHUB_TOKEN or another token with comment rights.
+
+Scripts
+.github/scripts/pr-triage.sh
+Purpose: Runs gh commands to ensure PRs reference an issue, syncs labels from linked issues, and outputs PRs needing a comment.
+Secrets / env: Uses GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_OUTPUT; optional PR_NUMBER.
+Transplant notes: Confirm gh CLI is installed, adjust label names/messages, and ensure repository permissions allow label edits.
+
+Workflows
+ci.yml – Runs Python unit tests with uv and pytest on pushes/PRs to main or master. No custom secrets. Modify branch targets, Python version, or test commands as needed.
+
+eval.yml – Manual workflow that sets up Node (20/22/24) and Python/Poetry; currently ends after tooling setup. Add actual evaluation steps or remove if unused.
+
+docs-page-action.yml – Deploys a Jekyll site to GitHub Pages when a tag starting with v is pushed. No secrets. Adjust tag pattern or build path for your docs.
+
+e2e.yml – Push/merge-group workflow running Linux & macOS end‑to‑end tests across Node versions and optional Docker/Podman sandboxes. Needs DOCKERHUB_USERNAME, DOCKERHUB_TOKEN, and GEMINI_API_KEY. Adapt Node versions, sandbox matrix, and test commands to your project; remove Podman/Docker steps if unused.
+
+community-report.yml – Weekly/dispatchable job that generates a community contribution report and sends it through Gemini for insights. Requires GitHub App secrets APP_ID, PRIVATE_KEY, Gemini key GEMINI_API_KEY, and repo variables GCP_WIF_PROVIDER, GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, SERVICE_ACCOUNT_EMAIL, GOOGLE_GENAI_USE_VERTEXAI, GOOGLE_GENAI_USE_GCA. Replace repository check, adjust prompts, and provide equivalent secrets/variables.
+
+gemini-automated-issue-dedup.yml – On issue events or /deduplicate comments, finds duplicate issues via Gemini and labels/comment them. Needs APP_ID, PRIVATE_KEY, GEMINI_API_KEY, default GITHUB_TOKEN, and vars FIRESTORE_PROJECT, GCP_WIF_PROVIDER, GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, SERVICE_ACCOUNT_EMAIL, GOOGLE_GENAI_USE_VERTEXAI, GOOGLE_GENAI_USE_GCA, TRIAGE_DEDUPLICATE_ISSUES. Update repo guard, label names, Firestore project, and Gemini settings.
+
+gemini-automated-issue-triage.yml – Labels issues using Gemini when opened, reopened, or triggered with /triage. Same secrets/vars as above minus Firestore. Modify repository condition, prompt, and label taxonomy.
+
+gemini-scheduled-issue-dedup.yml – Hourly job to refresh deduplication embeddings. Uses same secrets/vars as dedup workflow. Adjust schedule or remove if not needed.
+
+gemini-scheduled-issue-triage.yml – Hourly triage of unlabelled issues via Gemini. Requires APP_ID, PRIVATE_KEY, GEMINI_API_KEY and same GCP vars as automated triage. Update repo name, label rules, and schedule.
+
+gemini-scheduled-pr-triage.yml – Every 15 minutes runs pr-triage.sh to enforce issue linking and label sync. Needs APP_ID and PRIVATE_KEY; relies on GITHUB_TOKEN from the GitHub App. Adapt labels, schedule, and follow‑up comment logic if desired.
+
+gemini-self-assign-issue.yml – Lets users assign themselves by commenting /assign. Requires APP_ID and PRIVATE_KEY. Change repo guard, max-assigned limit, or wording.
+
+release.yml – Nightly/weekly/dispatchable release pipeline: runs tests, bumps versions, builds/publishes npm packages via Wombat, and creates GitHub releases. Needs GITHUB_TOKEN, GEMINI_API_KEY, WOMBAT_TOKEN_CORE, WOMBAT_TOKEN_CLI. Replace package names, scripts, and tokens for your package registry; adjust schedules if not releasing on the same cadence.
+
+stale.yml – Daily job marking issues/PRs as stale after 60 days and closing after 14 more. Uses GITHUB_TOKEN. Modify inactivity windows, messages, and exempt labels.
+
+no-response.yml – Daily job closing status/need-information items after 14 days without response. Uses GITHUB_TOKEN. Adjust label or timing to suit your workflow.
+
+Transplanting the .github structure to a new repository
+Copy files – Move the entire .github directory (actions, scripts, workflows, templates) into the root of the new project.
+
+Remove or update repository guards – Replace all google-gemini/gemini-cli checks and paths with the new repository name or delete them.
+
+Adjust workflow triggers – Verify branch names, tag patterns, and cron schedules align with the new project’s release cadence and branching strategy.
+
+Customize labels and prompts – Ensure labels referenced in scripts/workflows exist in the new repo; edit prompts/messages to match its terminology.
+
+Configure secrets in the new repository settings:
+
+GEMINI_API_KEY
+
+APP_ID and PRIVATE_KEY for a GitHub App (or substitute a PAT)
+
+DOCKERHUB_USERNAME / DOCKERHUB_TOKEN if Podman/Docker tests are used
+
+WOMBAT_TOKEN_CORE and WOMBAT_TOKEN_CLI for npm publishing
+
+Set repository variables (if keeping Gemini/GCP automation): GCP_WIF_PROVIDER, GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION, SERVICE_ACCOUNT_EMAIL, GOOGLE_GENAI_USE_VERTEXAI, GOOGLE_GENAI_USE_GCA, FIRESTORE_PROJECT, TRIAGE_DEDUPLICATE_ISSUES.
+
+Review action inputs and file paths – Update paths in post-coverage-comment and other workflows to match your build artifacts.
+
+Evaluate optional workflows – Disable or remove Gemini-specific triage, deduplication, or release jobs if the new project doesn’t need them.
+
+Ensure required tooling – Install gh CLI in environments running pr-triage.sh and confirm any referenced Docker images or scripts exist.
+
+Enable GitHub Pages or package publishing – Configure repository settings for Pages, npm publishing, or any other services used by the workflows.
+
+Summary table
+File Role Configuration notes
+actions/post-coverage-comment/action.yml Composite action posting coverage summary. Update coverage file paths, node_version, os; pass secrets.GITHUB_TOKEN.
+scripts/pr-triage.sh Shell script enforcing PR issue linkage and label sync. Requires GITHUB_TOKEN, GITHUB_REPOSITORY; adjust label names/messages.
+workflows/ci.yml Python unit-test workflow. Modify branches, Python version, test commands if different.
+workflows/eval.yml Manual eval setup (Node & Python/Poetry). Add actual evaluation steps or remove if unused.
+workflows/docs-page-action.yml Deploys Jekyll site to GitHub Pages on tag push. Ensure Pages enabled; change tag pattern or build path.
+workflows/e2e.yml Cross-platform E2E test matrix. Set DOCKERHUB_USERNAME, DOCKERHUB_TOKEN, GEMINI_API_KEY; tweak Node versions and tests.
+workflows/community-report.yml Weekly contribution report with Gemini insights. Needs APP_ID, PRIVATE_KEY, GEMINI_API_KEY, and GCP-related vars; update repo guard and prompts.
+workflows/gemini-automated-issue-dedup.yml Auto-deduplicate issues and label/comment. Requires GitHub App creds, GEMINI_API_KEY, FIRESTORE_PROJECT, GCP vars; update labels & repo name.
+workflows/gemini-automated-issue-triage.yml Auto-label issues on open/reopen or /triage. Same GitHub App & Gemini secrets; adjust prompts and available labels.
+workflows/gemini-scheduled-issue-dedup.yml Hourly refresh of deduplication embeddings. Same secrets/vars as issue dedup; modify schedule or repo guard.
+workflows/gemini-scheduled-issue-triage.yml Hourly triage of unlabelled issues. Needs GitHub App & Gemini secrets, GCP vars; tweak label taxonomy.
+workflows/gemini-scheduled-pr-triage.yml Scheduled PR issue-link/label audit using pr-triage.sh. Requires GitHub App creds; adjust schedule and script behavior.
+workflows/gemini-self-assign-issue.yml Enables /assign self-assignment. Needs APP_ID, PRIVATE_KEY; adjust max assignments or messages.
+workflows/release.yml Automated nightly/preview/manual release pipeline. Requires GITHUB_TOKEN, GEMINI_API_KEY, WOMBAT_TOKEN_CORE, WOMBAT_TOKEN_CLI; update package scripts, registry, schedule.
+workflows/stale.yml Marks and closes stale issues/PRs. Uses GITHUB_TOKEN; adjust days/messages/labels.
+workflows/no-response.yml Closes items lacking required info. Uses GITHUB_TOKEN; change label or delay as needed.
+This catalog should help you replicate and adapt the repository’s GitHub automation in any new project.

@@ -133,7 +133,7 @@
           4,
           5
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -146,7 +146,7 @@
         "dependencies": [
           5
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -154,7 +154,7 @@
             "description": "Load the specified small open LLM and its tokenizer from the Hugging Face Hub, applying 4/8-bit quantization during model instantiation.",
             "dependencies": [],
             "details": "Use `transformers.AutoTokenizer.from_pretrained` to load the tokenizer. Use `transformers.AutoModelForCausalLM.from_pretrained` with a `bitsandbytes.BitsAndBytesConfig` to load the model in 4-bit (e.g., NF4) or 8-bit mode. This combines the model selection and quantization steps.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Verify that the model object is an instance of a quantized model and the tokenizer can process a sample string."
           },
           {
@@ -165,7 +165,7 @@
               "7.1"
             ],
             "details": "Create a `peft.LoraConfig` object, specifying the rank (`r`), `lora_alpha`, `target_modules` (e.g., `['q_proj', 'v_proj']`), and `task_type`. Use `peft.get_peft_model` to wrap the quantized model from the previous step.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Inspect the model's parameters and confirm that only the LoRA adapter weights are marked as trainable."
           },
           {
@@ -174,7 +174,7 @@
             "description": "Configure the `transformers.TrainingArguments` to ensure the training loop is deterministic and saves checkpoints periodically.",
             "dependencies": [],
             "details": "Instantiate `TrainingArguments`, setting a fixed `seed` for reproducibility. Configure `output_dir`, `per_device_train_batch_size`, `num_train_epochs`, `logging_steps`, and `save_strategy` (e.g., 'steps') along with `save_steps` to enable checkpointing.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Review the arguments object to ensure the seed and checkpointing parameters are correctly set before passing to the trainer."
           },
           {
@@ -186,7 +186,7 @@
               "7.3"
             ],
             "details": "Initialize `trl.SFTTrainer`, passing the PEFT model, training/evaluation datasets (from Task 5), the tokenizer, and the configured `TrainingArguments`. Call the `trainer.train()` method to start the fine-tuning loop.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run the training script for a small number of steps (e.g., 1-2) on a tiny dataset sample. Verify it completes without errors and a checkpoint directory is created."
           },
           {
@@ -197,7 +197,7 @@
               "7.4"
             ],
             "details": "Add logic (e.g., using `argparse`) to detect a `--resume-from-checkpoint` argument. If present, pass its value (the path to a checkpoint) to the `resume_from_checkpoint` parameter of the `trainer.train()` method.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Start a training run for 2 steps, stop it, then restart it with the `--resume-from-checkpoint` flag pointing to the 'checkpoint-2' directory. Verify from the logs that training resumes from step 3."
           }
         ]
@@ -212,7 +212,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -225,7 +225,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -238,14 +238,14 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Base model and tokenizer loader util",
             "description": "Utility to load a base model and tokenizer for evaluation.",
             "details": "Create `src/eval_utils.py:load_base(model_name_or_path: str, device: str)` that returns `(model, tokenizer)` using `AutoModelForCausalLM` and `AutoTokenizer`. Ensure `torch_dtype`, `device_map`, and `padding_side='left'` are set appropriately for generation. Test with a tiny model.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           },
@@ -254,7 +254,7 @@
             "title": "PEFT adapter load/apply util",
             "description": "Utility to load a PEFT adapter and apply to a base model.",
             "details": "Extend `src/eval_utils.py` with `load_with_adapter(base_model_name: str, adapter_path: str, device: str)` that loads base, applies `PeftModel.from_pretrained` (or `get_peft_model` + `PeftConfig.from_pretrained`), and returns `(model, tokenizer)`. Validate weights are loaded and set to eval.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           },
@@ -263,7 +263,7 @@
             "title": "CLI entrypoint scripts/eval.py",
             "description": "Main evaluation script with argparse for paths and options.",
             "details": "Create `scripts/eval.py` with arguments: `--base`, `--adapter`, `--suite`, `--out`, `--max-new-tokens`, `--temperature`, `--device`. Select loader based on presence of `--adapter`. Use tqdm logging.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           },
@@ -272,7 +272,7 @@
             "title": "Evaluation loop for base vs adapter",
             "description": "Generate responses from base and fine-tuned models over the suite.",
             "details": "Implement a loop that reads JSON/JSONL suite entries `{question, context?}`; formats prompts; runs `generate` on base and adapter models with fixed seeds; collects outputs with latency. Keep batch size small and handle device placement.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           },
@@ -281,7 +281,7 @@
             "title": "Save paired generations to JSONL/CSV",
             "description": "Write structured outputs with question/context, base, fine-tuned, and timing.",
             "details": "Add writers to emit JSONL (one record per item) and optional CSV. Fields: `id`, `question`, `context`, `base.text`, `adapter.text`, `base.latency_ms`, `adapter.latency_ms`. Validate files exist and contain expected keys.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 10
           }
@@ -297,7 +297,7 @@
         "dependencies": [
           10
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -310,7 +310,7 @@
         "dependencies": [
           11
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -323,7 +323,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -336,7 +336,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
@@ -344,7 +344,7 @@
             "description": "Create the initial file structure in the `api/` directory. Set up a minimal FastAPI application in `api/main.py` with two endpoints: a `GET /healthz` that returns a 200 OK status, and a placeholder `POST /generate` that returns a hardcoded response.",
             "dependencies": [],
             "details": "Initialize the FastAPI app object. Implement the `/healthz` endpoint to return `{\"status\": \"ok\"}`. The `/generate` endpoint can initially return a static JSON object like `{\"generated_text\": \"placeholder response\"}`.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Run `uv run uvicorn api.main:app` and send a GET request to `/healthz` to verify the status response. Send a POST request to `/generate` to verify the placeholder response."
           },
           {
@@ -355,7 +355,7 @@
               "14.1"
             ],
             "details": "In `api/main.py` or a new `api/models.py`, define a `GenerateRequest` model with a `prompt` field (string). Define a `GenerateResponse` model with a `generated_text` field (string). Update the `/generate` endpoint to use these models in its signature.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "With the app running, send a POST request to `/generate` with a valid JSON body (`{\"prompt\": \"hello\"}`). Verify it succeeds. Send a request with an invalid body (e.g., wrong field name) and verify FastAPI returns a 422 Unprocessable Entity error."
           },
           {
@@ -366,7 +366,7 @@
               "14.1"
             ],
             "details": "Create a dependency function that checks for an `X-API-Key` header. If the header is missing or its value doesn't match a predefined static key (e.g., from an environment variable), raise an `HTTPException` with a 401 status. Apply this dependency to the `/generate` endpoint.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Send a request to `/generate` without the `X-API-Key` header and verify a 401/403 error. Send a request with the correct header and verify a 200 OK response."
           },
           {
@@ -377,7 +377,7 @@
               "14.2"
             ],
             "details": "Modify the `GenerateRequest` model to accept either a single string or a list of strings for the `prompt` field (e.g., using `Union[str, List[str]]`). Update the `GenerateResponse` to return a corresponding single string or list of strings. The endpoint logic should handle both cases, iterating through prompts if a list is provided.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Test the `/generate` endpoint with a single prompt request. Then, test it with a batch request containing multiple prompts in a list and verify the response contains a corresponding list of generated texts."
           },
           {
@@ -388,7 +388,7 @@
               "14.1"
             ],
             "details": "Create a `run.sh` script containing the command `uv run uvicorn api.main:app --host 0.0.0.0 --port 8000`. Create an `api/README.md` file detailing how to install dependencies (e.g., `uv sync --dev`), how to run the service using the script, and providing `curl` examples for both the `/healthz` and `/generate` endpoints.",
-            "status": "pending",
+            "status": "done",
             "testStrategy": "Execute the `run.sh` script and verify the server starts. Follow the instructions in the new `README.md` to test the endpoints with `curl` and confirm they work as documented."
           }
         ]
@@ -403,7 +403,7 @@
         "dependencies": [
           7
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -416,7 +416,7 @@
         "dependencies": [
           6
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -430,7 +430,7 @@
           7,
           13
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -444,7 +444,7 @@
           16,
           17
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -457,8 +457,45 @@
         "dependencies": [
           8
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Add DPO data loader/mapper",
+            "description": "Extend data pipeline to load preference data with fields {prompt, chosen, rejected} and map to TRL DPOTrainer expected format.",
+            "details": "Implement loader that reads JSON/JSONL preference items and returns a Dataset with columns ['prompt','chosen','rejected']. Provide a small utility to validate records and to convert from our existing schema if needed.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 2,
+            "title": "Select trainer via config (SFT vs DPO)",
+            "description": "Update training entry to choose SFTTrainer or DPOTrainer based on a config flag.",
+            "details": "Add a config key like recipe: sft|dpo. When dpo, instantiate TRL DPOTrainer and DPOConfig (wire beta and shared args). Keep SFT path unchanged.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 3,
+            "title": "Add DPO config file",
+            "description": "Create configs/dpo.yaml with DPO-specific fields and doc differences vs sft.yaml.",
+            "details": "Include fields: recipe: dpo, model/splits/output, beta, max_length, batch sizes, logging/eval settings. Add README snippet on switching recipes.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 19
+          },
+          {
+            "id": 4,
+            "title": "DPO smoke test in CI",
+            "description": "Create tiny DPO dataset and minimal config to run a single training step and assert DPO path executes.",
+            "details": "Add a pytest that launches `scripts/train.py --config configs/dpo.yaml` on a tiny preference set, 1 step, asserting logs mention DPOTrainer and job completes.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 19
+          }
+        ]
       },
       {
         "id": 20,
@@ -471,7 +508,7 @@
           9,
           11
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -484,14 +521,14 @@
         "dependencies": [
           10
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Curate additional evaluation sets",
             "description": "Add at least two new JSON/JSONL evaluation suites for different support domains.",
             "details": "Create `eval/suites/support_billing.jsonl` and `eval/suites/support_setup.jsonl` with fields `{id, inputs:{question, context?}, outputs:{answer?}, meta:{tags[]}}`. Ensure coverage of varied intents and difficulty.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 21
           },
@@ -500,7 +537,7 @@
             "title": "Define error classification schema and rubric",
             "description": "Introduce structured error categories and a rubric for annotation.",
             "details": "Add `src/eval_schema.py` with `Enum ErrorType { REFUSAL, HALLUCINATION, STYLE, OTHER }` and rubric notes in `eval/README.md`. Provide examples and decision rules.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 21
           },
@@ -509,7 +546,7 @@
             "title": "Annotate eval outputs with error category",
             "description": "Modify evaluation to capture error categories per response.",
             "details": "Extend `scripts/eval.py` to optionally apply a rule-based tagger (using the rubric) and add `error_type` to each record. Leave hooks for manual review or future ML-based tagging.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 21
           },
@@ -518,7 +555,7 @@
             "title": "Aggregate and report error statistics",
             "description": "Update results summary to include error-type aggregates.",
             "details": "Extend results writer to compute counts and rates per `ErrorType` and print a summary table. Save an `error_stats.json` with aggregates per suite and overall.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 21
           }
@@ -563,7 +600,44 @@
           11
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integrate EarlyStoppingCallback",
+            "description": "Wire EarlyStoppingCallback into training and expose patience/metric in config.",
+            "details": "Add config fields {early_stopping_patience, metric_for_best_model, greater_is_better}. Pass load_best_model_at_end=True and register EarlyStoppingCallback with patience.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 2,
+            "title": "Create sweep runner (Optuna)",
+            "description": "Add scripts/sweep.py with Optuna objective that launches training and returns selected metric.",
+            "details": "Define objective sampling space for lr, lora_r, lora_dropout, gradient_accumulation_steps. Run N trials and write the best params/score to results/sweeps/.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 3,
+            "title": "Define search space via config",
+            "description": "Allow search ranges in YAML to drive sweep (e.g., learning_rate:[1e-5,1e-3], lora_r:[4,64])",
+            "details": "Update config parsing to accept a sweep section with ranges/choices; sweep runner reads it to build the Optuna search space.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          },
+          {
+            "id": 4,
+            "title": "Docs for sweeps + early stopping",
+            "description": "Document how to run a local sweep and interpret results; include early stopping usage.",
+            "details": "README section with example commands for scripts/sweep.py, environment tips, and how to read best trial output; note patience/metric config and CI-friendly defaults.",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 24
+          }
+        ]
       },
       {
         "id": 25,
@@ -668,7 +742,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-08-30T16:44:31.142Z",
+      "updated": "2025-09-02T17:39:28.022Z",
       "description": "Tasks for default context"
     }
   }

@@ -1,0 +1,44 @@
+# Example DPO recipe configuration
+recipe: dpo
+
+# Base components (override as needed)
+model: sshleifer/tiny-gpt2
+splits_dir: ./data/splits
+output_dir: ./results/dpo-out
+
+# Quantization & precision
+quant: none
+bf16: false
+fp16: false
+
+# LoRA defaults
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.05
+lora_target_modules:
+  - auto
+
+# Trainer settings
+epochs: 1
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 1
+learning_rate: 2e-5
+logging_steps: 1
+save_steps: 1
+eval_steps: 1
+seed: 42
+
+# Best-model selection (optional; may be ignored by some TRL versions)
+load_best_model_at_end: false
+metric_name: eval_loss
+greater_is_better: false
+
+# DPO-specific
+beta: 0.1
+max_length: 256
+max_prompt_length: 128
+
+# Optional explicit preference file paths (override autodetect train.dpo.jsonl/val.dpo.jsonl)
+# dpo_train_file: ./data/splits/train.dpo.jsonl
+# dpo_val_file: ./data/splits/val.dpo.jsonl

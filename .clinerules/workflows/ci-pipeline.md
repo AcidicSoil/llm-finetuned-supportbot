@@ -5,8 +5,8 @@ A production‑grade CI workflow for this repo that runs lint, tests, coverage, 
 
 **When to use / When not to use**
 
-* Use on every `push` and `pull_request` to `main` and feature branches.
-* Don’t use for deploys (create a separate `deploy-*.md`), or for local ad‑hoc runs (use `pytest` locally).
+- Use on every `push` and `pull_request` to `main` and feature branches.
+- Don’t use for deploys (create a separate `deploy-*.md`), or for local ad‑hoc runs (use `pytest` locally).
 
 ---
 
@@ -18,17 +18,17 @@ A production‑grade CI workflow for this repo that runs lint, tests, coverage, 
 
 ## Preconditions & Safety
 
-* [ ] Repo has `.git` and GitHub origin.
-* [ ] Tests live under `tests/` and run via `pytest`.
-* [ ] Dependencies pinned in `requirements.txt` (and optionally `requirements-dev.txt`).
-* [ ] No secrets committed to the repo; use **GitHub Secrets** only.
-* [ ] Workflows run on ephemeral VMs; treat filesystem as non‑persistent between jobs.
+- [ ] Repo has `.git` and GitHub origin.
+- [ ] Tests live under `tests/` and run via `pytest`.
+- [ ] Dependencies pinned in `requirements.txt` (and optionally `requirements-dev.txt`).
+- [ ] No secrets committed to the repo; use **GitHub Secrets** only.
+- [ ] Workflows run on ephemeral VMs; treat filesystem as non‑persistent between jobs.
 
 **Safety Rules**
 
-* Use built‑in `setup-python` caching (`cache: 'pip'`) and include a manual cache with `hashFiles()` fallback.
-* Gate destructive steps behind approvals.
-* Concurrency: cancel in‑flight older runs for the same branch to reduce CI spend.
+- Use built‑in `setup-python` caching (`cache: 'pip'`) and include a manual cache with `hashFiles()` fallback.
+- Gate destructive steps behind approvals.
+- Concurrency: cancel in‑flight older runs for the same branch to reduce CI spend.
 
 ---
 
@@ -36,16 +36,16 @@ A production‑grade CI workflow for this repo that runs lint, tests, coverage, 
 
 **Required**
 
-* `{{PY_MATRIX}}` — Python versions to test (default: `["3.10","3.11","3.12"]`)
-* `{{REQ_FILE}}` — path to runtime requirements (default: `requirements.txt`)
+- `{{PY_MATRIX}}` — Python versions to test (default: `["3.10","3.11","3.12"]`)
+- `{{REQ_FILE}}` — path to runtime requirements (default: `requirements.txt`)
 
 **Optional**
 
-* `{{REQ_DEV_FILE}}` — dev requirements (default: `requirements-dev.txt` if present)
-* `{{CI_NAME}}` — workflow file name (default: `ci.yml`)
-* `{{LINT_PATHS}}` — paths to lint (default: `"."`)
-* `{{TEST_FLAGS}}` — extra pytest flags (default: `-q --maxfail=1`)
-* `{{COVERAGE}}` — enable coverage (default: `true`)
+- `{{REQ_DEV_FILE}}` — dev requirements (default: `requirements-dev.txt` if present)
+- `{{CI_NAME}}` — workflow file name (default: `ci.yml`)
+- `{{LINT_PATHS}}` — paths to lint (default: `"."`)
+- `{{TEST_FLAGS}}` — extra pytest flags (default: `-q --maxfail=1`)
+- `{{COVERAGE}}` — enable coverage (default: `true`)
 
 ```xml
 <ask_followup_question>
@@ -58,13 +58,13 @@ A production‑grade CI workflow for this repo that runs lint, tests, coverage, 
 
 ## Tooling Inventory
 
-* `<read_file>` / `<search_files>` to detect existing workflows and requirements.
-* `@terminal` for local lint/test dry‑runs (optional).
-* GitHub Actions building blocks:
+- `<read_file>` / `<search_files>` to detect existing workflows and requirements.
+- `@terminal` for local lint/test dry‑runs (optional).
+- GitHub Actions building blocks:
 
-  * `actions/checkout@v4`, `actions/setup-python@v5`
-  * `actions/cache@v4`, `actions/upload-artifact@v4`
-* Python tools: `pip`, `pytest`, `coverage.py` (optional), `black`, `ruff`.
+  - `actions/checkout@v4`, `actions/setup-python@v5`
+  - `actions/cache@v4`, `actions/upload-artifact@v4`
+- Python tools: `pip`, `pytest`, `coverage.py` (optional), `black`, `ruff`.
 
 ---
 
@@ -256,54 +256,54 @@ git push origin HEAD
 
 ## Branching & Decisions
 
-* **Matrix versions:** Default `["3.10","3.11","3.12"]`. Trim if dependency constraints require it.
-* **Coverage on/off:** Controlled by `{{COVERAGE}}`. If off, skip `coverage` steps.
-* **Dev requirements:** Install `{{REQ_DEV_FILE}}` only if present.
-* **Fail‑fast:** Disabled in matrix to see all breakages; enable by toggling `strategy.fail-fast: true` if desired.
-* **Separate lint job:** Optional; keeps a fast signal for style.
+- **Matrix versions:** Default `["3.10","3.11","3.12"]`. Trim if dependency constraints require it.
+- **Coverage on/off:** Controlled by `{{COVERAGE}}`. If off, skip `coverage` steps.
+- **Dev requirements:** Install `{{REQ_DEV_FILE}}` only if present.
+- **Fail‑fast:** Disabled in matrix to see all breakages; enable by toggling `strategy.fail-fast: true` if desired.
+- **Separate lint job:** Optional; keeps a fast signal for style.
 
 ---
 
 ## Failure Handling & Recovery
 
-* **Dependency resolution fails**
+- **Dependency resolution fails**
 
-  * Retry with `pip install --no-cache-dir -r {{REQ_FILE}}`.
-  * Pin/adjust conflicting versions; regenerate `requirements.txt`.
-* **Lint failures**
+  - Retry with `pip install --no-cache-dir -r {{REQ_FILE}}`.
+  - Pin/adjust conflicting versions; regenerate `requirements.txt`.
+- **Lint failures**
 
-  * Run `black .` locally to auto‑format; fix `ruff` issues with `ruff --fix` where safe.
-* **Test failures**
+  - Run `black .` locally to auto‑format; fix `ruff` issues with `ruff --fix` where safe.
+- **Test failures**
 
-  * Inspect artifacts: `coverage.xml`, `coverage_html/`, and `.pytest_cache/`.
-  * Reproduce locally with same Python version shown in job name.
-* **Cache misses / stale cache**
+  - Inspect artifacts: `coverage.xml`, `coverage_html/`, and `.pytest_cache/`.
+  - Reproduce locally with same Python version shown in job name.
+- **Cache misses / stale cache**
 
-  * Cache keys are tied to `hashFiles('{{REQ_FILE}}','requirements-dev.txt')`. Update keys if lockfiles change.
-* **Long install times**
+  - Cache keys are tied to `hashFiles('{{REQ_FILE}}','requirements-dev.txt')`. Update keys if lockfiles change.
+- **Long install times**
 
-  * Consider building wheels in a dedicated job and caching `~/.cache/pip`.
-* **Intermittent flakiness**
+  - Consider building wheels in a dedicated job and caching `~/.cache/pip`.
+- **Intermittent flakiness**
 
-  * Mark tests with `@pytest.mark.flaky` + retries (plugin) or rerun jobs; investigate root cause.
+  - Mark tests with `@pytest.mark.flaky` + retries (plugin) or rerun jobs; investigate root cause.
 
 ---
 
 ## Verification & Exit Criteria
 
-* CI triggers on `push` and `pull_request`.
-* All matrix entries complete; status reported back to PR.
-* Artifacts present on failures (logs/coverage).
-* Lint and test steps are **required checks** before merge (configure in branch protection).
+- CI triggers on `push` and `pull_request`.
+- All matrix entries complete; status reported back to PR.
+- Artifacts present on failures (logs/coverage).
+- Lint and test steps are **required checks** before merge (configure in branch protection).
 
 ---
 
 ## Artifacts & Reporting
 
-* `coverage.xml` (for Codecov/Sonar if later integrated)
-* `coverage_html/` (human‑readable)
-* `.pytest_cache/` and optional `junit.xml` (if you enable `--junitxml=junit.xml`)
-* GitHub PR checks summary with per‑Python results
+- `coverage.xml` (for Codecov/Sonar if later integrated)
+- `coverage_html/` (human‑readable)
+- `.pytest_cache/` and optional `junit.xml` (if you enable `--junitxml=junit.xml`)
+- GitHub PR checks summary with per‑Python results
 
 ---
 
@@ -328,7 +328,7 @@ git add README.md && git commit -m "docs: add CI badge and local test instructio
 
 ## Cleanup
 
-* No long‑running resources in CI. Ensure artifacts are small; HTML coverage can be large—keep, but consider retention policies.
+- No long‑running resources in CI. Ensure artifacts are small; HTML coverage can be large—keep, but consider retention policies.
 
 ---
 
@@ -348,10 +348,10 @@ git add README.md && git commit -m "docs: add CI badge and local test instructio
 
 ### Notes & Tips
 
-* **Caching:** `setup-python@v5` with `cache: 'pip'` is usually enough. The fallback `actions/cache` keeps resilience when lockfiles aren’t detected.
-* **Parallelization:** Keep a single job with a matrix to simplify; add separate `lint-only` for quick feedback.
-* **Artifacts Retention:** Configure repo settings if you want shorter retention to save space.
-* **Coverage Gates:** You can fail builds on low coverage via `coverage report --fail-under=NN`.
+- **Caching:** `setup-python@v5` with `cache: 'pip'` is usually enough. The fallback `actions/cache` keeps resilience when lockfiles aren’t detected.
+- **Parallelization:** Keep a single job with a matrix to simplify; add separate `lint-only` for quick feedback.
+- **Artifacts Retention:** Configure repo settings if you want shorter retention to save space.
+- **Coverage Gates:** You can fail builds on low coverage via `coverage report --fail-under=NN`.
 
 ---
 
@@ -372,7 +372,7 @@ PY
 
 Require the following checks **before merging** into `main`:
 
-* `Lint & Test (py3.10)`
-* `Lint & Test (py3.11)`
-* `Lint & Test (py3.12)`
-* (Optional) `Lint Only (fast)`
+- `Lint & Test (py3.10)`
+- `Lint & Test (py3.11)`
+- `Lint & Test (py3.12)`
+- (Optional) `Lint Only (fast)`

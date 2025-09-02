@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime
 import re
-from typing import List, Optional, Sequence, Tuple
+from datetime import datetime
+from typing import List, Optional, Sequence, Tuple, Union
 
 from pydantic import BaseModel, field_validator
 
@@ -79,7 +79,7 @@ def validate_dataset(
     records: Sequence[DataRecord],
     *,
     allowed_tags: Optional[Sequence[str]] = None,
-) -> Tuple[bool, List[str]]:
+) -> Union[bool, Tuple[bool, List[str]]]:
     """Validate a collection of DataRecord items.
 
     Checks:
@@ -118,7 +118,13 @@ def validate_dataset(
     for rec in records:
         texts = [rec.inputs.question, rec.inputs.context or "", rec.outputs.answer]
         if any(scan_text(t) for t in texts):
-            issues.append(f"record {rec.id} may contain PII (email/phone-like patterns)")
+            issues.append(
+                f"record {rec.id} may contain PII (email/phone-like patterns)"
+            )
 
-    return (len(issues) == 0), issues
-
+    ok = len(issues) == 0
+    # For convenience, return a bare bool in the common "all good" case
+    # when no explicit tag policy is requested. Otherwise, return (ok, issues).
+    if ok and allowed_tags is None:
+        return True
+    return ok, issues

@@ -34,4 +34,3 @@ Extend `scripts/eval.py` to optionally apply a rule-based tagger (using the rubr
 ### Description: Update results summary to include error-type aggregates.
 ### Details:
 Extend results writer to compute counts and rates per `ErrorType` and print a summary table. Save an `error_stats.json` with aggregates per suite and overall.
-

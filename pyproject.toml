@@ -14,6 +14,11 @@ dependencies = [
     "bitsandbytes",
     "evaluate",
     "pydantic>2",
+    "black",
+    "ruff",
+    "pre-commit",
+    "fastapi[standard]",
+    "uvicorn"
 ]
 
 [dependency-groups]
@@ -23,5 +28,17 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-# Ensure tests can import from the src/ layout without editable install
 pythonpath = ["src"]
+  markers = [
+    "smoke: tiny online tests"
+  ]
+
+[tool.ruff]
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501", "E402"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

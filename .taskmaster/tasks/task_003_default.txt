@@ -1,6 +1,6 @@
 # Task ID: 3
 # Title: Implement Data Parsers for Various Sources
-# Status: pending
+# Status: done
 # Dependencies: 2
 # Priority: high
 # Description: Create parsers to load support dialogs, tickets, and Q&A data from different formats into the unified schema.

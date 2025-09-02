@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 from datetime import datetime
 from pathlib import Path
-from typing import IO, Iterable, List, Optional, Union
+from typing import IO, List, Optional, Union
 
 from pydantic import ValidationError
 
@@ -49,7 +49,9 @@ def load_csv_records(source: Union[PathLike, FileLike]) -> List[DataRecord]:
     """
     opened, fp = _ensure_path(source)
     try:
-        reader = csv.DictReader(fp)
+        # Use restkey so trailing, unquoted commas in last column (e.g., tags)
+        # don't get silently dropped by the csv module; we'll merge them below.
+        reader = csv.DictReader(fp, restkey="__rest__")
         required = {"id", "question", "answer", "source", "timestamp"}
         missing = required - set(reader.fieldnames or [])
         if missing:
@@ -58,6 +60,15 @@ def load_csv_records(source: Union[PathLike, FileLike]) -> List[DataRecord]:
         items: List[DataRecord] = []
         for row_idx, row in enumerate(reader, start=2):  # include header line
             try:
+                # Merge any overflow columns (from restkey) into the tags field
+                raw_tags = row.get("tags") or ""
+                overflow = row.get("__rest__")
+                if overflow:
+                    # join extras with commas to be parsed by _parse_tags
+                    raw_tags = ",".join(
+                        [raw_tags] + [str(x) for x in overflow if x is not None]
+                    ).strip(", ")
+
                 rec = DataRecord(
                     id=(row.get("id") or "").strip(),
                     inputs=Inputs(
@@ -70,7 +81,7 @@ def load_csv_records(source: Union[PathLike, FileLike]) -> List[DataRecord]:
                     meta=Meta(
                         source=(row.get("source") or "").strip(),
                         timestamp=_parse_timestamp(row.get("timestamp") or ""),
-                        tags=_parse_tags(row.get("tags")),
+                        tags=_parse_tags(raw_tags),
                     ),
                 )
             except (ValidationError, Exception) as e:  # noqa: BLE001
@@ -80,4 +91,3 @@ def load_csv_records(source: Union[PathLike, FileLike]) -> List[DataRecord]:
     finally:
         if opened is not None:
             opened.close()
-

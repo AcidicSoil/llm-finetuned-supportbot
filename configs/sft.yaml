@@ -1,0 +1,42 @@
+# Example YAML config for LoRA SFT training
+# Keys map to CLI flags in scripts/train_lora.py and can be overridden on CLI.
+
+# Base artifacts and data
+model: mistralai/Mistral-7B-Instruct-v0.3
+splits_dir: data/processed/splits
+output_dir: runs/sft_mistral_lora
+
+# Quantization
+quant: 4bit            # one of: 4bit, 8bit, none
+bnb_compute_dtype: bfloat16
+bnb_quant_type: nf4    # nf4 or fp4
+bnb_double_quant: true
+
+# LoRA
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# Trainer
+epochs: 1
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 4
+learning_rate: 2.0e-5
+logging_steps: 10
+save_steps: 50
+eval_steps: 100
+seed: 42
+bf16: true
+fp16: false
+
+# Optional: resume from a previous checkpoint
+# resume_from_checkpoint: runs/sft_mistral_lora/checkpoint-500
