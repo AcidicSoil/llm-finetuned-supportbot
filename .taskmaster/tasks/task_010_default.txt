@@ -1,6 +1,6 @@
 # Task ID: 10
 # Title: Develop Evaluation Harness
-# Status: pending
+# Status: done
 # Dependencies: 7
 # Priority: high
 # Description: Create a script to run a fine-tuned model and a base model against a predefined evaluation question suite.
@@ -11,32 +11,33 @@ Create `scripts/eval.py` that loads a fine-tuned model (adapter) and a base mode
 Run the script on a trained model and a base model with a small 5-question suite. Verify that it generates outputs for both models for all questions.
 
 # Subtasks:
-## 1. Base model and tokenizer loader util [pending]
+## 1. Base model and tokenizer loader util [done]
 ### Dependencies: None
 ### Description: Utility to load a base model and tokenizer for evaluation.
 ### Details:
 Create `src/eval_utils.py:load_base(model_name_or_path: str, device: str)` that returns `(model, tokenizer)` using `AutoModelForCausalLM` and `AutoTokenizer`. Ensure `torch_dtype`, `device_map`, and `padding_side='left'` are set appropriately for generation. Test with a tiny model.
 
-## 2. PEFT adapter load/apply util [pending]
+## 2. PEFT adapter load/apply util [done]
 ### Dependencies: None
 ### Description: Utility to load a PEFT adapter and apply to a base model.
 ### Details:
 Extend `src/eval_utils.py` with `load_with_adapter(base_model_name: str, adapter_path: str, device: str)` that loads base, applies `PeftModel.from_pretrained` (or `get_peft_model` + `PeftConfig.from_pretrained`), and returns `(model, tokenizer)`. Validate weights are loaded and set to eval.
 
-## 3. CLI entrypoint scripts/eval.py [pending]
+## 3. CLI entrypoint scripts/eval.py [done]
 ### Dependencies: None
 ### Description: Main evaluation script with argparse for paths and options.
 ### Details:
 Create `scripts/eval.py` with arguments: `--base`, `--adapter`, `--suite`, `--out`, `--max-new-tokens`, `--temperature`, `--device`. Select loader based on presence of `--adapter`. Use tqdm logging.
 
-## 4. Evaluation loop for base vs adapter [pending]
+## 4. Evaluation loop for base vs adapter [done]
 ### Dependencies: None
 ### Description: Generate responses from base and fine-tuned models over the suite.
 ### Details:
 Implement a loop that reads JSON/JSONL suite entries `{question, context?}`; formats prompts; runs `generate` on base and adapter models with fixed seeds; collects outputs with latency. Keep batch size small and handle device placement.
 
-## 5. Save paired generations to JSONL/CSV [pending]
+## 5. Save paired generations to JSONL/CSV [done]
 ### Dependencies: None
 ### Description: Write structured outputs with question/context, base, fine-tuned, and timing.
 ### Details:
 Add writers to emit JSONL (one record per item) and optional CSV. Fields: `id`, `question`, `context`, `base.text`, `adapter.text`, `base.latency_ms`, `adapter.latency_ms`. Validate files exist and contain expected keys.
+

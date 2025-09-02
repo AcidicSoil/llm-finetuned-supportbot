@@ -1,6 +1,6 @@
 # Task ID: 18
 # Title: Setup Basic CI Pipeline
-# Status: pending
+# Status: done
 # Dependencies: 16, 17
 # Priority: high
 # Description: Configure a continuous integration pipeline to run checks on code changes.

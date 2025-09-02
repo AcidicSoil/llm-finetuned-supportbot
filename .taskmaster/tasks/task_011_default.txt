@@ -1,6 +1,6 @@
 # Task ID: 11
 # Title: Implement Automated Metrics Calculation
-# Status: pending
+# Status: done
 # Dependencies: 10
 # Priority: high
 # Description: Calculate win-rate and hallucination rate based on the evaluation harness outputs.

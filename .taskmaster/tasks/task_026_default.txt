@@ -40,3 +40,4 @@ Update `demo.py` to accept `--template` and apply `apply_template` with `{questi
 ### Description: Support optional template parameter in `/generate`.
 ### Details:
 Extend `api` service request model to include optional `template`. Use `apply_template` to build the final prompt for both single and batch requests.
+

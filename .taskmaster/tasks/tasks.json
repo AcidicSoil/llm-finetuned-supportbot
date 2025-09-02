@@ -572,8 +572,63 @@
           5,
           7
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define chunking config options",
+            "description": "",
+            "details": "Add config keys: chunking.strategy = [\"truncate\",\"sliding_window\"], chunking.max_seq_length, chunking.stride. Wire into configs/sft.yaml and dpo.yaml with sensible defaults.",
+            "status": "done",
+            "dependencies": [],
+            "parentTaskId": 22
+          },
+          {
+            "id": 2,
+            "title": "Implement sliding-window chunker",
+            "description": "",
+            "details": "Add a reusable function (e.g., src/chunking.py) that splits text into overlapping chunks using max_seq_length and stride; returns token ids and attention masks ready for model input.",
+            "status": "done",
+            "dependencies": [
+              "22.1"
+            ],
+            "parentTaskId": 22
+          },
+          {
+            "id": 3,
+            "title": "Integrate chunking into preprocessing & inference",
+            "description": "",
+            "details": "Use the chunker in scripts/tokenize_dataset.py and in inference (api/main.py or demo.py) so both training and inference can handle long inputs consistently.",
+            "status": "done",
+            "dependencies": [
+              "22.2"
+            ],
+            "parentTaskId": 22
+          },
+          {
+            "id": 4,
+            "title": "Unit tests for windowing and edge cases",
+            "description": "",
+            "details": "Add tests that verify: (1) over-length inputs produce multiple chunks with expected overlap; (2) exactly-at-limit yields one chunk; (3) tiny inputs; (4) masks and shapes are valid.",
+            "status": "done",
+            "dependencies": [
+              "22.2"
+            ],
+            "parentTaskId": 22
+          },
+          {
+            "id": 5,
+            "title": "CLI/docs wiring",
+            "description": "",
+            "details": "Expose a CLI flag to choose chunking strategy and stride; document tradeoffs in README and configs. Ensure CI passes with new tests.",
+            "status": "done",
+            "dependencies": [
+              "22.3",
+              "22.4"
+            ],
+            "parentTaskId": 22
+          }
+        ]
       },
       {
         "id": 23,
@@ -586,7 +641,61 @@
           8
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define preset YAMLs",
+            "description": "",
+            "details": "Add preset overlays under configs/presets/: cpu.yaml (no AMP, ga=1), gpu-bf16.yaml (bf16 on, ga=1), gpu-fp16.yaml (fp16 on, ga=1), memory-efficient.yaml (reduce batch size, increase gradient_accumulation_steps).",
+            "status": "pending",
+            "dependencies": [],
+            "parentTaskId": 23
+          },
+          {
+            "id": 2,
+            "title": "Add --preset overlay flag",
+            "description": "",
+            "details": "Update scripts/train_lora.py to accept --preset <name>. If provided, load configs/presets/<name>.yaml and apply as defaults before CLI overrides.",
+            "status": "pending",
+            "dependencies": [
+              "23.1"
+            ],
+            "parentTaskId": 23
+          },
+          {
+            "id": 3,
+            "title": "Auto-detect precision support (optional)",
+            "description": "",
+            "details": "If --preset not provided, optionally auto-enable bf16 when torch.cuda.is_available() and torch.cuda.get_device_capability>= (8,0) and bf16 supported; else leave as configured.",
+            "status": "pending",
+            "dependencies": [
+              "23.2"
+            ],
+            "parentTaskId": 23
+          },
+          {
+            "id": 4,
+            "title": "Tests: preset overlay precedence",
+            "description": "",
+            "details": "Unit test that --preset loads YAML overlay and CLI flags still override. Verify bf16/fp16 and gradient_accumulation_steps values in args snapshot prior to trainer init.",
+            "status": "pending",
+            "dependencies": [
+              "23.2"
+            ],
+            "parentTaskId": 23
+          },
+          {
+            "id": 5,
+            "title": "Docs: presets quickstart",
+            "description": "",
+            "details": "Add README section with examples for presets and a table of recommended combos (CPU, single-GPU bf16, older-GPU fp16, memory-efficient).",
+            "status": "pending",
+            "dependencies": [
+              "23.1"
+            ],
+            "parentTaskId": 23
+          }
+        ]
       },
       {
         "id": 24,
@@ -742,7 +851,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-09-02T17:39:28.022Z",
+      "updated": "2025-09-02T21:21:25.707Z",
       "description": "Tasks for default context"
     }
   }

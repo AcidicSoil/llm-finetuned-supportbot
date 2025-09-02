@@ -40,3 +40,4 @@ Initialize `trl.SFTTrainer`, passing the PEFT model, training/evaluation dataset
 ### Description: Modify the training script to handle a command-line argument that allows resuming training from a specified checkpoint directory.
 ### Details:
 Add logic (e.g., using `argparse`) to detect a `--resume-from-checkpoint` argument. If present, pass its value (the path to a checkpoint) to the `resume_from_checkpoint` parameter of the `trainer.train()` method.
+

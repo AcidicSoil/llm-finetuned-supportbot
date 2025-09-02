@@ -1,6 +1,6 @@
 # Task ID: 16
 # Title: Write Unit Tests for Data Pipeline
-# Status: pending
+# Status: done
 # Dependencies: 6
 # Priority: high
 # Description: Create unit tests for the data loading, validation, and splitting components.

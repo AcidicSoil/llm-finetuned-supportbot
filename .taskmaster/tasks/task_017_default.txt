@@ -1,6 +1,6 @@
 # Task ID: 17
 # Title: Write Smoke Tests for Training and Inference
-# Status: pending
+# Status: done
 # Dependencies: 7, 13
 # Priority: high
 # Description: Create fast-running tests to ensure the main training and inference paths are not broken.

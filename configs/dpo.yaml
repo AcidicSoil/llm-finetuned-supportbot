@@ -39,6 +39,12 @@ beta: 0.1
 max_length: 256
 max_prompt_length: 128
 
+# Chunking (advanced input handling)
+chunking:
+  strategy: truncate        # one of: truncate, sliding_window
+  max_seq_length: 512
+  stride: 128
+
 # Optional explicit preference file paths (override autodetect train.dpo.jsonl/val.dpo.jsonl)
 # dpo_train_file: ./data/splits/train.dpo.jsonl
 # dpo_val_file: ./data/splits/val.dpo.jsonl

@@ -38,5 +38,11 @@ seed: 42
 bf16: true
 fp16: false
 
+# Chunking (advanced input handling)
+chunking:
+  strategy: truncate        # one of: truncate, sliding_window
+  max_seq_length: 512       # applies to prompts/answers in preprocessing
+  stride: 128               # overlap when using sliding_window
+
 # Optional: resume from a previous checkpoint
 # resume_from_checkpoint: runs/sft_mistral_lora/checkpoint-500
