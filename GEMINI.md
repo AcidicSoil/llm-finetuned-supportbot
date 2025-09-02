@@ -7,7 +7,7 @@
 
 ## Instruction Loading Model (Simplified)
 
-- **Baseline:** This file (**AGENTS.md**) is the canonical baseline for all assistant behavior.
+- **Baseline:** This file (**GEMINI.md**) is the canonical baseline for all assistant behavior.
 - **Auto-discovered extensions (no tags):** At **session start**, the assistant **scans** the repository’s `instructions/` directory and proposes any instruction files it finds for inclusion. **User confirmation is required** before they affect behavior.
 
   - Valid instruction files: `instructions/**/*.md` or `instructions/**/*.txt` (recursive).
@@ -48,7 +48,7 @@
 2. **Confirmation:** present the list; user selects and orders; default = none.
 3. **Loading model:**
 
-   - **Baseline** = AGENTS.md
+   - **Baseline** = GEMINI.md
    - **Extensions** = user-approved files from `instructions/` (loaded left → right in the confirmed order)
    - **Conflict rule** = The more specific **extension** wins within its scope; otherwise baseline holds.
 4. **Context files:** Any `@{...}` references are added to retrieval only and are reported under `DocFetchReport.context_files`.
@@ -72,10 +72,10 @@
 
 - **Baseline only** (no extra behavior files applied):
 
-  - `codex-cli run "Summarize the repo structure"`
+  - `gemini run "Summarize the repo structure"`
 - **Context only (no behavior change):**
 
-  - `codex-cli run "Analyze these examples @{examples/*.md}"`
+  - `gemini run "Analyze these examples @{examples/*.md}"`
 - **Add/modify behavior for this run:**
 
   - Place/modify files under `instructions/`, then start a new session; confirm which to apply and in what order when prompted.
@@ -90,7 +90,7 @@
   - **Approved instruction files** from `instructions/` (the final confirmed set and order).
 - **Compose instructions**
 
-  1. Apply AGENTS.md (baseline)
+  1. Apply GEMINI.md (baseline)
   2. Layer the **approved **`instructions/`** files** (left → right, final order)
   3. Resolve conflicts per rules above
 - Proceed only when `DocFetchReport.status == "OK"` (Decision Gate §B).
@@ -127,6 +127,9 @@ When discovery/confirmation is used, add:
     ],
     "proposed_mcp_servers": [
       {"name": "<lib> Docs", "url": "https://gitmcp.io/{OWNER}/{REPO}", "source": "techstack-bootstrap", "status": "proposed"}
+    ],
+    "owner_repo_resolution": [
+      {"library": "<lib>", "candidates": ["owner1/repo1", "owner2/repo2"], "selected": "owner/repo", "confidence": 0.92, "method": "registry|package_index|docs_link|search"}
     ],
     "techstack_toml": "<fenced TOML emitted in §A.2>"
   }
@@ -223,6 +226,17 @@ When discovery/confirmation is used, add:
   - File extensions in repo (`.py`, `.ts`, `.js`, `.sh`, `.sql`, etc.).
   - User/task context (explicit mentions of frameworks, CLIs, infra).
 
+- **Repo mapping requirement (NEW):** Resolve the **canonical GitHub OWNER/REPO** for each detected library/tool whenever feasible.
+
+  - **Resolution order:**
+
+    1. **Registry mapping** (maintained lookup table for common libs).
+    2. **Package index metadata** (e.g., PyPI `project_urls` → `Source`/`Homepage`; npm `package.json` → `repository.url`).
+    3. **Official docs → GitHub link** discovery.
+    4. **Targeted search** (as a last resort) with guardrails below.
+  - **Guardrails:** Prefer official orgs; require name similarity and recent activity; avoid forks and mirrors unless explicitly chosen.
+  - Record outcomes in `DocFetchReport.owner_repo_resolution[]` with candidates, selected repo, method, and confidence score.
+
 - Doc retrieval (§A) **must cover each identified language and stack element** that will be touched by the task.
 
 - Record both in the `DocFetchReport`:
@@ -238,7 +252,7 @@ When discovery/confirmation is used, add:
 
 **Goal:** On the **first session for a new project**, generate a **ready-to-paste TOML** block that wires detected tech-stack docs into **GitMCP** servers for use by codex-cli (or any MCP-compatible client).
 
-**When:** Run **after** §A.1 (tech stack identified) and **before** §A (Preflight) proceeds. This step is **idempotent** and **one-time per project**.
+**When:** Run **after** §A.1 (tech stack identified & repo mapping attempted) and **before** §A (Preflight) proceeds. This step is **idempotent** and **one-time per project**.
 
 **Idempotency / Guard:**
 
@@ -252,7 +266,7 @@ When discovery/confirmation is used, add:
 
 1. Take the stack from §A.1 (`DocFetchReport.tech_stack`).
 2. For each library/tool `X`, propose an MCP server entry named `"X Docs"` using the **GitMCP** URL template `https://gitmcp.io/{OWNER}/{REPO}`.
-3. We do **not** guess owners by default — placeholders `{OWNER}` and `{REPO}` are emitted for user fill-in. (Optionally, we may suggest likely repos inside comments when confidently known.)
+3. **OWNER/REPO Auto‑Resolution (NEW):** Attempt to **fill** `{OWNER}/{REPO}` automatically using the repo mapping from §A.1. If confidence ≥ **0.85**, insert the resolved value; otherwise keep placeholders and add a TOML **comment** with the top 1–2 candidates.
 
 **Generated artifact (fenced TOML + file):**
 
@@ -267,7 +281,7 @@ When discovery/confirmation is used, add:
 
 [mcp_servers]
 
-# Example for FastAPI
+# Example for FastAPI (auto-resolved if confidence ≥ 0.85; else left as placeholder with candidates)
 [mcp_servers.fastapi_docs]
 command = "npx"
 args = [
@@ -279,34 +293,24 @@ args = [
 # [mcp_servers.<slug>_docs]
 # command = "npx"
 # args = ["mcp-remote", "https://gitmcp.io/{OWNER}/{REPO}"]
-```
 
-**Concrete example (if `fastapi` detected):**
-
-```toml
-[mcp_servers.fastapi_docs]
-command = "npx"
-args = ["mcp-remote", "https://gitmcp.io/{OWNER}/{REPO}"]
-```
-
-**Also support a generic docs server:**
-
-```toml
+# Generic docs server
 [mcp_servers.gitmcp_docs]
 command = "npx"
 args = ["mcp-remote", "https://gitmcp.io/docs"]
 ```
 
-**Acceptance Flow:**
+**Acceptance Flow (updated):**
 
 - After emission, prompt the user: **“Insert into codex-cli `config.toml` now?”**
 
   - If **yes**: append the generated block under `[mcp_servers]` (or merge keys if already present).
   - If **no**: leave `config/mcp_servers.generated.toml` for manual review.
+  - If any OWNER/REPO values were auto‑filled, show a **diff preview** and allow quick **Accept**/**Override** for each.
 
-**Reporting:**
+**Reporting (updated):**
 
-- Add `proposed_mcp_servers[]` and `techstack_toml` to `DocFetchReport` (see earlier Addendum) with the exact names/URLs proposed.
+- Add `proposed_mcp_servers[]`, `owner_repo_resolution[]`, and `techstack_toml` to `DocFetchReport` with the exact names/URLs proposed and confidence scores.
 
 ---
 
@@ -374,9 +378,9 @@ args = ["mcp-remote", "https://gitmcp.io/docs"]
   - **Build check** — run the project’s docs build (`npm run docs:build` | `mkdocs build` | `sphinx-build`) if available. Record the result under `DocFetchReport.observations.docs_build`.
   - **Sync scripts** — run `docs:sync`/`docs-sync` if defined; otherwise propose a TODO in the completion note.
   - **Commit style** — use commit prefix `[docs] <scope>: <summary>` and link PR/issue.
-  - **Scope guard** — never edit `AGENTS.md` as part of docs maintenance.
+  - **Scope guard** — never edit `GEMINI.md` as part of docs maintenance.
 - Seed/Update the knowledge graph **before** exiting the task so subsequent sessions can leverage it.
-- Do **NOT** write to `AGENTS.md` beyond these standing instructions.
+- Do **NOT** write to `GEMINI.md` beyond these standing instructions.
 
 ## 3) Status management
 

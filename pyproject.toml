@@ -29,6 +29,9 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+  markers = [
+    "smoke: tiny online tests"
+  ]
 
 [tool.ruff]
 src = ["src"]

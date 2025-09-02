@@ -90,4 +90,3 @@ def test_training_one_step_tiny_model():
         # Check that adapter files exist
         # trainer.save_model() writes adapter_config.json/adapter_model.bin
         assert (out_dir / "adapter_config.json").exists() or any(p.name == "adapter_config.json" for p in out_dir.rglob("adapter_config.json"))
-

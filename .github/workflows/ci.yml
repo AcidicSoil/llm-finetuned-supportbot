@@ -33,11 +33,22 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install uv
+      - name: Install uv (with cache)
         uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
 
       - name: Install project dependencies
         run: uv sync --locked --all-extras --group dev
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Black format check
+        run: uv run black --check .
 
       - name: Run tests (offline; smoke skipped)
         run: uv run -m pytest -q
@@ -58,11 +69,22 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install uv
+      - name: Install uv (with cache)
         uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            **/pyproject.toml
+            **/uv.lock
 
       - name: Install project dependencies
         run: uv sync --locked --all-extras --group dev
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Black format check
+        run: uv run black --check .
 
       - name: Run smoke tests (online; pulls tiny model)
         run: uv run -m pytest -q -m smoke tests/smoke

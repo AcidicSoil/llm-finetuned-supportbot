@@ -41,8 +41,9 @@ def test_load_model_and_tokenizer_basic(monkeypatch):
     fake_transformers.AutoTokenizer = _Tok
     fake_transformers.AutoModelForCausalLM = auto_model
 
-    sys.modules.setdefault("transformers", fake_transformers)
-    sys.modules.setdefault("torch", make_fake_torch())
+    # Force stub modules to be used even if real ones were imported earlier
+    sys.modules["transformers"] = fake_transformers
+    sys.modules["torch"] = make_fake_torch()
 
     from src import evaluation as evalmod
 

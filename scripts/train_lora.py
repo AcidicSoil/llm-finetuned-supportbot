@@ -72,17 +72,31 @@ def _bitsandbytes_config(quant: str, *, compute_dtype: str, quant_type: str, dou
     )
 
 
-def _default_lora_targets() -> List[str]:
-    # Common projections for LLaMA/Mistral-style blocks; configurable via CLI
-    return [
-        "q_proj",
-        "k_proj",
-        "v_proj",
-        "o_proj",
-        "gate_proj",
-        "up_proj",
-        "down_proj",
-    ]
+def _infer_lora_targets_from_model(model) -> List[str]:
+    """Infer sensible LoRA targets based on module names.
+
+    - LLaMA/Mistral/Qwen2-style: q_proj/k_proj/v_proj/o_proj/gate_proj/up_proj/down_proj
+    - GPT-2-style: c_attn/c_fc/c_proj
+    - Falcon-style: query_key_value/dense_h_to_4h/dense_4h_to_h
+    Fallback: return an empty list to let PEFT decide or error early.
+    """
+    names = [n for n, _ in model.named_modules()]
+    joined = "\n".join(names)
+    if any(".c_attn" in n for n in names):
+        return ["c_attn", "c_fc", "c_proj"]
+    if any(".q_proj" in n for n in names):
+        return [
+            "q_proj",
+            "k_proj",
+            "v_proj",
+            "o_proj",
+            "gate_proj",
+            "up_proj",
+            "down_proj",
+        ]
+    if any(".query_key_value" in n for n in names):
+        return ["query_key_value", "dense_h_to_4h", "dense_4h_to_h"]
+    return []
 
 
 def parse_args() -> argparse.Namespace:
@@ -96,9 +110,10 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="LoRA SFT training with quantization")
     # Config file (YAML) support
     p.add_argument("--config", type=Path, default=None, help="Path to YAML config with training params")
-    p.add_argument("--model", required=True, help="Base HF model id (e.g., 'mistralai/Mistral-7B-Instruct-v0.3')")
-    p.add_argument("--splits-dir", type=Path, required=True, help="Directory containing train.jsonl and val.jsonl (from prepare_data)")
-    p.add_argument("--output-dir", type=Path, required=True, help="Training output directory for checkpoints")
+    # Mark as optional to allow programmatic/test invocation; we validate in main()
+    p.add_argument("--model", required=False, help="Base HF model id (e.g., 'mistralai/Mistral-7B-Instruct-v0.3')")
+    p.add_argument("--splits-dir", type=Path, required=False, help="Directory containing train.jsonl and val.jsonl (from prepare_data)")
+    p.add_argument("--output-dir", type=Path, required=False, help="Training output directory for checkpoints")
 
     # Quantization
     p.add_argument("--quant", default="4bit", choices=["4bit", "8bit", "none"], help="Quantization mode (default: 4bit)")
@@ -113,8 +128,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--lora-target-modules",
         nargs="*",
-        default=_default_lora_targets(),
-        help="Target module names for LoRA (default: common proj layers)",
+        default=["auto"],
+        help="Target module names for LoRA; use 'auto' to infer based on model (default)",
     )
 
     # Trainer
@@ -129,6 +144,31 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--bf16", action="store_true", help="Enable bfloat16 mixed precision if supported")
     p.add_argument("--fp16", action="store_true", help="Enable float16 mixed precision if supported")
+    # Best model selection
+    p.add_argument(
+        "--load-best-model-at-end",
+        dest="load_best_model_at_end",
+        action="store_true",
+        help="Load the best checkpoint (per metric) after training",
+    )
+    p.add_argument(
+        "--metric-name",
+        default="eval_loss",
+        help="Metric name for best-model selection (default: eval_loss)",
+    )
+    p.add_argument(
+        "--greater-is-better",
+        dest="greater_is_better",
+        action="store_true",
+        help="Whether a higher metric value is better (default: False)",
+    )
+    p.add_argument(
+        "--no-greater-is-better",
+        dest="greater_is_better",
+        action="store_false",
+        help="Set greater_is_better to False (useful with eval_loss)",
+    )
+    p.set_defaults(greater_is_better=False)
 
     # Resume support
     p.add_argument(
@@ -151,7 +191,8 @@ def parse_args() -> argparse.Namespace:
         # NOTE: CLI flags will override these defaults on the final parse.
         p.set_defaults(**loaded)
 
-    args = p.parse_args()
+    # Use parse_known_args so test runners' flags (e.g., -q) don't break parsing
+    args, _unknown = p.parse_known_args()
     # Echo effective config for reproducibility
     try:
         # Serialize Path objects to str for printing
@@ -171,6 +212,10 @@ def main() -> None:
     args = parse_args()
 
     set_seed(args.seed)
+
+    # Validate required arguments when running as a CLI
+    if not args.model or not args.splits_dir or not args.output_dir:
+        raise SystemExit("--model, --splits-dir, and --output-dir are required")
 
     train_path = args.splits_dir / "train.jsonl"
     val_path = args.splits_dir / "val.jsonl"
@@ -213,13 +258,25 @@ def main() -> None:
 
     # Apply LoRA via PEFT
     print("[train_lora] Applying LoRA adapters…")
+    # Determine targets
+    targets = list(args.lora_target_modules)
+    if len(targets) == 1 and isinstance(targets[0], str) and targets[0].lower() == "auto":
+        targets = _infer_lora_targets_from_model(model)
+        if not targets:
+            raise SystemExit("Could not infer LoRA target modules for this model; please pass --lora-target-modules …")
+        print(f"[train_lora] Inferred LoRA targets: {targets}")
+
+    # Auto-adjust fan_in_fan_out for GPT-2 Conv1D blocks to avoid PEFT warning
+    fan_in_fan_out = any(t in {"c_attn", "c_fc", "c_proj"} for t in targets)
+
     lora_cfg = LoraConfig(
         r=int(args.lora_r),
         lora_alpha=int(args.lora_alpha),
         lora_dropout=float(args.lora_dropout),
-        target_modules=list(args.lora_target_modules),
+        target_modules=targets,
         task_type=TaskType.CAUSAL_LM,
         bias="none",
+        fan_in_fan_out=fan_in_fan_out,
     )
     model = get_peft_model(model, lora_cfg)
     # Optional: show trainable share
@@ -228,35 +285,77 @@ def main() -> None:
     except Exception:
         pass
 
-    # SFT training args
+    # SFT training args (version-tolerant)
     print("[train_lora] Preparing trainer…")
-    training_args = SFTConfig(
-        output_dir=str(args.output_dir),
-        overwrite_output_dir=True,
-        num_train_epochs=args.epochs,
-        per_device_train_batch_size=args.per_device_train_batch_size,
-        per_device_eval_batch_size=args.per_device_eval_batch_size,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
-        learning_rate=args.learning_rate,
-        logging_steps=args.logging_steps,
-        save_strategy="steps",
-        save_steps=args.save_steps,
-        evaluation_strategy="steps",
-        eval_steps=args.eval_steps,
-        seed=args.seed,
-        fp16=args.fp16,
-        bf16=args.bf16,
-        report_to=[],  # disable wandb/tensorboard by default
-    )
+    base_kwargs = {
+        "output_dir": str(args.output_dir),
+        "overwrite_output_dir": True,
+        "num_train_epochs": args.epochs,
+        "per_device_train_batch_size": args.per_device_train_batch_size,
+        "per_device_eval_batch_size": args.per_device_eval_batch_size,
+        "gradient_accumulation_steps": args.gradient_accumulation_steps,
+        "learning_rate": args.learning_rate,
+        "logging_steps": args.logging_steps,
+        "save_strategy": "steps",
+        "save_steps": args.save_steps,
+        # evaluation/eval_steps vary across TRL versions
+        "evaluation_strategy": "steps",
+        "eval_steps": args.eval_steps,
+        "seed": args.seed,
+        "fp16": args.fp16,
+        "bf16": args.bf16,
+        "report_to": [],
+        # Silence pin_memory warning on CPU-only runs
+        "dataloader_pin_memory": bool(torch.cuda.is_available()),
+        # best-model selection (may be ignored if unsupported by current TRL)
+        "load_best_model_at_end": bool(args.load_best_model_at_end),
+        "metric_for_best_model": str(args.metric_name),
+        "greater_is_better": bool(args.greater_is_better),
+    }
 
-    trainer = SFTTrainer(
-        model=model,
-        args=training_args,
-        tokenizer=tokenizer,
-        train_dataset=train_ds,
-        eval_dataset=eval_ds,
-        peft_config=lora_cfg,
-    )
+    # Filter kwargs to those supported by this SFTConfig
+    try:
+        from dataclasses import is_dataclass, fields as dc_fields
+        allowed = set(f.name for f in dc_fields(SFTConfig)) if is_dataclass(SFTConfig) else set()
+    except Exception:
+        allowed = set()
+
+    # Map evaluation_strategy -> eval_strategy if needed
+    if "evaluation_strategy" in base_kwargs and allowed and "evaluation_strategy" not in allowed and "eval_strategy" in allowed:
+        base_kwargs["eval_strategy"] = base_kwargs.pop("evaluation_strategy")
+
+    training_kwargs = {k: v for k, v in base_kwargs.items() if (not allowed) or (k in allowed)}
+    training_args = SFTConfig(**training_kwargs)
+
+    # Build version-tolerant kwargs for SFTTrainer
+    import inspect
+    trainer_kwargs = {
+        "model": model,
+        "train_dataset": train_ds,
+        "eval_dataset": eval_ds,
+    }
+
+    try:
+        params = set(inspect.signature(SFTTrainer.__init__).parameters.keys())
+    except Exception:
+        params = {"tokenizer"}
+
+    # Handle args/config rename across TRL versions
+    if "args" in params:
+        trainer_kwargs["args"] = training_args
+    elif "config" in params:
+        trainer_kwargs["config"] = training_args
+
+    if "processing_class" in params:
+        trainer_kwargs["processing_class"] = tokenizer
+    elif "tokenizer" in params:
+        trainer_kwargs["tokenizer"] = tokenizer
+
+    # Only pass peft_config if the model isn't already PEFT-wrapped
+    if "peft_config" in params and not hasattr(model, "peft_config"):
+        trainer_kwargs["peft_config"] = lora_cfg
+
+    trainer = SFTTrainer(**trainer_kwargs)
 
     print("[train_lora] Starting training…")
     trainer.train(resume_from_checkpoint=str(args.resume_from_checkpoint) if args.resume_from_checkpoint else None)

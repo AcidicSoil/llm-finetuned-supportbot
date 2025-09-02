@@ -87,6 +87,12 @@ uv run scripts/train.py --config configs/sft.yaml \
 # Resume from a prior checkpoint
 uv run scripts/train.py --config configs/sft.yaml \
   --resume-from-checkpoint runs/sft_mistral_lora/checkpoint-500
+
+# Save best checkpoint based on eval metric (Task #20)
+uv run scripts/train.py --config configs/sft.yaml \
+  --load-best-model-at-end \
+  --metric-name eval_loss \
+  --no-greater-is-better
 ```
 
 Notes:
@@ -94,6 +100,12 @@ Notes:
 - YAML keys map directly to CLI flags (flat mapping).
 - CLI overrides always take precedence over YAML defaults.
 - See `configs/sft.yaml` for a complete example.
+- Best-model selection: use `--load-best-model-at-end` with `--metric-name` and
+  `--greater-is-better/--no-greater-is-better` to control how the best checkpoint
+  is chosen (defaults target minimizing `eval_loss`).
+- LoRA target inference: `--lora-target-modules auto` (default) detects sensible
+  targets for common architectures (e.g., GPT-2 uses `c_attn,c_fc,c_proj`; LLaMA/Mistral
+  uses `q_proj,k_proj,v_proj,o_proj,gate_proj,up_proj,down_proj`). Override to force.
 
 ## 📊 Evaluation
 
@@ -102,9 +114,52 @@ Notes:
 
 ## 🧪 Tests
 
-```bash
-uv run pytest -q
-```
+Local testing works both fully offline (unit tests) and online (optional smoke tests with a tiny model).
+
+- macOS/Linux (bash/zsh)
+  - Offline full suite (skips smoke):
+
+    ```bash
+    export HF_HUB_OFFLINE=1
+    uv run pytest -q
+    ```
+
+  - Online smoke only (pulls a tiny model):
+
+    ```bash
+    export HF_HUB_OFFLINE=0
+    export TEST_TINY_MODEL_ID=sshleifer/tiny-gpt2
+    uv run pytest -q -m smoke tests/smoke
+    ```
+
+- Windows (PowerShell)
+  - Activate venv: `..\.venv\Scripts\Activate.ps1`
+  - Offline full suite (skips smoke):
+
+    ```powershell
+    $env:HF_HUB_OFFLINE = '1'
+    .\.venv\Scripts\python -m pytest -q
+    ```
+
+  - Online smoke only (pulls a tiny model):
+
+    ```powershell
+    $env:HF_HUB_OFFLINE = '0'
+    $env:TEST_TINY_MODEL_ID = 'sshleifer/tiny-gpt2'
+    .\.venv\Scripts\python -m pytest -q -m smoke tests\smoke
+    ```
+
+Notes
+
+- Smoke tests require internet access and download a tiny checkpoint; they are skipped when `HF_HUB_OFFLINE=1`.
+- If pytest warns about an unknown `smoke` marker, you can register it by adding to `pyproject.toml`:
+
+  ```toml
+  [tool.pytest.ini_options]
+  markers = [
+    "smoke: tiny online tests"
+  ]
+  ```
 
 ## 📦 Packaging (Task #15)
 

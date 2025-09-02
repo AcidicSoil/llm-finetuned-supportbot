@@ -17,6 +17,7 @@ This project uses Pydantic v2 models to validate records used for fine-tuning an
     - `tags: List[str]` — non-empty strings; trimmed
 
 Validation notes:
+
 - Empty/whitespace-only strings are rejected for `id`, `question`, `answer`, and `source`.
 - `tags` must not contain empty strings or nulls; values are trimmed.
 - Dataset-level utility `validate_dataset(records, allowed_tags=None)` checks:
