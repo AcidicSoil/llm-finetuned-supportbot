@@ -30,4 +30,3 @@ def classify_error(prompt: str, response: str) -> Optional[ErrorType]:
         return ErrorType.STYLE
     # Hallucination detection would need references; skip here
     return None
-

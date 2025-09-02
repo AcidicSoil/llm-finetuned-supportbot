@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
 import re
+from datetime import datetime
 from typing import List, Optional, Sequence, Tuple, Union
 
 from pydantic import BaseModel, field_validator
@@ -118,7 +118,9 @@ def validate_dataset(
     for rec in records:
         texts = [rec.inputs.question, rec.inputs.context or "", rec.outputs.answer]
         if any(scan_text(t) for t in texts):
-            issues.append(f"record {rec.id} may contain PII (email/phone-like patterns)")
+            issues.append(
+                f"record {rec.id} may contain PII (email/phone-like patterns)"
+            )
 
     ok = len(issues) == 0
     # For convenience, return a bare bool in the common "all good" case

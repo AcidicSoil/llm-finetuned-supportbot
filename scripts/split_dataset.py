@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import List
 
 from src.models import DataRecord
-from src.parsers import load_json_records, load_jsonl_records, load_csv_records
-from src.split import SplitResult, StratifyBy, split_records
+from src.parsers import load_csv_records, load_json_records, load_jsonl_records
+from src.split import split_records
 
 
 def _load(path: Path) -> List[DataRecord]:
@@ -32,9 +32,13 @@ def _dump_jsonl(records: List[DataRecord], out_path: Path) -> None:
 def main() -> None:
     p = argparse.ArgumentParser(description="Deterministic stratified dataset split")
     p.add_argument("input", type=Path, help="Path to input dataset (.jsonl/.json/.csv)")
-    p.add_argument("output_dir", type=Path, help="Directory to write train/val/test JSONL files")
+    p.add_argument(
+        "output_dir", type=Path, help="Directory to write train/val/test JSONL files"
+    )
     p.add_argument("--train", type=float, default=0.8, help="Train ratio (default 0.8)")
-    p.add_argument("--val", type=float, default=0.1, help="Validation ratio (default 0.1)")
+    p.add_argument(
+        "--val", type=float, default=0.1, help="Validation ratio (default 0.1)"
+    )
     p.add_argument("--test", type=float, default=0.1, help="Test ratio (default 0.1)")
     p.add_argument(
         "--stratify-by",
@@ -43,7 +47,9 @@ def main() -> None:
         choices=["none", "source", "primary_tag"],
         help="Stratify key (default: source)",
     )
-    p.add_argument("--seed", type=int, default=42, help="Deterministic seed (default 42)")
+    p.add_argument(
+        "--seed", type=int, default=42, help="Deterministic seed (default 42)"
+    )
     args = p.parse_args()
 
     records = _load(args.input)
@@ -72,4 +78,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import IO, Iterable, List, Union, Any, Tuple
+from typing import IO, Any, List, Tuple, Union
 
 from datasets import Dataset
 
@@ -35,19 +35,24 @@ def load_preference_jsonl(source: Union[PathLike, FileLike]) -> Dataset:
             except json.JSONDecodeError as e:
                 raise ValueError(f"invalid JSON on line {line_no}: {e}") from e
             for key in ("prompt", "chosen", "rejected"):
-                if key not in obj or not isinstance(obj[key], str) or not obj[key].strip():
+                if (
+                    key not in obj
+                    or not isinstance(obj[key], str)
+                    or not obj[key].strip()
+                ):
                     raise ValueError(
                         f"invalid record on line {line_no}: missing/non-string '{key}'"
                     )
-            rows.append({
-                "prompt": obj["prompt"].strip(),
-                "chosen": obj["chosen"].strip(),
-                "rejected": obj["rejected"].strip(),
-            })
+            rows.append(
+                {
+                    "prompt": obj["prompt"].strip(),
+                    "chosen": obj["chosen"].strip(),
+                    "rejected": obj["rejected"].strip(),
+                }
+            )
         if not rows:
             raise ValueError("no valid preference rows loaded")
         return Dataset.from_list(rows)
     finally:
         if opened is not None:
             opened.close()
-

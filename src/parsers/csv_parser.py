@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 from datetime import datetime
 from pathlib import Path
-from typing import IO, Iterable, List, Optional, Union
+from typing import IO, List, Optional, Union
 
 from pydantic import ValidationError
 
@@ -65,7 +65,9 @@ def load_csv_records(source: Union[PathLike, FileLike]) -> List[DataRecord]:
                 overflow = row.get("__rest__")
                 if overflow:
                     # join extras with commas to be parsed by _parse_tags
-                    raw_tags = ",".join([raw_tags] + [str(x) for x in overflow if x is not None]).strip(", ")
+                    raw_tags = ",".join(
+                        [raw_tags] + [str(x) for x in overflow if x is not None]
+                    ).strip(", ")
 
                 rec = DataRecord(
                     id=(row.get("id") or "").strip(),

@@ -6,7 +6,6 @@ from typing import List, Union
 from fastapi import Depends, FastAPI, Header, HTTPException, status
 from pydantic import BaseModel
 
-
 app = FastAPI(title="LLM SupportBot Inference API")
 
 
@@ -18,7 +17,9 @@ class GenerateResponse(BaseModel):
     generated_text: Union[str, List[str]]
 
 
-def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")) -> None:
+def require_api_key(
+    x_api_key: str | None = Header(default=None, alias="X-API-Key")
+) -> None:
     expected = os.getenv("API_KEY", "devkey")
     if x_api_key is None or x_api_key != expected:
         # Using 401 with WWW-Authenticate is a common choice; keep simple stub here
@@ -33,7 +34,11 @@ def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.post("/generate", response_model=GenerateResponse, dependencies=[Depends(require_api_key)])
+@app.post(
+    "/generate",
+    response_model=GenerateResponse,
+    dependencies=[Depends(require_api_key)],
+)
 def generate(req: GenerateRequest) -> GenerateResponse:
     # Placeholder generation logic; echo back prompt(s)
     def _gen(p: str) -> str:
@@ -44,4 +49,3 @@ def generate(req: GenerateRequest) -> GenerateResponse:
         return GenerateResponse(generated_text=outputs)
     else:
         return GenerateResponse(generated_text=_gen(req.prompt))
-

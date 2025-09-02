@@ -14,12 +14,16 @@ Features
 
 import argparse
 import json
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Tuple, Any, Dict
+from typing import Any, Dict, Iterable, List
 
 import torch
+import yaml
 from datasets import Dataset
+from peft import LoraConfig, TaskType, get_peft_model
+from src.models import DataRecord
+from src.parsers import load_jsonl_records, load_preference_jsonl
+from src.tokenization import default_pair_template
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
@@ -27,12 +31,6 @@ from transformers import (
     set_seed,
 )
 from trl import SFTConfig, SFTTrainer
-from peft import LoraConfig, TaskType, get_peft_model
-import yaml
-
-from src.models import DataRecord
-from src.parsers import load_jsonl_records, load_preference_jsonl
-from src.tokenization import default_pair_template
 
 
 def _load_split_jsonl(path: Path) -> List[DataRecord]:
@@ -49,7 +47,9 @@ def _records_to_prompt_completion(records: Iterable[DataRecord]) -> Dataset:
     return Dataset.from_dict({"prompt": prompts, "completion": completions})
 
 
-def _bitsandbytes_config(quant: str, *, compute_dtype: str, quant_type: str, double_quant: bool) -> BitsAndBytesConfig | None:
+def _bitsandbytes_config(
+    quant: str, *, compute_dtype: str, quant_type: str, double_quant: bool
+) -> BitsAndBytesConfig | None:
     if quant not in {"4bit", "8bit", "none"}:
         raise SystemExit("--quant must be one of: 4bit, 8bit, none")
     if quant == "none":
@@ -81,7 +81,6 @@ def _infer_lora_targets_from_model(model) -> List[str]:
     Fallback: return an empty list to let PEFT decide or error early.
     """
     names = [n for n, _ in model.named_modules()]
-    joined = "\n".join(names)
     if any(".c_attn" in n for n in names):
         return ["c_attn", "c_fc", "c_proj"]
     if any(".q_proj" in n for n in names):
@@ -109,26 +108,83 @@ def parse_args() -> argparse.Namespace:
     """
     p = argparse.ArgumentParser(description="LoRA SFT/DPO training with quantization")
     # Config file (YAML) support
-    p.add_argument("--config", type=Path, default=None, help="Path to YAML config with training params")
+    p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to YAML config with training params",
+    )
     # Mark as optional to allow programmatic/test invocation; we validate in main()
-    p.add_argument("--model", required=False, help="Base HF model id (e.g., 'mistralai/Mistral-7B-Instruct-v0.3')")
-    p.add_argument("--splits-dir", type=Path, required=False, help="Directory containing train.jsonl and val.jsonl (from prepare_data)")
-    p.add_argument("--output-dir", type=Path, required=False, help="Training output directory for checkpoints")
+    p.add_argument(
+        "--model",
+        required=False,
+        help="Base HF model id (e.g., 'mistralai/Mistral-7B-Instruct-v0.3')",
+    )
+    p.add_argument(
+        "--splits-dir",
+        type=Path,
+        required=False,
+        help="Directory containing train.jsonl and val.jsonl (from prepare_data)",
+    )
+    p.add_argument(
+        "--output-dir",
+        type=Path,
+        required=False,
+        help="Training output directory for checkpoints",
+    )
 
     # Recipe selection
-    p.add_argument("--recipe", default="sft", choices=["sft", "dpo"], help="Training recipe: supervised (sft) or preference (dpo)")
+    p.add_argument(
+        "--recipe",
+        default="sft",
+        choices=["sft", "dpo"],
+        help="Training recipe: supervised (sft) or preference (dpo)",
+    )
     # DPO-specific options
     p.add_argument("--beta", type=float, default=0.1, help="DPO beta parameter")
-    p.add_argument("--max-length", type=int, default=512, help="Max combined sequence length (DPO)")
-    p.add_argument("--max-prompt-length", type=int, default=256, help="Max prompt length (DPO)")
-    p.add_argument("--dpo-train-file", type=Path, default=None, help="Optional explicit path to DPO train JSONL {prompt,chosen,rejected}")
-    p.add_argument("--dpo-val-file", type=Path, default=None, help="Optional explicit path to DPO val JSONL {prompt,chosen,rejected}")
+    p.add_argument(
+        "--max-length", type=int, default=512, help="Max combined sequence length (DPO)"
+    )
+    p.add_argument(
+        "--max-prompt-length", type=int, default=256, help="Max prompt length (DPO)"
+    )
+    p.add_argument(
+        "--dpo-train-file",
+        type=Path,
+        default=None,
+        help="Optional explicit path to DPO train JSONL {prompt,chosen,rejected}",
+    )
+    p.add_argument(
+        "--dpo-val-file",
+        type=Path,
+        default=None,
+        help="Optional explicit path to DPO val JSONL {prompt,chosen,rejected}",
+    )
 
     # Quantization
-    p.add_argument("--quant", default="4bit", choices=["4bit", "8bit", "none"], help="Quantization mode (default: 4bit)")
-    p.add_argument("--bnb-compute-dtype", default="bfloat16", choices=["float32", "float16", "bfloat16"], help="4-bit compute dtype")
-    p.add_argument("--bnb-quant-type", default="nf4", choices=["nf4", "fp4"], help="4-bit quant type")
-    p.add_argument("--bnb-double-quant", action="store_true", help="Enable 4-bit double quantization")
+    p.add_argument(
+        "--quant",
+        default="4bit",
+        choices=["4bit", "8bit", "none"],
+        help="Quantization mode (default: 4bit)",
+    )
+    p.add_argument(
+        "--bnb-compute-dtype",
+        default="bfloat16",
+        choices=["float32", "float16", "bfloat16"],
+        help="4-bit compute dtype",
+    )
+    p.add_argument(
+        "--bnb-quant-type",
+        default="nf4",
+        choices=["nf4", "fp4"],
+        help="4-bit quant type",
+    )
+    p.add_argument(
+        "--bnb-double-quant",
+        action="store_true",
+        help="Enable 4-bit double quantization",
+    )
 
     # LoRA
     p.add_argument("--lora-r", type=int, default=16)
@@ -151,8 +207,16 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--save-steps", type=int, default=50)
     p.add_argument("--eval-steps", type=int, default=100)
     p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--bf16", action="store_true", help="Enable bfloat16 mixed precision if supported")
-    p.add_argument("--fp16", action="store_true", help="Enable float16 mixed precision if supported")
+    p.add_argument(
+        "--bf16",
+        action="store_true",
+        help="Enable bfloat16 mixed precision if supported",
+    )
+    p.add_argument(
+        "--fp16",
+        action="store_true",
+        help="Enable float16 mixed precision if supported",
+    )
     # Best model selection
     p.add_argument(
         "--load-best-model-at-end",
@@ -268,7 +332,9 @@ def main() -> None:
 
     print("[train_lora] Loading base model…")
     if bnb_cfg is None:
-        model = AutoModelForCausalLM.from_pretrained(args.model, device_map="auto", torch_dtype="auto")
+        model = AutoModelForCausalLM.from_pretrained(
+            args.model, device_map="auto", torch_dtype="auto"
+        )
     else:
         model = AutoModelForCausalLM.from_pretrained(
             args.model,
@@ -281,10 +347,16 @@ def main() -> None:
     print("[train_lora] Applying LoRA adapters…")
     # Determine targets
     targets = list(args.lora_target_modules)
-    if len(targets) == 1 and isinstance(targets[0], str) and targets[0].lower() == "auto":
+    if (
+        len(targets) == 1
+        and isinstance(targets[0], str)
+        and targets[0].lower() == "auto"
+    ):
         targets = _infer_lora_targets_from_model(model)
         if not targets:
-            raise SystemExit("Could not infer LoRA target modules for this model; please pass --lora-target-modules …")
+            raise SystemExit(
+                "Could not infer LoRA target modules for this model; please pass --lora-target-modules …"
+            )
         print(f"[train_lora] Inferred LoRA targets: {targets}")
 
     # Auto-adjust fan_in_fan_out for GPT-2 Conv1D blocks to avoid PEFT warning
@@ -334,6 +406,7 @@ def main() -> None:
         "greater_is_better": bool(args.greater_is_better),
     }
     import inspect
+
     if str(args.recipe).lower() == "dpo":
         # Assemble DPOConfig with version tolerance
         try:
@@ -349,13 +422,28 @@ def main() -> None:
         }
         # Determine allowed fields for DPOConfig
         try:
-            from dataclasses import is_dataclass, fields as dc_fields
-            dpo_allowed = set(f.name for f in dc_fields(DPOConfig)) if is_dataclass(DPOConfig) else set()
+            from dataclasses import fields as dc_fields
+            from dataclasses import is_dataclass
+
+            dpo_allowed = (
+                set(f.name for f in dc_fields(DPOConfig))
+                if is_dataclass(DPOConfig)
+                else set()
+            )
         except Exception:
             dpo_allowed = set()
-        dpo_kwargs = base_kwargs | {k: v for k, v in dpo_extra.items() if (not dpo_allowed) or (k in dpo_allowed)}
+        dpo_kwargs = base_kwargs | {
+            k: v
+            for k, v in dpo_extra.items()
+            if (not dpo_allowed) or (k in dpo_allowed)
+        }
         # Some TRL versions use eval_strategy instead of evaluation_strategy
-        if "evaluation_strategy" in dpo_kwargs and dpo_allowed and "evaluation_strategy" not in dpo_allowed and "eval_strategy" in dpo_allowed:
+        if (
+            "evaluation_strategy" in dpo_kwargs
+            and dpo_allowed
+            and "evaluation_strategy" not in dpo_allowed
+            and "eval_strategy" in dpo_allowed
+        ):
             dpo_kwargs["eval_strategy"] = dpo_kwargs.pop("evaluation_strategy")
         training_args = DPOConfig(**dpo_kwargs)
 
@@ -384,6 +472,7 @@ def main() -> None:
         if needs_ref:
             try:
                 from trl import create_reference_model
+
                 ref_model = create_reference_model(model)
             except Exception:
                 ref_model = None
@@ -396,13 +485,26 @@ def main() -> None:
     else:
         # SFT path (default)
         try:
-            from dataclasses import is_dataclass, fields as dc_fields
-            allowed = set(f.name for f in dc_fields(SFTConfig)) if is_dataclass(SFTConfig) else set()
+            from dataclasses import fields as dc_fields
+            from dataclasses import is_dataclass
+
+            allowed = (
+                set(f.name for f in dc_fields(SFTConfig))
+                if is_dataclass(SFTConfig)
+                else set()
+            )
         except Exception:
             allowed = set()
-        if "evaluation_strategy" in base_kwargs and allowed and "evaluation_strategy" not in allowed and "eval_strategy" in allowed:
+        if (
+            "evaluation_strategy" in base_kwargs
+            and allowed
+            and "evaluation_strategy" not in allowed
+            and "eval_strategy" in allowed
+        ):
             base_kwargs["eval_strategy"] = base_kwargs.pop("evaluation_strategy")
-        training_kwargs = {k: v for k, v in base_kwargs.items() if (not allowed) or (k in allowed)}
+        training_kwargs = {
+            k: v for k, v in base_kwargs.items() if (not allowed) or (k in allowed)
+        }
         training_args = SFTConfig(**training_kwargs)
         trainer_kwargs = {
             "model": model,
@@ -426,7 +528,11 @@ def main() -> None:
         trainer = SFTTrainer(**trainer_kwargs)
 
     print(f"[train_lora] Starting training ({args.recipe.upper()})…")
-    trainer.train(resume_from_checkpoint=str(args.resume_from_checkpoint) if args.resume_from_checkpoint else None)
+    trainer.train(
+        resume_from_checkpoint=(
+            str(args.resume_from_checkpoint) if args.resume_from_checkpoint else None
+        )
+    )
     print("[train_lora] Saving model…")
     trainer.save_model()
     print("[train_lora] Done.")

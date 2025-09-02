@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
 import io
 import json
-import pytest
+from datetime import datetime, timezone
 
+import pytest
 from src.models import DataRecord
-from src.parsers import load_json_records, load_jsonl_records, load_csv_records
+from src.parsers import load_csv_records, load_json_records, load_jsonl_records
 
 
 def _sample_record(idx: str = "r1"):
@@ -78,4 +78,3 @@ def test_load_csv_records_semicolon_tags():
 def test_invalid_records_raise(bad_json):
     with pytest.raises(Exception):
         load_json_records(io.StringIO(bad_json))
-

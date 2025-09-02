@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import IO, Iterable, List, Sequence, Union, Any
 import json
+from pathlib import Path
+from typing import IO, Any, Iterable, List, Union
 
 from pydantic import ValidationError
 
@@ -76,4 +76,3 @@ def load_jsonl_records(source: Union[PathLike, FileLike]) -> List[DataRecord]:
     finally:
         if opened is not None:
             opened.close()
-

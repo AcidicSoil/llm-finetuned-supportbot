@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable, List, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, List, Sequence, Tuple, Union
 
 from src.models import DataRecord
 
+if TYPE_CHECKING:  # import for type checking only
+    from transformers import PreTrainedTokenizerBase
 
 TextPair = Tuple[str, str]
 
@@ -25,7 +27,9 @@ class TokenizedPairs:
     answer_attention_mask: List[List[int]]
 
 
-def _ensure_tokenizer(tokenizer_or_id: Union[str, "PreTrainedTokenizerBase"]) -> "PreTrainedTokenizerBase":
+def _ensure_tokenizer(
+    tokenizer_or_id: Union[str, "PreTrainedTokenizerBase"]
+) -> "PreTrainedTokenizerBase":
     # Accept an already-initialized tokenizer-like object
     if hasattr(tokenizer_or_id, "__call__") and not isinstance(tokenizer_or_id, str):
         return tokenizer_or_id  # type: ignore[return-value]
@@ -85,4 +89,3 @@ def tokenize_pairs(
         answer_input_ids=list(enc_a["input_ids"]),
         answer_attention_mask=list(enc_a["attention_mask"]),
     )
-

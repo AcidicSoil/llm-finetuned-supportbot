@@ -3,8 +3,8 @@ from __future__ import annotations
 import importlib
 import json
 import os
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 import pytest
 
@@ -19,8 +19,12 @@ def _libs_available() -> bool:
 
 
 @pytest.mark.smoke
-@pytest.mark.skipif(not _libs_available(), reason="torch/transformers/peft/trl not available")
-@pytest.mark.skipif(os.getenv("HF_HUB_OFFLINE") == "1", reason="HF Hub offline; tiny model unavailable")
+@pytest.mark.skipif(
+    not _libs_available(), reason="torch/transformers/peft/trl not available"
+)
+@pytest.mark.skipif(
+    os.getenv("HF_HUB_OFFLINE") == "1", reason="HF Hub offline; tiny model unavailable"
+)
 def test_best_model_selection_sft_tiny():
     """Tiny SFT run with best-model selection flags should complete and save adapter."""
     model_id = os.getenv("TEST_TINY_MODEL_ID", "sshleifer/tiny-gpt2")
@@ -30,7 +34,11 @@ def test_best_model_selection_sft_tiny():
             "id": f"r{i}",
             "inputs": {"question": f"Hello {i}?", "context": None},
             "outputs": {"answer": f"Hi {i}!"},
-            "meta": {"source": "smoke", "timestamp": "2024-01-01T00:00:00Z", "tags": ["smoke"]},
+            "meta": {
+                "source": "smoke",
+                "timestamp": "2024-01-01T00:00:00Z",
+                "tags": ["smoke"],
+            },
         }
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -49,7 +57,11 @@ def test_best_model_selection_sft_tiny():
 
         from scripts import train_lora as T
 
-        args = T.parse_args.__wrapped__() if hasattr(T.parse_args, "__wrapped__") else T.parse_args()
+        args = (
+            T.parse_args.__wrapped__()
+            if hasattr(T.parse_args, "__wrapped__")
+            else T.parse_args()
+        )
         args.model = model_id
         args.splits_dir = splits
         args.output_dir = out_dir
@@ -72,6 +84,6 @@ def test_best_model_selection_sft_tiny():
             T.parse_args = orig_parse
 
         assert (out_dir / "adapter_config.json").exists() or any(
-            p.name == "adapter_config.json" for p in out_dir.rglob("adapter_config.json")
+            p.name == "adapter_config.json"
+            for p in out_dir.rglob("adapter_config.json")
         )
-

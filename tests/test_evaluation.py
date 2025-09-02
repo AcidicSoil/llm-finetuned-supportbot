@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import types
 import sys
-import builtins
+import types
 
 
 def make_fake_torch():

@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 import importlib
-import io
 import json
 import os
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-import tempfile
 
 import pytest
 
@@ -21,8 +20,12 @@ def _libs_available() -> bool:
 
 
 @pytest.mark.smoke
-@pytest.mark.skipif(not _libs_available(), reason="torch/transformers/peft/trl not available")
-@pytest.mark.skipif(os.getenv("HF_HUB_OFFLINE") == "1", reason="HF Hub offline; tiny model unavailable")
+@pytest.mark.skipif(
+    not _libs_available(), reason="torch/transformers/peft/trl not available"
+)
+@pytest.mark.skipif(
+    os.getenv("HF_HUB_OFFLINE") == "1", reason="HF Hub offline; tiny model unavailable"
+)
 def test_training_one_step_tiny_model():
     """Run a tiny single-epoch training on a miniature dataset.
 
@@ -59,14 +62,15 @@ def test_training_one_step_tiny_model():
         write_jsonl(splits / "val.jsonl", [rec(i) for i in range(2)])
 
         # Import training entry and invoke main with patched argv via argparse defaults
+        # Build args object mimicking CLI parse
         from scripts import train_lora as T
 
-        # Build args object mimicking CLI parse
-        import argparse
-
-        parser = argparse.ArgumentParser()
         # Reuse parse_args() to get full set, then override fields
-        args = T.parse_args.__wrapped__() if hasattr(T.parse_args, "__wrapped__") else T.parse_args()
+        args = (
+            T.parse_args.__wrapped__()
+            if hasattr(T.parse_args, "__wrapped__")
+            else T.parse_args()
+        )
         # Override required fields for tiny run
         args.model = model_id
         args.splits_dir = splits
@@ -89,4 +93,7 @@ def test_training_one_step_tiny_model():
 
         # Check that adapter files exist
         # trainer.save_model() writes adapter_config.json/adapter_model.bin
-        assert (out_dir / "adapter_config.json").exists() or any(p.name == "adapter_config.json" for p in out_dir.rglob("adapter_config.json"))
+        assert (out_dir / "adapter_config.json").exists() or any(
+            p.name == "adapter_config.json"
+            for p in out_dir.rglob("adapter_config.json")
+        )

@@ -6,8 +6,6 @@ dependencies inside call-sites, so tests can stub/mocks libs easily.
 
 from __future__ import annotations
 
-from typing import Tuple
-
 
 def _quantization_supported() -> bool:
     """Best-effort check for 4-bit quantization support.
@@ -39,11 +37,14 @@ def load_model_and_tokenizer(base_model_name: str, quantization: bool = False):
     Returns a tuple (model, tokenizer).
     """
     try:
-        import importlib, sys
+        import importlib
+        import sys
 
         # Prefer any pre-inserted stubs/fakes in sys.modules (used by tests)
         torch = sys.modules.get("torch") or importlib.import_module("torch")
-        transformers = sys.modules.get("transformers") or importlib.import_module("transformers")
+        transformers = sys.modules.get("transformers") or importlib.import_module(
+            "transformers"
+        )
     except Exception as e:
         raise ImportError(
             "Transformers and torch are required to load models for inference."
@@ -80,10 +81,15 @@ def load_model_and_tokenizer(base_model_name: str, quantization: bool = False):
     elif callable(AutoModelForCausalLM):
         model = AutoModelForCausalLM(base_model_name, **model_kwargs)  # type: ignore[misc]
     else:
-        raise TypeError("AutoModelForCausalLM is neither a factory nor exposes from_pretrained")
+        raise TypeError(
+            "AutoModelForCausalLM is neither a factory nor exposes from_pretrained"
+        )
 
     # Ensure pad token exists to allow batching/generation convenience
-    if getattr(tokenizer, "pad_token", None) is None and getattr(tokenizer, "eos_token", None) is not None:
+    if (
+        getattr(tokenizer, "pad_token", None) is None
+        and getattr(tokenizer, "eos_token", None) is not None
+    ):
         tokenizer.pad_token = tokenizer.eos_token
 
     return model, tokenizer
@@ -97,6 +103,7 @@ def load_peft_model(model, peft_model_path: str):
     """
     try:
         import sys
+
         peft = sys.modules.get("peft")
         if peft is None:
             raise ImportError

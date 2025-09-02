@@ -4,10 +4,9 @@ import hashlib
 import math
 import random
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, List, Literal, Sequence, Tuple
+from typing import Dict, Iterable, List, Literal, Sequence, Tuple
 
 from src.models import DataRecord
-
 
 StratifyBy = Literal["none", "source", "primary_tag"]
 
@@ -153,4 +152,3 @@ def split_records(
         raise AssertionError("duplicate ids detected across splits")
 
     return SplitResult(train=train, val=val, test=test)
-

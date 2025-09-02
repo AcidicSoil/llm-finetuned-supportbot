@@ -18,7 +18,7 @@ Outputs:
 import argparse
 import json
 from pathlib import Path
-from typing import List, Optional, Sequence
+from typing import List, Sequence
 
 from src.models import DataRecord, validate_dataset
 from src.parsers import (
@@ -49,8 +49,15 @@ def _dump_jsonl_records(records: Sequence[DataRecord], out_path: Path) -> None:
             f.write("\n")
 
 
-def _dump_tokenized(records: Sequence[DataRecord], model_id: str, out_path: Path, *,
-                    max_length: int, padding: str | bool, truncation: str | bool) -> None:
+def _dump_tokenized(
+    records: Sequence[DataRecord],
+    model_id: str,
+    out_path: Path,
+    *,
+    max_length: int,
+    padding: str | bool,
+    truncation: str | bool,
+) -> None:
     toks = tokenize_pairs(
         list(records),
         model_id,
@@ -73,7 +80,9 @@ def _dump_tokenized(records: Sequence[DataRecord], model_id: str, out_path: Path
 
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Orchestrate data ingestion, validation, split, and tokenization")
+    p = argparse.ArgumentParser(
+        description="Orchestrate data ingestion, validation, split, and tokenization"
+    )
     p.add_argument("input", type=Path, help="Input dataset path (.jsonl/.json/.csv)")
     p.add_argument("output_dir", type=Path, help="Output directory for processed data")
 
@@ -92,7 +101,9 @@ def parse_args() -> argparse.Namespace:
 
     # Split
     p.add_argument("--train", type=float, default=0.8, help="Train ratio (default 0.8)")
-    p.add_argument("--val", type=float, default=0.1, help="Validation ratio (default 0.1)")
+    p.add_argument(
+        "--val", type=float, default=0.1, help="Validation ratio (default 0.1)"
+    )
     p.add_argument("--test", type=float, default=0.1, help="Test ratio (default 0.1)")
     p.add_argument(
         "--stratify-by",
@@ -101,10 +112,16 @@ def parse_args() -> argparse.Namespace:
         choices=["none", "source", "primary_tag"],
         help="Stratify key (default: source)",
     )
-    p.add_argument("--seed", type=int, default=42, help="Deterministic seed (default 42)")
+    p.add_argument(
+        "--seed", type=int, default=42, help="Deterministic seed (default 42)"
+    )
 
     # Tokenization
-    p.add_argument("--model", required=True, help="HF model id for tokenizer (e.g., 'bert-base-uncased')")
+    p.add_argument(
+        "--model",
+        required=True,
+        help="HF model id for tokenizer (e.g., 'bert-base-uncased')",
+    )
     p.add_argument("--max-length", type=int, default=512)
     p.add_argument(
         "--padding",
@@ -126,8 +143,16 @@ def main() -> None:
     args = parse_args()
 
     # Normalize boolean-like strings to bool for HF API where allowed
-    padding = True if args.padding == "True" else False if args.padding == "False" else args.padding
-    truncation = True if args.truncation == "True" else False if args.truncation == "False" else args.truncation
+    padding = (
+        True
+        if args.padding == "True"
+        else False if args.padding == "False" else args.padding
+    )
+    truncation = (
+        True
+        if args.truncation == "True"
+        else False if args.truncation == "False" else args.truncation
+    )
 
     print("[prepare_data] Loading records…")
     records = _load_any(args.input)
@@ -193,4 +218,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
