@@ -30,4 +30,3 @@ Two starter suites are provided under `eval/suites/`:
 - `support_setup.jsonl` — setup/configuration/troubleshooting scenarios
 
 Each line is `{ "prompt": "..." }`.
-

@@ -2,4 +2,3 @@
 {"prompt": "The CLI says 'permission denied' when writing to ~/.config. How can I fix this on Windows?"}
 {"prompt": "How do I enable debug logs and where are they stored?"}
 {"prompt": "Can I run the server behind a corporate proxy? What env vars are supported?"}
-

@@ -59,4 +59,3 @@ The helper `load_preference_jsonl()` in `src/parsers/preference.py` validates an
 - Reference model: some TRL versions require a frozen reference model. The trainer creates one automatically when needed.
 - Best-model selection: you may enable `--load-best-model-at-end` with metric knobs; support varies across TRL versions.
 - Smoke tests: tiny runs exist for both SFT and DPO under `tests/smoke/`.
-

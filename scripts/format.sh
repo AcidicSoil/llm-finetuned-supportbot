@@ -11,4 +11,3 @@ else
 fi
 
 echo "Applied Ruff fixes and Black formatting."
-

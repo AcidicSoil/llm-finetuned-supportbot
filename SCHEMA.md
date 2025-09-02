@@ -70,4 +70,3 @@ Invalid record (empty strings + bad tag):
 - Ensure deps are installed: `uv sync --dev`
 - Generate schema: `uv run python scripts/generate_schema.py`
 - Run tests: `uv run pytest -q`
-

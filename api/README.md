@@ -52,4 +52,3 @@ curl -s \
   -d '{"prompt":["hello","world"]}' \
   http://localhost:8000/generate | jq
 ```
-

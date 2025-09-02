@@ -11,4 +11,3 @@ All notable changes to this project will be documented in this file.
 - README updated with DPO usage instructions.
 
 Breaking changes: none. The SFT path and existing flags remain backward compatible.
-

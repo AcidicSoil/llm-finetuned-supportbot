@@ -11,4 +11,3 @@ else
 fi
 
 echo "Lint checks passed."
-

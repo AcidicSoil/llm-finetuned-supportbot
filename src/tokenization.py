@@ -28,7 +28,7 @@ class TokenizedPairs:
 
 
 def _ensure_tokenizer(
-    tokenizer_or_id: Union[str, "PreTrainedTokenizerBase"]
+    tokenizer_or_id: Union[str, "PreTrainedTokenizerBase"],
 ) -> "PreTrainedTokenizerBase":
     # Accept an already-initialized tokenizer-like object
     if hasattr(tokenizer_or_id, "__call__") and not isinstance(tokenizer_or_id, str):

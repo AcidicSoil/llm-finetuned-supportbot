@@ -42,4 +42,3 @@ max_prompt_length: 128
 # Optional explicit preference file paths (override autodetect train.dpo.jsonl/val.dpo.jsonl)
 # dpo_train_file: ./data/splits/train.dpo.jsonl
 # dpo_val_file: ./data/splits/val.dpo.jsonl
-

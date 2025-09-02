@@ -40,4 +40,3 @@ fp16: false
 
 # Optional: resume from a previous checkpoint
 # resume_from_checkpoint: runs/sft_mistral_lora/checkpoint-500
-
