@@ -43,4 +43,3 @@ Add a `schema_version: str` field to the main `DataRecord` model, setting a defa
 ### Description: Produce both machine-readable and human-readable documentation for the schema to guide developers, especially those working on data parsers (Task 3).
 ### Details:
 Use the Pydantic model's `.schema_json()` method to generate a formal `data_schema.json` file. Create a `SCHEMA.md` markdown file that explains each field, its type, and validation rules. Include clear JSON examples of one valid and one invalid record to illustrate usage.
-

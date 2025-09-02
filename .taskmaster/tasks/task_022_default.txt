@@ -40,4 +40,3 @@ Add tests that verify: (1) over-length inputs produce multiple chunks with expec
 ### Description: 
 ### Details:
 Expose a CLI flag to choose chunking strategy and stride; document tradeoffs in README and configs. Ensure CI passes with new tests.
-

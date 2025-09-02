@@ -34,4 +34,3 @@ Update config parsing to accept a sweep section with ranges/choices; sweep runne
 ### Description: Document how to run a local sweep and interpret results; include early stopping usage.
 ### Details:
 README section with example commands for scripts/sweep.py, environment tips, and how to read best trial output; note patience/metric config and CI-friendly defaults.
-

@@ -40,4 +40,3 @@ Implement a loop that reads JSON/JSONL suite entries `{question, context?}`; for
 ### Description: Write structured outputs with question/context, base, fine-tuned, and timing.
 ### Details:
 Add writers to emit JSONL (one record per item) and optional CSV. Fields: `id`, `question`, `context`, `base.text`, `adapter.text`, `base.latency_ms`, `adapter.latency_ms`. Validate files exist and contain expected keys.
-

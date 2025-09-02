@@ -40,4 +40,3 @@ Unit test that --preset loads YAML overlay and CLI flags still override. Verify 
 ### Description: 
 ### Details:
 Add README section with examples for presets and a table of recommended combos (CPU, single-GPU bf16, older-GPU fp16, memory-efficient).
-

@@ -34,4 +34,3 @@ Include fields: recipe: dpo, model/splits/output, beta, max_length, batch sizes,
 ### Description: Create tiny DPO dataset and minimal config to run a single training step and assert DPO path executes.
 ### Details:
 Add a pytest that launches `scripts/train.py --config configs/dpo.yaml` on a tiny preference set, 1 step, asserting logs mention DPOTrainer and job completes.
-
