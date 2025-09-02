@@ -457,14 +457,14 @@
         "dependencies": [
           8
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Add DPO data loader/mapper",
             "description": "Extend data pipeline to load preference data with fields {prompt, chosen, rejected} and map to TRL DPOTrainer expected format.",
             "details": "Implement loader that reads JSON/JSONL preference items and returns a Dataset with columns ['prompt','chosen','rejected']. Provide a small utility to validate records and to convert from our existing schema if needed.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 19
           },
@@ -473,7 +473,7 @@
             "title": "Select trainer via config (SFT vs DPO)",
             "description": "Update training entry to choose SFTTrainer or DPOTrainer based on a config flag.",
             "details": "Add a config key like recipe: sft|dpo. When dpo, instantiate TRL DPOTrainer and DPOConfig (wire beta and shared args). Keep SFT path unchanged.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 19
           },
@@ -482,7 +482,7 @@
             "title": "Add DPO config file",
             "description": "Create configs/dpo.yaml with DPO-specific fields and doc differences vs sft.yaml.",
             "details": "Include fields: recipe: dpo, model/splits/output, beta, max_length, batch sizes, logging/eval settings. Add README snippet on switching recipes.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 19
           },
@@ -491,7 +491,7 @@
             "title": "DPO smoke test in CI",
             "description": "Create tiny DPO dataset and minimal config to run a single training step and assert DPO path executes.",
             "details": "Add a pytest that launches `scripts/train.py --config configs/dpo.yaml` on a tiny preference set, 1 step, asserting logs mention DPOTrainer and job completes.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 19
           }
@@ -508,7 +508,7 @@
           9,
           11
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": []
       },
       {
@@ -521,14 +521,14 @@
         "dependencies": [
           10
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Curate additional evaluation sets",
             "description": "Add at least two new JSON/JSONL evaluation suites for different support domains.",
             "details": "Create `eval/suites/support_billing.jsonl` and `eval/suites/support_setup.jsonl` with fields `{id, inputs:{question, context?}, outputs:{answer?}, meta:{tags[]}}`. Ensure coverage of varied intents and difficulty.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 21
           },
@@ -537,7 +537,7 @@
             "title": "Define error classification schema and rubric",
             "description": "Introduce structured error categories and a rubric for annotation.",
             "details": "Add `src/eval_schema.py` with `Enum ErrorType { REFUSAL, HALLUCINATION, STYLE, OTHER }` and rubric notes in `eval/README.md`. Provide examples and decision rules.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 21
           },
@@ -546,7 +546,7 @@
             "title": "Annotate eval outputs with error category",
             "description": "Modify evaluation to capture error categories per response.",
             "details": "Extend `scripts/eval.py` to optionally apply a rule-based tagger (using the rubric) and add `error_type` to each record. Leave hooks for manual review or future ML-based tagging.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 21
           },
@@ -555,7 +555,7 @@
             "title": "Aggregate and report error statistics",
             "description": "Update results summary to include error-type aggregates.",
             "details": "Extend results writer to compute counts and rates per `ErrorType` and print a summary table. Save an `error_stats.json` with aggregates per suite and overall.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 21
           }
@@ -742,7 +742,7 @@
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-09-02T14:01:56.030Z",
+      "updated": "2025-09-02T17:39:28.022Z",
       "description": "Tasks for default context"
     }
   }

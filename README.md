@@ -95,6 +95,32 @@ uv run scripts/train.py --config configs/sft.yaml \
   --no-greater-is-better
 ```
 
+### DPO (Preference Training)
+
+Provide a DPO config and preference JSONL files with lines shaped as `{"prompt": ..., "chosen": ..., "rejected": ...}`. By default, the trainer looks for `train.dpo.jsonl` and `val.dpo.jsonl` under `--splits-dir`. You can also point to explicit files with `--dpo-train-file/--dpo-val-file`.
+
+```bash
+uv run scripts/train.py --config configs/dpo.yaml \
+  --splits-dir ./data/splits \
+  --output-dir ./results/dpo-out
+```
+
+Key knobs: `beta`, `max_length`, `max_prompt_length` in `configs/dpo.yaml`.
+
+More details and examples: see `docs/training/recipes.md`.
+
+### Best Model Selection
+
+You can enable automatic best-checkpoint selection (both SFT and DPO paths) by adding:
+
+```bash
+--load-best-model-at-end \
+--metric-name eval_loss \
+--no-greater-is-better
+```
+
+These flags are already supported by the trainer config. When enabled, the trainer loads the best-performing checkpoint (per metric) before `save_model()`.
+
 Notes:
 
 - YAML keys map directly to CLI flags (flat mapping).
@@ -111,6 +137,7 @@ Notes:
 
 - Scripts in `eval/` reproduce metrics.
 - Results saved to `results/` as CSV/JSON, summarized in README tables.
+- Optional error annotation and starter suites documented in `docs/eval/error_analysis.md`.
 
 ## 🧪 Tests
 
@@ -160,6 +187,10 @@ Notes
     "smoke: tiny online tests"
   ]
   ```
+
+Additional smoke:
+
+- DPO path: `tests/smoke/test_dpo_smoke.py` runs a tiny preference step using `--recipe dpo`.
 
 ## 📦 Packaging (Task #15)
 

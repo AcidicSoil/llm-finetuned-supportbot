@@ -13,6 +13,7 @@ import torch
 from tqdm import tqdm
 
 from src.evaluation import load_model_and_tokenizer, load_peft_model
+from src.eval_schema import classify_error, ErrorType
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate base and fine-tuned models.")
@@ -23,6 +24,7 @@ def main():
     parser.add_argument("--max_new_tokens", type=int, default=100, help="Maximum number of new tokens to generate.")
     parser.add_argument("--temperature", type=float, default=0.7, help="Temperature for generation.")
     parser.add_argument("--quantization", action="store_true", help="Enable quantization.")
+    parser.add_argument("--annotate_errors", action="store_true", help="Annotate responses with heuristic error types")
     args = parser.parse_args()
 
     # Load base model and tokenizer
@@ -40,7 +42,12 @@ def main():
     # Run evaluation
     results = []
     for item in tqdm(evaluation_suite):
-        prompt = item["prompt"]
+        # Support either flat {prompt: ...} or schema-like {inputs:{question,context?}}
+        if "prompt" in item:
+            prompt = item["prompt"]
+        else:
+            inputs = item.get("inputs", {})
+            prompt = inputs.get("question") or inputs.get("prompt") or ""
         inputs = tokenizer(prompt, return_tensors="pt").to(base_model.device)
 
         # Generate from base model
@@ -58,16 +65,22 @@ def main():
             peft_latency = time.time() - start_time
             peft_response = tokenizer.decode(peft_output[0], skip_special_tokens=True)
 
-        results.append({
+        rec = {
             "prompt": prompt,
             "base_response": base_response,
             "base_latency": base_latency,
             "peft_response": peft_response,
             "peft_latency": peft_latency,
-        })
+        }
+        if args.annotate_errors and peft_response is not None:
+            etype = classify_error(prompt, peft_response)
+            rec["error_type"] = etype.value if isinstance(etype, ErrorType) else None
+        results.append(rec)
 
     # Save results
-    output_path = Path(args.output_dir) / "results.csv"
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "results.csv"
     df = pd.DataFrame(results)
     df.to_csv(output_path, index=False)
     print(f"Results saved to {output_path}")
@@ -90,6 +103,14 @@ def main():
             print("\nHallucination Rate:")
             print(f"Base model: {base_hallucination_rate:.2%}")
             print(f"PEFT model: {peft_hallucination_rate:.2%}")
+
+    # Error aggregates
+    if args.annotate_errors and 'error_type' in df.columns:
+        agg = df['error_type'].value_counts(dropna=True, normalize=True).to_dict()
+        stats_path = output_dir / "error_stats.json"
+        with open(stats_path, "w", encoding="utf-8") as f:
+            json.dump({"rates": agg}, f, indent=2)
+        print(f"Error stats saved to {stats_path}")
 
 if __name__ == "__main__":
     main()

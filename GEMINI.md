@@ -58,13 +58,13 @@
 ## MCP Servers & Aliases (runtime)
 
 - **mem0** — free-form checkpoints & notes (alias: `mem0`)
-- **Knowledge Graph** — structured entities/relations/observations (alias: `knowledge-graph-mcp`)
+- **Knowledge Graph** — structured entities/relations/observations (alias: `memory`)
 - **gitmcp** — remote docs for any GitHub repo via `npx mcp-remote` (alias: `gitmcp`)
 - **sourcebot** — polyglot docs retrieval/search across official docs, guides, and APIs (alias: `sourcebot`)
 - **docfork** — ephemeral docs workspace for snapshotting, annotating, and composing fetched docs (alias: `docfork`)
 
   - Primary ops: `create_entities`, `create_relations`, `add_observations`, `read_graph`, `search_nodes`
-  - Namespace for KG: `project:${PROJECT_TAG}`
+  - Namespace for memory graph: `project:${PROJECT_TAG}`
 
 ---
 
@@ -72,10 +72,10 @@
 
 - **Baseline only** (no extra behavior files applied):
 
-  - `gemini run "Summarize the repo structure"`
+  - `codex-cli run "Summarize the repo structure"`
 - **Context only (no behavior change):**
 
-  - `gemini run "Analyze these examples @{examples/*.md}"`
+  - `codex-cli run "Analyze these examples @{examples/*.md}"`
 - **Add/modify behavior for this run:**
 
   - Place/modify files under `instructions/`, then start a new session; confirm which to apply and in what order when prompted.
@@ -122,8 +122,8 @@ When discovery/confirmation is used, add:
     "context_files": [
       {"path": "docs/changelog.md", "loaded": true}
     ],
-    "kg_ops": [
-      {"tool": "knowledge-graph-mcp", "op": "create_entities|create_relations|add_observations|read_graph|search_nodes", "time_utc": "<ISO8601>", "scope": "project:${PROJECT_TAG}"}
+    "memory_ops": [
+      {"tool": "memory", "op": "create_entities|create_relations|add_observations|read_graph|search_nodes", "time_utc": "<ISO8601>", "scope": "project:${PROJECT_TAG}"}
     ],
     "proposed_mcp_servers": [
       {"name": "<lib> Docs", "url": "https://gitmcp.io/{OWNER}/{REPO}", "source": "techstack-bootstrap", "status": "proposed"}
@@ -131,7 +131,23 @@ When discovery/confirmation is used, add:
     "owner_repo_resolution": [
       {"library": "<lib>", "candidates": ["owner1/repo1", "owner2/repo2"], "selected": "owner/repo", "confidence": 0.92, "method": "registry|package_index|docs_link|search"}
     ],
-    "techstack_toml": "<fenced TOML emitted in §A.2>"
+    "server_inventory": [
+      {"name": "fastapi_docs", "url": "https://gitmcp.io/tiangolo/fastapi", "source": "project-local|user|generated", "writable": true}
+    ],
+    "server_diff": {
+      "missing": ["fastapi_docs", "httpx_docs"],
+      "extra": ["legacy_docs_server"]
+    },
+    "server_actions": [
+      {"action": "add", "name": "httpx_docs", "target": "project-local", "accepted": true}
+    ],
+    "techstack_toml": "<fenced TOML emitted in §A.2>",
+    "last_bootstrap_signature": {
+      "tech_stack_hash": "<sha256>",
+      "file_hash": "<sha256>",
+      "time_utc": "<ISO8601>"
+    },
+    "techstack_bootstrap_suppressed": true
   }
 }
 ```
@@ -248,57 +264,106 @@ When discovery/confirmation is used, add:
 
 ---
 
+## A) Preflight: Latest Docs Requirement (**MUST**, Blocking)
+
+**Goal:** Ensure the assistant retrieves and considers the *latest relevant docs* before planning, acting, or finalizing.
+
+**Primary/Fallback Order (consolidated):**
+
+1. **sourcebot** (primary) **or** **docfork** (if configured for direct retrieval)
+2. **contex7-mcp** (fallback if the primary fails)
+3. **gitmcp** (last-resort fallback if both above fail)
+
+**What to do:**
+
+- For every task that could touch code, configuration, APIs, tooling, or libraries:
+
+  - Call **sourcebot** **or** **docfork** to fetch the latest documentation or guides.
+  - If the chosen primary call **fails**, immediately retry with the other primary (**docfork** ⇄ **sourcebot**); if that also **fails**, retry with **contex7-mcp**; if that also **fails**, retry with **gitmcp**.
+- Each successful call **MUST** capture:
+
+  - Tool name, query/topic, retrieval timestamp (UTC), and source refs/URLs (or repo refs/commits).
+- Scope:
+
+  - Fetch docs for each **area to be touched** (framework, library, CLI, infra, etc.).
+  - Prefer focused topics (e.g., "exception handlers", "lifespan", "retry policy", "sqlite schema").
+
+**Failure handling:**
+
+- If **all** providers fail for a required area, **do not finalize**. Return a minimal **“Docs Missing”** plan listing missing paths and suggested fix.
+
+**Proof-of-Work Artifact (required):**
+
+- Produce and attach a `DocFetchReport` (JSON) with `status`, `tools_called[]`, `sources[]`, `coverage`, `key_guidance[]`, `gaps`, and `informed_changes[]`.
+
+---
+
+## A.1) Tech & Language Identification (Pre-Requirement)
+
+- Before running Preflight (§A), the assistant must determine both:
+
+  1. The **primary language(s)** used in the project (e.g., Python, TypeScript, Pytest, Bash).
+  2. The **current project’s tech stack** (frameworks, libraries, infra, tools).
+
+- Sources to infer language/stack:
+
+  - Project tags (`${PROJECT_TAG}`), mem0 checkpoints, prior completion records.
+  - Files present in repo (e.g., `pyproject.toml`, `requirements.txt`, `package.json`, `tsconfig.json`, `Dockerfile`, CI configs).
+  - File extensions in repo (`.py`, `.ts`, `.js`, `.sh`, `.sql`, etc.).
+  - User/task context (explicit mentions of frameworks, CLIs, infra).
+
+- **Repo mapping requirement (NEW):** Resolve the **canonical GitHub OWNER/REPO** for each detected library/tool whenever feasible.
+
+  - **Resolution order:**
+
+    1. **Registry mapping** (maintained lookup table for common libs).
+    2. **Package index metadata** (e.g., PyPI `project_urls` → `Source`/`Homepage`; npm `package.json` → `repository.url`).
+    3. **Official docs → GitHub link** discovery.
+    4. **Targeted search** (as a last resort) with guardrails below.
+  - **Guardrails:** Prefer official orgs; require name similarity and recent activity; avoid forks and mirrors unless explicitly chosen.
+  - Record outcomes in `DocFetchReport.owner_repo_resolution[]` with candidates, selected repo, method, and confidence score.
+
+- Doc retrieval (§A) **must cover each identified language and stack element** that will be touched by the task.
+
+- Record both in the `DocFetchReport`:
+
+```json
+"tech_stack": ["fastapi", "httpx", "sqlite3", "pytest-asyncio"],
+"languages": ["python", "pytest"]
+```
+
+---
+
 ## A.2) **One-time Tech Stack MCP Bootstrap (TOML emitter)**
 
 **Goal:** On the **first session for a new project**, generate a **ready-to-paste TOML** block that wires detected tech-stack docs into **GitMCP** servers for use by codex-cli (or any MCP-compatible client).
 
 **When:** Run **after** §A.1 (tech stack identified & repo mapping attempted) and **before** §A (Preflight) proceeds. This step is **idempotent** and **one-time per project**.
 
-**Idempotency / Guard:**
+**Idempotency / Re-run Control (UPDATED):**
 
-- Only generate if **both** are true:
+- Generate only if **both** are true:
 
   - No file exists at `config/mcp_servers.generated.toml`, **and**
   - `DocFetchReport.techstack_toml` is empty for this project.
-- Otherwise, **skip** generation.
+- If `config/mcp_servers.generated.toml` **exists**, set `ctx.techstack_bootstrap_suppressed = true` and **skip both** the emitter **and** reconciliation checks in future sessions unless one of the **re-run triggers** below applies.
+- **Re-run triggers:**
+
+  - The user explicitly asks (e.g., *“recheck MCP servers”* or *“re-run Tech Stack MCP Bootstrap”*), **or**
+  - The file was deleted/renamed or its content hash differs from `DocFetchReport.last_bootstrap_signature.file_hash`, **or**
+  - A **new stack element** is detected since the last run (hash mismatch on `DocFetchReport.last_bootstrap_signature.tech_stack_hash`).
 
 **Detection → Proposal:**
 
 1. Take the stack from §A.1 (`DocFetchReport.tech_stack`).
 2. For each library/tool `X`, propose an MCP server entry named `"X Docs"` using the **GitMCP** URL template `https://gitmcp.io/{OWNER}/{REPO}`.
-3. **OWNER/REPO Auto‑Resolution (NEW):** Attempt to **fill** `{OWNER}/{REPO}` automatically using the repo mapping from §A.1. If confidence ≥ **0.85**, insert the resolved value; otherwise keep placeholders and add a TOML **comment** with the top 1–2 candidates.
+3. **OWNER/REPO Auto‑Resolution:** Attempt to **fill** `{OWNER}/{REPO}` automatically using the repo mapping from §A.1. If confidence ≥ **0.85**, insert the resolved value; otherwise keep placeholders and add a TOML **comment** with the top 1–2 candidates.
 
 **Generated artifact (fenced TOML + file):**
 
 - Emit a fenced **TOML** block into the chat and write an identical file at:
 
-  - `config/mcp_servers.generated.toml` (created, not overwritten unless user approves).
-- The TOML follows codex-cli conventions:
-
-```toml
-# Auto-generated by TechStackBootstrap (first-run). Safe to copy into your codex-cli config.
-# Replace {OWNER}/{REPO} for each entry, or delete lines you don't want.
-
-[mcp_servers]
-
-# Example for FastAPI (auto-resolved if confidence ≥ 0.85; else left as placeholder with candidates)
-[mcp_servers.fastapi_docs]
-command = "npx"
-args = [
-  "mcp-remote",
-  "https://gitmcp.io/{OWNER}/{REPO}" # e.g., tiangolo/fastapi
-]
-
-# Template for each detected library
-# [mcp_servers.<slug>_docs]
-# command = "npx"
-# args = ["mcp-remote", "https://gitmcp.io/{OWNER}/{REPO}"]
-
-# Generic docs server
-[mcp_servers.gitmcp_docs]
-command = "npx"
-args = ["mcp-remote", "https://gitmcp.io/docs"]
-```
+  - `config/mcp_servers.generated.toml` (created; **do not overwrite** without explicit user approval).
 
 **Acceptance Flow (updated):**
 
@@ -308,9 +373,17 @@ args = ["mcp-remote", "https://gitmcp.io/docs"]
   - If **no**: leave `config/mcp_servers.generated.toml` for manual review.
   - If any OWNER/REPO values were auto‑filled, show a **diff preview** and allow quick **Accept**/**Override** for each.
 
+**MCP Servers Reconciliation (non-blocking, on re-run or when config is present):**
+
+- **Discovery:** Attempt to enumerate currently configured MCP servers from the active client configuration (project-local config first; fall back to user-level if readable). If the config cannot be read, record a gap and **skip silently**.
+- **Diff:** Compare `current_servers` with `proposed_mcp_servers` derived from the detected tech stack.
+- **Proposal:** Present a checklist of **missing** servers (name → URL). **No changes** are made without explicit user confirmation.
+- **Write target:** Prefer updating the **project-local** config. Only modify user-level config if the user opts in.
+- **Reporting:** Record inventory, diff, and any accepted additions in `DocFetchReport.server_inventory`, `server_diff`, and `server_actions`.
+
 **Reporting (updated):**
 
-- Add `proposed_mcp_servers[]`, `owner_repo_resolution[]`, and `techstack_toml` to `DocFetchReport` with the exact names/URLs proposed and confidence scores.
+- Add `proposed_mcp_servers[]`, `owner_repo_resolution[]`, `techstack_toml`, `last_bootstrap_signature`, and `techstack_bootstrap_suppressed` to `DocFetchReport` with exact names/URLs, confidence scores, and hashes.
 
 ---
 
@@ -331,15 +404,15 @@ args = ["mcp-remote", "https://gitmcp.io/docs"]
   - Try **sourcebot** → **docfork** (if configured) → **contex7-mcp** → **gitmcp**.
   - Record results in `DocFetchReport`.
 
-## 1) Startup memory bootstrap (mem0 + KG-MCP)
+## 1) Startup memory bootstrap (mem0 + memory)
 
-- On chat/session start: initialize **mem0** and the **Knowledge Graph MCP (KG-MCP)**.
+- On chat/session start: initialize **mem0** and the **memory**.
 - Retrieve (project-scoped):
 
   - **mem0** → latest `memory_checkpoints` and recent task completions.
-  - **KG-MCP** → ensure a graph namespace exists for this project and load prior nodes/edges.
+  - **memory** → ensure a graph namespace exists for this project and load prior nodes/edges.
 
-    - **Server alias**: `knowledge-graph-mcp` (e.g., Smithery "Knowledge Graph Memory Server" such as `@jlia0/servers`).
+    - **Server alias**: `memory` (e.g., Smithery "Memory Server" such as `@jlia0/servers`).
     - **Bootstrap ops** (idempotent):
 
       - `create_entities` (or `upsert_entities`) for: `project:${PROJECT_TAG}`.
@@ -348,8 +421,8 @@ args = ["mcp-remote", "https://gitmcp.io/docs"]
 - Read/write rules:
 
   - Prefer **mem0** for free-form notes and checkpoints.
-  - Prefer **KG-MCP** for **structured** facts/relations (entities, edges, observations).
-  - If KG-MCP is unavailable, continue with mem0 and record `kg_unavailable: true` in the session preamble.
+  - Prefer **memory** for **structured** facts/relations (entities, edges, observations).
+  - If memory is unavailable, continue with mem0 and record `memory_unavailable: true` in the session preamble.
 
 ## 2) On task completion (status → done)
 
@@ -359,7 +432,7 @@ args = ["mcp-remote", "https://gitmcp.io/docs"]
   - Files touched
   - Commit/PR link (if applicable)
   - Test results (if applicable)
-- **Update the Knowledge Graph (KG-MCP)**:
+- **Update the Knowledge Graph (memory)**:
 
   - Ensure base entity `project:${PROJECT_TAG}` exists.
   - Upsert `task:${task_id}` and any `file:<path>` entities touched.
@@ -389,7 +462,7 @@ args = ["mcp-remote", "https://gitmcp.io/docs"]
 ## 4) Tagging for retrieval
 
 - Use tags: `${PROJECT_TAG}`, `project:${PROJECT_TAG}`, `memory_checkpoint`, `completion`, `agents`, `routine`, `instructions`, plus task-specific tags (e.g., `fastapi`, `env-vars`).
-- For KG-MCP entities/relations, mirror tags on observations (e.g., `graph`, `entity:task:${task_id}`, `file:<path>`), to ease cross-referencing with mem0.
+- For memory entities/relations, mirror tags on observations (e.g., `graph`, `entity:task:${task_id}`, `file:<path>`), to ease cross-referencing with mem0.
 
 ## 5) Handling user requests for code or docs
 
