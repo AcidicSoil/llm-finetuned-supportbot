@@ -109,6 +109,44 @@ Key knobs: `beta`, `max_length`, `max_prompt_length` in `configs/dpo.yaml`.
 
 More details and examples: see `docs/training/recipes.md`.
 
+### Advanced Input Length Handling (Task #22)
+
+Two strategies are supported for over-length inputs:
+
+- Truncate (default): cut to `max_length`.
+- Sliding window: create overlapping chunks using `stride`.
+
+Configure in YAML (applies to preprocessing utilities):
+
+```yaml
+chunking:
+  strategy: truncate        # or: sliding_window
+  max_seq_length: 512
+  stride: 128
+```
+
+Tokenize a dataset with sliding windows:
+
+```bash
+uv run scripts/tokenize_dataset.py \
+  data/raw/dataset.jsonl \
+  data/tokenized/out.jsonl \
+  --model mistralai/Mistral-7B-Instruct-v0.3 \
+  --max-length 512 \
+  --chunking-strategy sliding_window \
+  --stride 128
+```
+
+Interactive demo with windowing at inference:
+
+```bash
+uv run demo.py \
+  --base_model_name mistralai/Mistral-7B-Instruct-v0.3 \
+  --chunking-strategy sliding_window \
+  --max-input-length 512 \
+  --stride 128
+```
+
 ### Best Model Selection
 
 You can enable automatic best-checkpoint selection (both SFT and DPO paths) by adding:

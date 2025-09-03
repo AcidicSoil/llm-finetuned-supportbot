@@ -1,6 +1,6 @@
 # Task ID: 13
 # Title: Create Interactive CLI Demo
-# Status: pending
+# Status: done
 # Dependencies: 7
 # Priority: high
 # Description: Build a simple command-line interface for quick Q&A with the fine-tuned model.

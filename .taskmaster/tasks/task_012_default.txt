@@ -1,6 +1,6 @@
 # Task ID: 12
 # Title: Implement Results Exporter and Summary Table
-# Status: pending
+# Status: done
 # Dependencies: 11
 # Priority: high
 # Description: Save detailed evaluation results to a file and print a summary table to the console.

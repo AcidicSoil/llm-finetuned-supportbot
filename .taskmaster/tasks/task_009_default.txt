@@ -1,6 +1,6 @@
 # Task ID: 9
 # Title: Implement Checkpoint Saving and Resuming
-# Status: pending
+# Status: done
 # Dependencies: 7
 # Priority: high
 # Description: Enable saving model checkpoints during training and resuming training from a saved checkpoint.

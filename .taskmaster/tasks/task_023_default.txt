@@ -9,3 +9,34 @@ Add options to the training config (YAML) to easily enable/disable mixed-precisi
 
 # Test Strategy:
 Run training with `gradient_accumulation_steps=4` and verify from the logs that the effective batch size is 4x the per-device batch size.
+
+# Subtasks:
+## 1. Define preset YAMLs [pending]
+### Dependencies: None
+### Description: 
+### Details:
+Add preset overlays under configs/presets/: cpu.yaml (no AMP, ga=1), gpu-bf16.yaml (bf16 on, ga=1), gpu-fp16.yaml (fp16 on, ga=1), memory-efficient.yaml (reduce batch size, increase gradient_accumulation_steps).
+
+## 2. Add --preset overlay flag [pending]
+### Dependencies: 23.1
+### Description: 
+### Details:
+Update scripts/train_lora.py to accept --preset <name>. If provided, load configs/presets/<name>.yaml and apply as defaults before CLI overrides.
+
+## 3. Auto-detect precision support (optional) [pending]
+### Dependencies: 23.2
+### Description: 
+### Details:
+If --preset not provided, optionally auto-enable bf16 when torch.cuda.is_available() and torch.cuda.get_device_capability>= (8,0) and bf16 supported; else leave as configured.
+
+## 4. Tests: preset overlay precedence [pending]
+### Dependencies: 23.2
+### Description: 
+### Details:
+Unit test that --preset loads YAML overlay and CLI flags still override. Verify bf16/fp16 and gradient_accumulation_steps values in args snapshot prior to trainer init.
+
+## 5. Docs: presets quickstart [pending]
+### Dependencies: 23.1
+### Description: 
+### Details:
+Add README section with examples for presets and a table of recommended combos (CPU, single-GPU bf16, older-GPU fp16, memory-efficient).

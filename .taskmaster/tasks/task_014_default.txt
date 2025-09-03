@@ -1,6 +1,6 @@
 # Task ID: 14
 # Title: Develop FastAPI Inference Service
-# Status: pending
+# Status: done
 # Dependencies: 7
 # Priority: high
 # Description: Create a web service for model inference.
@@ -11,31 +11,31 @@ In the `api/` directory, create a minimal FastAPI application. Implement a `POST
 Run the app with `uv run uvicorn`. Send a `GET` request to `/healthz` and a `POST` request to `/generate` using `curl` or another client. Verify the responses are correct.
 
 # Subtasks:
-## 1. Scaffold FastAPI App with Health and Generate Endpoints [pending]
+## 1. Scaffold FastAPI App with Health and Generate Endpoints [done]
 ### Dependencies: None
 ### Description: Create the initial file structure in the `api/` directory. Set up a minimal FastAPI application in `api/main.py` with two endpoints: a `GET /healthz` that returns a 200 OK status, and a placeholder `POST /generate` that returns a hardcoded response.
 ### Details:
 Initialize the FastAPI app object. Implement the `/healthz` endpoint to return `{"status": "ok"}`. The `/generate` endpoint can initially return a static JSON object like `{"generated_text": "placeholder response"}`.
 
-## 2. Define Pydantic Request/Response Models [pending]
+## 2. Define Pydantic Request/Response Models [done]
 ### Dependencies: 14.1
 ### Description: Create and integrate Pydantic models for the `/generate` endpoint's request and response bodies to ensure type-safe data handling.
 ### Details:
 In `api/main.py` or a new `api/models.py`, define a `GenerateRequest` model with a `prompt` field (string). Define a `GenerateResponse` model with a `generated_text` field (string). Update the `/generate` endpoint to use these models in its signature.
 
-## 3. Implement API Key Authentication Stub [pending]
+## 3. Implement API Key Authentication Stub [done]
 ### Dependencies: 14.1
 ### Description: Add a simple, non-production-ready authentication mechanism that requires a static API key to be present in the request headers for the `/generate` endpoint.
 ### Details:
 Create a dependency function that checks for an `X-API-Key` header. If the header is missing or its value doesn't match a predefined static key (e.g., from an environment variable), raise an `HTTPException` with a 401 status. Apply this dependency to the `/generate` endpoint.
 
-## 4. Enhance Generate Endpoint with Batching Support [pending]
+## 4. Enhance Generate Endpoint with Batching Support [done]
 ### Dependencies: 14.2
 ### Description: Update the `/generate` endpoint and its models to support both single-prompt and batch-prompt requests.
 ### Details:
 Modify the `GenerateRequest` model to accept either a single string or a list of strings for the `prompt` field (e.g., using `Union[str, List[str]]`). Update the `GenerateResponse` to return a corresponding single string or list of strings. The endpoint logic should handle both cases, iterating through prompts if a list is provided.
 
-## 5. Create Run Script and README Documentation [pending]
+## 5. Create Run Script and README Documentation [done]
 ### Dependencies: 14.1
 ### Description: Create a simple run script to start the service and add a README file in the `api/` directory with setup and usage instructions.
 ### Details:

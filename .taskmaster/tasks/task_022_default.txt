@@ -1,6 +1,6 @@
 # Task ID: 22
 # Title: Implement Advanced Input Length Handling
-# Status: pending
+# Status: done
 # Dependencies: 5, 7
 # Priority: medium
 # Description: Add strategies for handling inputs that are longer than the model's context window.
@@ -9,3 +9,34 @@ Implement an optional sliding-window strategy for long contexts as an alternativ
 
 # Test Strategy:
 Process a document longer than the max sequence length and verify that the sliding window approach generates multiple overlapping chunks.
+
+# Subtasks:
+## 1. Define chunking config options [done]
+### Dependencies: None
+### Description: 
+### Details:
+Add config keys: chunking.strategy = ["truncate","sliding_window"], chunking.max_seq_length, chunking.stride. Wire into configs/sft.yaml and dpo.yaml with sensible defaults.
+
+## 2. Implement sliding-window chunker [done]
+### Dependencies: 22.1
+### Description: 
+### Details:
+Add a reusable function (e.g., src/chunking.py) that splits text into overlapping chunks using max_seq_length and stride; returns token ids and attention masks ready for model input.
+
+## 3. Integrate chunking into preprocessing & inference [done]
+### Dependencies: 22.2
+### Description: 
+### Details:
+Use the chunker in scripts/tokenize_dataset.py and in inference (api/main.py or demo.py) so both training and inference can handle long inputs consistently.
+
+## 4. Unit tests for windowing and edge cases [done]
+### Dependencies: 22.2
+### Description: 
+### Details:
+Add tests that verify: (1) over-length inputs produce multiple chunks with expected overlap; (2) exactly-at-limit yields one chunk; (3) tiny inputs; (4) masks and shapes are valid.
+
+## 5. CLI/docs wiring [done]
+### Dependencies: 22.3, 22.4
+### Description: 
+### Details:
+Expose a CLI flag to choose chunking strategy and stride; document tradeoffs in README and configs. Ensure CI passes with new tests.

@@ -1,6 +1,6 @@
 # Task ID: 21
 # Title: Expand Evaluation Suite and Error Analysis
-# Status: pending
+# Status: done
 # Dependencies: 10
 # Priority: medium
 # Description: Add more evaluation questions and tools for qualitative error analysis.
@@ -11,25 +11,25 @@ Curate additional evaluation sets for different domains. Enhance the results out
 Run the enhanced evaluation and check that the output includes the new error buckets and qualitative examples.
 
 # Subtasks:
-## 1. Curate additional evaluation sets [pending]
+## 1. Curate additional evaluation sets [done]
 ### Dependencies: None
 ### Description: Add at least two new JSON/JSONL evaluation suites for different support domains.
 ### Details:
 Create `eval/suites/support_billing.jsonl` and `eval/suites/support_setup.jsonl` with fields `{id, inputs:{question, context?}, outputs:{answer?}, meta:{tags[]}}`. Ensure coverage of varied intents and difficulty.
 
-## 2. Define error classification schema and rubric [pending]
+## 2. Define error classification schema and rubric [done]
 ### Dependencies: None
 ### Description: Introduce structured error categories and a rubric for annotation.
 ### Details:
 Add `src/eval_schema.py` with `Enum ErrorType { REFUSAL, HALLUCINATION, STYLE, OTHER }` and rubric notes in `eval/README.md`. Provide examples and decision rules.
 
-## 3. Annotate eval outputs with error category [pending]
+## 3. Annotate eval outputs with error category [done]
 ### Dependencies: None
 ### Description: Modify evaluation to capture error categories per response.
 ### Details:
 Extend `scripts/eval.py` to optionally apply a rule-based tagger (using the rubric) and add `error_type` to each record. Leave hooks for manual review or future ML-based tagging.
 
-## 4. Aggregate and report error statistics [pending]
+## 4. Aggregate and report error statistics [done]
 ### Dependencies: None
 ### Description: Update results summary to include error-type aggregates.
 ### Details:
