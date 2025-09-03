@@ -2,6 +2,54 @@
 
 This project supports two training recipes via a single entrypoint `scripts/train.py` (alias to `train_lora.py`).
 
+## Presets (precision & accumulation)
+
+For quick ergonomics across common setups, you can apply a small YAML overlay, then still override anything via your main `--config` or CLI flags. Presets live in `configs/presets/`.
+
+### Tests for Presets
+
+- Location: `tests/unit/test_presets.py`
+- What they cover:
+  - `gpu-fp16` preset enables `--fp16` (and not `--bf16`).
+  - `cpu` preset disables AMP and sets `--gradient-accumulation-steps=1`.
+  - `memory-efficient` preset increases `--gradient-accumulation-steps` to 8.
+  - Precedence order is enforced as: base defaults < preset < `--config` < CLI.
+
+How to run only these tests:
+
+```bash
+uv run pytest -q tests/unit/test_presets.py
+```
+
+Windows (without `uv`):
+
+```powershell
+.\.venv\Scripts\python -m pytest -q tests\unit\test_presets.py
+```
+
+- `cpu`: disables AMP (`bf16: false`, `fp16: false`), `gradient_accumulation_steps: 1`.
+- `gpu-bf16`: enables `bf16`, disables `fp16`.
+- `gpu-fp16`: enables `fp16`, disables `bf16`.
+- `memory-efficient`: keeps per-device batch size small and increases `gradient_accumulation_steps: 8`.
+
+Usage examples:
+
+```
+python scripts/train.py \
+  --preset gpu-bf16 \
+  --config configs/sft.yaml
+
+# Preset + explicit override (CLI wins):
+python scripts/train.py --preset gpu-fp16 --bf16 --config configs/sft.yaml
+
+# Memory-friendly accumulation overlay (precision inherits from config/CLI):
+python scripts/train.py --preset memory-efficient --config configs/sft.yaml
+```
+
+Precedence: project defaults < preset < `--config` file < explicit CLI flags.
+
+Optional: add `--auto-precision` to prefer bf16 automatically on supported NVIDIA GPUs when neither `--bf16` nor `--fp16` is provided.
+
 - SFT (Supervised Fine-Tuning) — learn from prompt→completion pairs.
 - DPO (Direct Preference Optimization) — learn from preference pairs (chosen vs. rejected).
 

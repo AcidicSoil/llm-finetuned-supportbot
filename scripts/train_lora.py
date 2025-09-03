@@ -32,6 +32,9 @@ from transformers import (
 )
 from trl import SFTConfig, SFTTrainer
 
+# Repo root (for locating preset files regardless of CWD)
+ROOT = Path(__file__).resolve().parent.parent
+
 
 def _load_split_jsonl(path: Path) -> List[DataRecord]:
     return load_jsonl_records(str(path))
@@ -113,6 +116,15 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=None,
         help="Path to YAML config with training params",
+    )
+    # Optional preset overlay (applied before --config, still overridden by CLI flags)
+    p.add_argument(
+        "--preset",
+        type=str,
+        default=None,
+        help=(
+            "Name of preset overlay in configs/presets/<name>.yaml. Applied as defaults before --config and CLI."
+        ),
     )
     # Mark as optional to allow programmatic/test invocation; we validate in main()
     p.add_argument(
@@ -217,6 +229,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Enable float16 mixed precision if supported",
     )
+    # Optional: auto-detect precision when not explicitly set
+    p.add_argument(
+        "--auto-precision",
+        action="store_true",
+        help=(
+            "If set and neither --bf16 nor --fp16 are provided, enables bf16 automatically on supported GPUs."
+        ),
+    )
     # Best model selection
     p.add_argument(
         "--load-best-model-at-end",
@@ -250,8 +270,21 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Path to checkpoint dir to resume training from",
     )
-    # First pass: get --config if present
+    # First pass: get --preset / --config if present
     prelim, _ = p.parse_known_args()
+    # 1) Apply preset overlay, if any
+    if getattr(prelim, "preset", None):
+        preset_path = ROOT / "configs" / "presets" / f"{prelim.preset}.yaml"
+        if not preset_path.exists():
+            raise SystemExit(f"preset file not found: {preset_path}")
+        try:
+            with open(preset_path, "r", encoding="utf-8") as f:
+                preset_loaded: Dict[str, Any] = yaml.safe_load(f) or {}
+            if not isinstance(preset_loaded, dict):
+                raise SystemExit(f"preset YAML must be a mapping: {preset_path}")
+            p.set_defaults(**preset_loaded)
+        except Exception as e:
+            raise SystemExit(f"failed to load preset {preset_path}: {e}")
     if prelim.config is not None:
         if not prelim.config.exists():
             raise SystemExit(f"config file not found: {prelim.config}")
@@ -266,6 +299,29 @@ def parse_args() -> argparse.Namespace:
 
     # Use parse_known_args so test runners' flags (e.g., -q) don't break parsing
     args, _unknown = p.parse_known_args()
+
+    # Enforce mutual exclusivity at parse-time based on explicit CLI flags.
+    # This ensures CLI intent overrides preset/config defaults even when tests
+    # call parse_args() without running main().
+    try:
+        import sys as _sys
+
+        argv_tokens = set(_sys.argv[1:])
+        bf16_set_explicit = "--bf16" in argv_tokens
+        fp16_set_explicit = "--fp16" in argv_tokens
+        if bf16_set_explicit and fp16_set_explicit:
+            raise SystemExit("Both --bf16 and --fp16 were provided; choose one.")
+        if bf16_set_explicit and not fp16_set_explicit:
+            # User asked for bf16 explicitly; ensure fp16 is off
+            args.fp16 = False
+            args.bf16 = True
+        if fp16_set_explicit and not bf16_set_explicit:
+            # User asked for fp16 explicitly; ensure bf16 is off
+            args.bf16 = False
+            args.fp16 = True
+    except Exception:
+        # If sys.argv is not accessible or other issues, skip adjustment
+        pass
     # Echo effective config for reproducibility
     try:
         # Serialize Path objects to str for printing
@@ -285,6 +341,23 @@ def main() -> None:
     args = parse_args()
 
     set_seed(args.seed)
+
+    # Sanity: prevent both fp16 and bf16 simultaneously
+    if getattr(args, "bf16", False) and getattr(args, "fp16", False):
+        raise SystemExit("Both --bf16 and --fp16 were set; please choose only one.")
+
+    # Optional precision auto-detect: only if user asked and neither flag set
+    if getattr(args, "auto_precision", False) and not args.bf16 and not args.fp16:
+        try:
+            if torch.cuda.is_available():
+                # Prefer bf16 on Ampere or newer if bf16 supported
+                cap = torch.cuda.get_device_capability()
+                bf16_supported = getattr(torch.cuda, "is_bf16_supported", lambda: False)()
+                if bf16_supported or (isinstance(cap, tuple) and cap >= (8, 0)):
+                    args.bf16 = True
+                    print("[train_lora] Auto-enabled bf16 based on GPU capability.")
+        except Exception:
+            pass
 
     # Validate required arguments when running as a CLI
     if not args.model or not args.splits_dir or not args.output_dir:
