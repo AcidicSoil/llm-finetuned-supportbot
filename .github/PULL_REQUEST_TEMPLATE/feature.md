@@ -44,7 +44,3 @@ uv run pytest -q -m smoke tests/smoke
 ## Linked issues / bugs
 
 <!-- Closes #123 / Fixes #456 / Resolves #789 -->
-
----
-
-Note: For chores/infra-only changes, you can use the alternative template in `.github/PULL_REQUEST_TEMPLATE/chore.md` when creating a PR via the GitHub UI (Choose a template).
