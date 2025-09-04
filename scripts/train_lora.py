@@ -352,7 +352,9 @@ def main() -> None:
             if torch.cuda.is_available():
                 # Prefer bf16 on Ampere or newer if bf16 supported
                 cap = torch.cuda.get_device_capability()
-                bf16_supported = getattr(torch.cuda, "is_bf16_supported", lambda: False)()
+                bf16_supported = getattr(
+                    torch.cuda, "is_bf16_supported", lambda: False
+                )()
                 if bf16_supported or (isinstance(cap, tuple) and cap >= (8, 0)):
                     args.bf16 = True
                     print("[train_lora] Auto-enabled bf16 based on GPU capability.")
