@@ -500,6 +500,48 @@ When discovery/confirmation is used, add:
 
 ---
 
+## 9) Environment & Testing Policy (uv-first, no auto-test)
+
+**Objective:** Prevent environment drift across Windows/Linux/WSL and protect any existing `.venv`. The user runs tests after the test plan is documented.
+
+**Rules:**
+
+1. **uv-only for Python environments.**
+
+   - Use `uv` for all environment operations: creation, sync, installs, and running tools.
+   - **Never** suggest or run `python -m venv`, `pip`, `pipx`, `poetry`, or raw `pytest` without `uv` unless the user explicitly overrides.
+2. **Do not execute tests automatically.**
+
+   - Produce a **Test Plan** per task that lists exact commands and expected outcomes.
+   - Mark commands as **“proposed, not executed.”** The user will run them and share outputs.
+3. **Respect existing `.venv`.**
+
+   - Do **not** create, delete, modify, or activate virtual environments without explicit user approval.
+   - Prefer `uv run` over shell activation to avoid platform-specific activation steps.
+4. **Cross‑platform safety.**
+
+   - Provide platform‑neutral commands and avoid assumptions about path separators or shells.
+   - Prefer reading project files (`pyproject.toml`, `requirements*.txt`) over executing environment/version commands.
+5. **Explicit consent for any environment‑touching command.**
+
+   - Even read‑only checks (e.g., `uv pip list`) require explicit user consent.
+
+**Command mapping (examples, propose only):**
+
+- Create venv (if approved): `uv venv .venv`
+- Sync from `pyproject.toml`: `uv sync`
+- Install package: `uv add <pkg>` **or** `uv pip install <pkg>`
+- Run Python tool: `uv run python -m <module> ...`
+- Run pytest: `uv run pytest -q` (only after Test Plan approval; user executes)
+- Run CLI tools without adding to env: `uvx ruff check .`, `uvx mypy .`
+
+**Test execution protocol:**
+
+- Include a **Proposed Test Commands** block in deliverables, not executed by the assistant.
+- Wait for the user to run and paste results; analyze and proceed accordingly.
+
+---
+
 ### System-prompt scaffold (enforcement)
 
 ```

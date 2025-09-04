@@ -8,7 +8,7 @@
 
 ## Testing & Verification
 
-- Prefer fast, local checks first: `pytest -q` if tests exist.
+- Prefer fast, local checks first: `uv run pytest -q` if tests exist.
 - For script changes, add a smoke run target (dry run or small batch).
 - Do not fix unrelated failing tests; call them out in notes.
 

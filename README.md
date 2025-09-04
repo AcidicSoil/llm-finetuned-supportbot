@@ -198,12 +198,12 @@ Local testing works both fully offline (unit tests) and online (optional smoke t
     ```
 
 - Windows (PowerShell)
-  - Activate venv: `..\.venv\Scripts\Activate.ps1`
+  - No activation needed with uv. Use `uv run`.
   - Offline full suite (skips smoke):
 
     ```powershell
     $env:HF_HUB_OFFLINE = '1'
-    .\.venv\Scripts\python -m pytest -q
+    uv run pytest -q
     ```
 
   - Online smoke only (pulls a tiny model):
@@ -211,7 +211,7 @@ Local testing works both fully offline (unit tests) and online (optional smoke t
     ```powershell
     $env:HF_HUB_OFFLINE = '0'
     $env:TEST_TINY_MODEL_ID = 'sshleifer/tiny-gpt2'
-    .\.venv\Scripts\python -m pytest -q -m smoke tests\smoke
+    uv run pytest -q -m smoke tests/smoke
     ```
 
 Notes
@@ -274,6 +274,8 @@ llm-finetune-supportbot/
 - Add runtime dep: `uv add fastapi`
 - Add dev dep: `uv add --dev ruff`
 - Sync env (incl. dev): `uv sync --dev`
+
+For more tips, see `instructions/uv-cheatsheet.md`.
 
 ## 📸 Demos
 

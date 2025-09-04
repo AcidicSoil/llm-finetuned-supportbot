@@ -15,22 +15,17 @@ Features
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, TYPE_CHECKING
 
-import torch
 import yaml
-from datasets import Dataset
-from peft import LoraConfig, TaskType, get_peft_model
 from src.models import DataRecord
 from src.parsers import load_jsonl_records, load_preference_jsonl
 from src.tokenization import default_pair_template
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    set_seed,
-)
-from trl import SFTConfig, SFTTrainer
+if TYPE_CHECKING:
+    # Optional imports for type checking and IDEs only.
+    from datasets import Dataset
+    from transformers import BitsAndBytesConfig
+    from trl import SFTConfig, SFTTrainer
 
 # Repo root (for locating preset files regardless of CWD)
 ROOT = Path(__file__).resolve().parent.parent
@@ -40,24 +35,27 @@ def _load_split_jsonl(path: Path) -> List[DataRecord]:
     return load_jsonl_records(str(path))
 
 
-def _records_to_prompt_completion(records: Iterable[DataRecord]) -> Dataset:
+def _records_to_prompt_completion(records: Iterable[DataRecord]) -> "Dataset":
     prompts: List[str] = []
     completions: List[str] = []
     for rec in records:
         p, a = default_pair_template(rec)
         prompts.append(p)
         completions.append(a)
+    # Lazy import to avoid heavy deps during tests that only parse args
+    from datasets import Dataset
     return Dataset.from_dict({"prompt": prompts, "completion": completions})
 
 
 def _bitsandbytes_config(
     quant: str, *, compute_dtype: str, quant_type: str, double_quant: bool
-) -> BitsAndBytesConfig | None:
+) -> "BitsAndBytesConfig" | None:
     if quant not in {"4bit", "8bit", "none"}:
         raise SystemExit("--quant must be one of: 4bit, 8bit, none")
     if quant == "none":
         return None
     # Map dtype string to torch dtype
+    import torch  # lazy import
     dtype_map = {
         "float32": torch.float32,
         "float16": torch.float16,
@@ -65,8 +63,10 @@ def _bitsandbytes_config(
     }
     bnb_compute_dtype = dtype_map.get(compute_dtype.lower())
     if quant == "8bit":
+        from transformers import BitsAndBytesConfig
         return BitsAndBytesConfig(load_in_8bit=True)
     # 4bit
+    from transformers import BitsAndBytesConfig
     return BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type=quant_type,
@@ -338,6 +338,11 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    # Heavy imports kept local so tests that only import/parse don't need them
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
+    from peft import LoraConfig, TaskType, get_peft_model
+    import inspect
     args = parse_args()
 
     set_seed(args.seed)
@@ -557,6 +562,7 @@ def main() -> None:
         trainer = DPOTrainer(**trainer_kwargs)
     else:
         # SFT path (default)
+        from trl import SFTConfig, SFTTrainer
         try:
             from dataclasses import fields as dc_fields
             from dataclasses import is_dataclass

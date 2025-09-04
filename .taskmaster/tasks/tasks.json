@@ -17,7 +17,7 @@
         "title": "Define Data Schema and Validation Logic",
         "description": "Establish a unified schema for all input data and implement validators to ensure data quality.",
         "details": "Implement a data model class or Pydantic model for the schema: `{id, inputs:{question, context?}, outputs:{answer}, meta:{source, timestamp, tags[]}}`. Create validation functions to check for required fields, data types, and non-empty content.",
-        "testStrategy": "Write unit tests using `pytest` to check that the validator correctly accepts valid data and rejects invalid or incomplete data.",
+        "testStrategy": "Write unit tests using `pytest` (run via `uv run pytest`) to check that the validator correctly accepts valid data and rejects invalid or incomplete data.",
         "priority": "high",
         "dependencies": [
           1
@@ -42,7 +42,7 @@
             ],
             "details": "Use Pydantic's `@validator` decorator to add validation logic. Ensure that string fields like `id`, `question`, `answer`, and `source` are not empty or just whitespace. Validate that the `tags` list, if not empty, contains only non-empty strings.",
             "status": "done",
-            "testStrategy": "Using `pytest`, create tests that attempt to initialize the `DataRecord` model with invalid data (e.g., an empty `question`, a `tag` with an empty string) and assert that a `ValidationError` is raised."
+            "testStrategy": "Using `pytest` (run via `uv run pytest`), create tests that attempt to initialize the `DataRecord` model with invalid data (e.g., an empty `question`, a `tag` with an empty string) and assert that a `ValidationError` is raised."
           },
           {
             "id": 3,
@@ -411,7 +411,7 @@
         "title": "Write Unit Tests for Data Pipeline",
         "description": "Create unit tests for the data loading, validation, and splitting components.",
         "details": "Using `pytest`, write tests in the `tests/` directory to cover the functions in the data processing modules. Use mock data to test edge cases.",
-        "testStrategy": "Run `pytest tests/` and ensure all data-related tests pass.",
+        "testStrategy": "Run `uv run pytest tests/` and ensure all data-related tests pass.",
         "priority": "high",
         "dependencies": [
           6
@@ -634,20 +634,20 @@
         "id": 23,
         "title": "Add Mixed-Precision and Gradient Accumulation Presets",
         "description": "Provide pre-configured settings for common performance optimization techniques.",
-        "details": "Add options to the training config (YAML) to easily enable/disable mixed-precision (`fp16`/`bf16`) and set the number of gradient accumulation steps.",
+        "details": "Add options to the training config (YAML) to easily enable/disable mixed-precision (`fp16`/`bf16`) and set the number of gradient accumulation steps.\n<info added on 2025-09-03T13:14:41.842Z>\nInitial investigation started. Reviewing documentation for mixed-precision (`fp16`/`bf16`) and gradient accumulation. Inspecting the existing configuration files and training script entrypoints to outline the implementation plan for the preset system.\n</info added on 2025-09-03T13:14:41.842Z>",
         "testStrategy": "Run training with `gradient_accumulation_steps=4` and verify from the logs that the effective batch size is 4x the per-device batch size.",
         "priority": "low",
         "dependencies": [
           8
         ],
-        "status": "pending",
+        "status": "done",
         "subtasks": [
           {
             "id": 1,
             "title": "Define preset YAMLs",
             "description": "",
             "details": "Add preset overlays under configs/presets/: cpu.yaml (no AMP, ga=1), gpu-bf16.yaml (bf16 on, ga=1), gpu-fp16.yaml (fp16 on, ga=1), memory-efficient.yaml (reduce batch size, increase gradient_accumulation_steps).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [],
             "parentTaskId": 23
           },
@@ -656,7 +656,7 @@
             "title": "Add --preset overlay flag",
             "description": "",
             "details": "Update scripts/train_lora.py to accept --preset <name>. If provided, load configs/presets/<name>.yaml and apply as defaults before CLI overrides.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "23.1"
             ],
@@ -667,7 +667,7 @@
             "title": "Auto-detect precision support (optional)",
             "description": "",
             "details": "If --preset not provided, optionally auto-enable bf16 when torch.cuda.is_available() and torch.cuda.get_device_capability>= (8,0) and bf16 supported; else leave as configured.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "23.2"
             ],
@@ -678,7 +678,7 @@
             "title": "Tests: preset overlay precedence",
             "description": "",
             "details": "Unit test that --preset loads YAML overlay and CLI flags still override. Verify bf16/fp16 and gradient_accumulation_steps values in args snapshot prior to trainer init.",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "23.2"
             ],
@@ -689,7 +689,7 @@
             "title": "Docs: presets quickstart",
             "description": "",
             "details": "Add README section with examples for presets and a table of recommended combos (CPU, single-GPU bf16, older-GPU fp16, memory-efficient).",
-            "status": "pending",
+            "status": "done",
             "dependencies": [
               "23.1"
             ],
@@ -759,7 +759,60 @@
           15
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Metadata Schema for Registry Entry",
+            "description": "Establish a clear, consistent structure for the metadata that will be saved for each model.",
+            "dependencies": [],
+            "details": "Create a Pydantic model or a formal dictionary structure in a new `registry/schema.py` file. The schema must include fields for `run_id` (string), `evaluation_metrics` (dictionary), `model_artifact_path` (string), and a `creation_timestamp` (string, ISO 8601 format).",
+            "status": "pending",
+            "testStrategy": "Review the schema definition to ensure it captures all required information as per the task description."
+          },
+          {
+            "id": 2,
+            "title": "Implement Registry Directory Management",
+            "description": "Ensure the top-level `registry/` directory is automatically created if it does not exist.",
+            "dependencies": [],
+            "details": "In the main training script or a shared utility module, add a function that is called at startup. This function will use `pathlib.Path.mkdir(parents=True, exist_ok=True)` to create the `registry/` directory at the project root.",
+            "status": "pending",
+            "testStrategy": "Delete the `registry/` directory and run the training script. Verify the directory is created."
+          },
+          {
+            "id": 3,
+            "title": "Create Metadata Writer Function",
+            "description": "Develop a dedicated function to handle the serialization and writing of a metadata entry to a JSON file.",
+            "dependencies": [
+              "25.1",
+              "25.2"
+            ],
+            "details": "In a new `registry/utils.py` module, create a function `write_metadata(metadata: dict)`. This function will take the metadata, generate a filename from the `run_id` (e.g., `{run_id}.json`), and write the data to a file in the `registry/` directory in a human-readable JSON format.",
+            "status": "pending",
+            "testStrategy": "Call the function with mock metadata and verify that the corresponding JSON file is created with the correct content and filename in the `registry/` directory."
+          },
+          {
+            "id": 4,
+            "title": "Integrate Metadata Writing into Evaluation Pipeline",
+            "description": "Trigger the metadata writing process upon the successful completion of a model evaluation.",
+            "dependencies": [
+              "25.3"
+            ],
+            "details": "Locate the point in the evaluation script where final metrics are calculated. After a successful run, collect the current run ID, the computed metrics dictionary, and the path to the saved model artifact. Pass this information to the `write_metadata` function.",
+            "status": "pending",
+            "testStrategy": "Run a partial training and evaluation cycle. Check that the `write_metadata` function is called with the correct arguments at the end of evaluation."
+          },
+          {
+            "id": 5,
+            "title": "Verify Registry Entry Creation in a Full Run",
+            "description": "Confirm that a complete train-and-eval pipeline correctly produces a new registry file.",
+            "dependencies": [
+              "25.4"
+            ],
+            "details": "Execute the full train-and-eval pipeline as defined in the parent task's test strategy. After completion, manually inspect the `registry/` directory for a new JSON file corresponding to the completed run.",
+            "status": "pending",
+            "testStrategy": "Check the newly created JSON file's contents to ensure the `run_id`, `evaluation_metrics`, and `model_artifact_path` are accurate and match the results of the pipeline run."
+          }
+        ]
       },
       {
         "id": 26,
@@ -832,7 +885,63 @@
           14
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define Guardrail Hook Interface",
+            "description": "Establish a clear, reusable interface for both pre-processing and post-processing guardrail functions.",
+            "dependencies": [],
+            "details": "Define a base class or function signature. For pre-processing, it should accept a query string and return a boolean indicating safety and the (potentially modified) query. For post-processing, it should accept a response string and return the filtered/modified response.",
+            "status": "pending",
+            "testStrategy": "Review the interface definition to ensure it's flexible enough for various checks (keywords, regex, etc.) and can signal a rejection clearly."
+          },
+          {
+            "id": 2,
+            "title": "Integrate Pre-processing Hook into Inference Logic",
+            "description": "Modify the inference pipeline to execute the optional input guardrail hook before sending the query to the model.",
+            "dependencies": [
+              "27.1"
+            ],
+            "details": "In the main inference function, add a check to see if a pre-processing hook is configured. If so, call it with the user's input query. If the hook flags the input as unsafe, immediately stop processing and return an appropriate error message.",
+            "status": "pending",
+            "testStrategy": "Temporarily hard-code a hook that always rejects input. Verify that API calls are blocked before they reach the model."
+          },
+          {
+            "id": 3,
+            "title": "Integrate Post-processing Hook into Inference Logic",
+            "description": "Modify the inference pipeline to execute the optional output guardrail hook after the model generates a response.",
+            "dependencies": [
+              "27.1"
+            ],
+            "details": "After the model generates a response but before it's sent back to the user, add a check for a configured post-processing hook. Call the hook with the model's output and use its return value as the final response.",
+            "status": "pending",
+            "testStrategy": "Temporarily hard-code a hook that always replaces the model output with a fixed string like '[RESPONSE CENSORED]'. Verify that API calls return this fixed string."
+          },
+          {
+            "id": 4,
+            "title": "Implement a Basic Keyword/Regex Guardrail",
+            "description": "Create a concrete implementation of the guardrail interface that filters content based on a configurable list of keywords or regex patterns.",
+            "dependencies": [
+              "27.1"
+            ],
+            "details": "Create a new function or class that accepts a list of banned keywords/patterns during initialization. Implement the hook logic to check if an input/output string contains any of the banned items. This will serve as the default, testable guardrail.",
+            "status": "pending",
+            "testStrategy": "Unit test the guardrail function directly. Pass strings that should be allowed and strings that should be blocked, and assert the correct behavior."
+          },
+          {
+            "id": 5,
+            "title": "Add Configuration to Enable and Test Guardrails",
+            "description": "Expose configuration options to enable/disable guardrails and specify which hook functions to use.",
+            "dependencies": [
+              "27.2",
+              "27.3",
+              "27.4"
+            ],
+            "details": "Update the main configuration (e.g., YAML file or command-line arguments) to include parameters like `enable_guardrails`, `input_guardrail_path`, and `output_guardrail_path`. Load and apply these settings when the inference server starts.",
+            "status": "pending",
+            "testStrategy": "Use the new configuration to enable the keyword guardrail. Send an API request containing a blocked keyword and verify that the API rejects the request with an appropriate error message, as per the main task's Test Strategy."
+          }
+        ]
       },
       {
         "id": 28,
@@ -846,12 +955,66 @@
           15
         ],
         "status": "pending",
-        "subtasks": []
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Define the dependency builder stage",
+            "description": "Create the first stage of the multi-stage Dockerfile to install Python dependencies, caching them in a separate layer.",
+            "dependencies": [],
+            "details": "Use a standard Python base image. Copy the `requirements.txt` file and run `pip install` to download and install all dependencies.",
+            "status": "pending",
+            "testStrategy": "Ensure this stage builds successfully without errors before proceeding to the next stage."
+          },
+          {
+            "id": 2,
+            "title": "Initialize the final runtime stage",
+            "description": "Define the second, lightweight stage for the final image using a slim Python base.",
+            "dependencies": [
+              "28.1"
+            ],
+            "details": "Start a new stage from a slim base image like `python:3.11-slim`. Create and set a working directory for the application.",
+            "status": "pending",
+            "testStrategy": "Verify the Dockerfile syntax is correct for initiating a new stage."
+          },
+          {
+            "id": 3,
+            "title": "Copy dependencies and application code",
+            "description": "Transfer the pre-installed dependencies from the builder stage and the API source code into the final runtime stage.",
+            "dependencies": [
+              "28.2"
+            ],
+            "details": "Use `COPY --from=builder ...` to copy the installed packages from the first stage. Add another `COPY` instruction for the application source code.",
+            "status": "pending",
+            "testStrategy": "Build the image and list files inside the container's working directory to verify that both the dependencies and source code are present."
+          },
+          {
+            "id": 4,
+            "title": "Add model artifacts and expose API port",
+            "description": "Copy the necessary machine learning model files into the image and configure the network port.",
+            "dependencies": [
+              "28.3"
+            ],
+            "details": "Add a `COPY` instruction to place the model artifacts into a designated path within the container. Use the `EXPOSE` instruction to open the port the API will listen on.",
+            "status": "pending",
+            "testStrategy": "Run `docker inspect` on the built image to confirm the correct port is exposed."
+          },
+          {
+            "id": 5,
+            "title": "Set the Uvicorn entrypoint command",
+            "description": "Define the command that will execute when the container starts, launching the FastAPI application.",
+            "dependencies": [
+              "28.4"
+            ],
+            "details": "Use the `CMD` instruction to specify the command to run the Uvicorn server, pointing to the FastAPI app instance and binding it to `0.0.0.0`.",
+            "status": "pending",
+            "testStrategy": "Run the container using `docker run`. Check the container logs to ensure Uvicorn starts successfully and is listening on the correct host and port."
+          }
+        ]
       }
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-09-02T21:21:25.707Z",
+      "updated": "2025-09-03T13:30:40.178Z",
       "description": "Tasks for default context"
     }
   }
