@@ -2,15 +2,16 @@
 # Usage examples (run from repo root):
 #   pwsh -File scripts/open_pr.ps1
 #   pwsh -File scripts/open_pr.ps1 -Merge
-#   pwsh -File scripts/open_pr.ps1 -Merge -TagRelease -Tag v0.4.0
+#   pwsh -File scripts/open_pr.ps1 -Merge -TagRelease -Tag v0.4.0 -Labels "bug", "critical"
 
 param(
   [string]$Base = "main",
-  [string]$Head = "feat/presets-cli-precedence",
+  [string]$Head = "",
   [switch]$Merge,
   [switch]$TagRelease,
   [string]$Tag = "",
-  [string]$Repo = ""
+  [string]$Repo = "",
+  [string[]]$Labels = @()
 )
 
 Set-StrictMode -Version Latest
@@ -41,7 +42,10 @@ if (-not $Repo) {
   $Repo = $origin
 }
 
-# Make sure we're on the desired head branch
+# Resolve HEAD to current branch if not provided, then ensure we're on it
+if (-not $Head) {
+  $Head = git branch --show-current
+}
 $current = git branch --show-current
 if ($current -ne $Head) {
   Write-Host "Switching to '$Head' (current: '$current')..."
@@ -57,30 +61,16 @@ try {
   & git push -u origin $Head
 }
 
-$title = 'feat(train,presets): enforce preset<config<CLI precedence + uv docs'
-
-$body = @"
-Summary
-- Enforce precedence: preset < config < CLI
-- Add --auto-precision (use bf16 when supported)
-- Enforce mutual exclusivity: --bf16 / --fp16 at parse time
-- Add unit tests + docstrings for presets precedence
-- Update docs: how to run preset tests with uv
-
-Details
-This PR formalizes the CLI/config/preset precedence rules to prevent unexpected overrides when combining YAML presets, explicit config files, and command-line flags. It also adds an --auto-precision convenience flag and guards against invalid precision flag combinations. Docs updated to prefer uv for environment and test runs.
-
-Notes
-- Base: $Base
-- Head: $Head
-- Ensure branch is pushed: git push -u origin $Head
-"@
-
 Write-Host "Creating PR: $Head -> $Base ..."
-& gh pr create -R $Repo -B $Base -H $Head -t $title -b $body
+$label_args = @()
+foreach ($l in $Labels) {
+  $label_args += "--label", "$l"
+}
+
+& gh pr create -R $Repo -B $Base -H $Head --fill @label_args
 
 # Fetch PR info
-$prJson = & gh pr view --head $Head --json number,url -q "{number: .number, url: .url}"
+$prJson = & gh pr view $Head --json number,url -q "{number: .number, url: .url}"
 if (-not $prJson) { throw "Unable to retrieve PR details for head '$Head'." }
 $pr = $prJson | ConvertFrom-Json
 Write-Host ("PR #{0}: {1}" -f $pr.number, $pr.url)

@@ -3,20 +3,23 @@ set -euo pipefail
 
 # Create a GitHub PR from current repo, optionally squash-merge and tag a release.
 # Usage:
-#   bash scripts/open_pr.sh [-B base] [-H head] [-R owner/repo] [-m] [--tag TAG]
+#   bash scripts/open_pr.sh [-B base] [-H head] [-R owner/repo] [-m] [--tag TAG] [--label <label>]
 # Examples:
 #   bash scripts/open_pr.sh
 #   bash scripts/open_pr.sh -m
-#   bash scripts/open_pr.sh -m --tag v0.4.0
+#   bash scripts/open_pr.sh -m --tag v0.4.0 --label "bug" --label "critical"
 
 BASE="main"
-HEAD="feat/presets-cli-precedence"
+# Default HEAD will be resolved to the current branch later
+HEAD=""
 REPO=""
 DO_MERGE=false
 TAG_RELEASE=""
+# Default labels applied to the PR (repeatable)
+LABELS=()
 
 print_usage() {
-  echo "Usage: $0 [-B base] [-H head] [-R owner/repo] [-m] [--tag TAG]" >&2
+  echo "Usage: $0 [-B base] [-H head] [-R owner/repo] [-m] [--tag TAG] [--label <label>]" >&2
 }
 
 # Parse short/long flags
@@ -27,6 +30,7 @@ while (( $# )); do
     -R) REPO=${2:-}; shift 2 ;;
     -m|--merge) DO_MERGE=true; shift ;;
     --tag) TAG_RELEASE=${2:-}; shift 2 ;;
+    --label) LABELS+=("$2"); shift 2;;
     -h|--help) print_usage; exit 0 ;;
     --) shift; break ;;
     -*) echo "Unknown option: $1" >&2; print_usage; exit 2 ;;
@@ -62,6 +66,11 @@ if [[ -z "$REPO" ]]; then
   REPO="$origin_url"
 fi
 
+# Resolve HEAD to current branch if not supplied
+if [[ -z "$HEAD" ]]; then
+  HEAD=$(git branch --show-current)
+fi
+
 current_branch=$(git branch --show-current)
 if [[ "$current_branch" != "$HEAD" ]]; then
   echo "Switching to '$HEAD' (current: '$current_branch')..."
@@ -74,36 +83,26 @@ if ! git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
   git push -u origin "$HEAD"
 fi
 
-TITLE='feat(train,presets): enforce preset<config<CLI precedence + uv docs'
-read -r -d '' BODY <<'EOF'
-Summary
-- Enforce precedence: preset < config < CLI
-- Add --auto-precision (use bf16 when supported)
-- Enforce mutual exclusivity: --bf16 / --fp16 at parse time
-- Add unit tests + docstrings for presets precedence
-- Update docs: how to run preset tests with uv
-
-Details
-This PR formalizes the CLI/config/preset precedence rules to prevent unexpected overrides when combining YAML presets, explicit config files, and command-line flags. It also adds an --auto-precision convenience flag and guards against invalid precision flag combinations. Docs updated to prefer uv for environment and test runs.
-
-Notes
-- Ensure branch is pushed: git push -u origin HEAD
-EOF
-
 echo "Creating PR: $HEAD -> $BASE ..."
-if ! gh pr create -R "$REPO" -B "$BASE" -H "$HEAD" -t "$TITLE" -b "$BODY" >/dev/null; then
+# Build label args for gh
+label_args=()
+for l in "${LABELS[@]}"; do
+  label_args+=(--label "$l")
+done
+
+if ! gh pr create -R "$REPO" -B "$BASE" -H "$HEAD" --fill "${label_args[@]}"; then
   echo "PR create failed (it may already exist). Continuing to fetch details..." >&2
 fi
 
 # Retrieve PR number + URL for the head branch
-PR_JSON=$(gh pr view -R "$REPO" --head "$HEAD" --json number,url 2>/dev/null || true)
+PR_JSON=$(gh pr view -R "$REPO" "$HEAD" --json number,url 2>/dev/null || true)
 if [[ -z "$PR_JSON" ]]; then
   echo "Unable to retrieve PR details for head '$HEAD'." >&2
   exit 1
 fi
 
 PR_NUMBER=$(printf '%s' "$PR_JSON" | grep -o '"number"[^0-9]*[0-9]\+' | grep -o '[0-9]\+$' || true)
-PR_URL=$(printf '%s' "$PR_JSON" | sed -n 's/.*"url"[[:space:]]*:[[:space:]]*"\([^"]\+\)".*/\1/p')
+PR_URL=$(printf '%s' "$PR_JSON" | sed -n 's/.*"url"[[:space:]]*:[[:space:]]*"\([^"]\+\)"_.*_/.p')
 
 echo "PR #$PR_NUMBER: $PR_URL"
 
