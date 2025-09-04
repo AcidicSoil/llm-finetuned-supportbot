@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# Git pre-commit hook (portable, uv-first)
+# - Runs ruff and black checks on staged Python files
+# - Uses `uvx` if available, falls back to tool on PATH
+# - Non-destructive: check-only (does not modify files)
+#
+# Config via env vars:
+#   HOOK_STRICT=1  -> fail if tools are missing (default: warn and continue)
+#   HOOK_MYPY=1    -> run mypy (if config present)
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+cd "$ROOT_DIR"
+
+echo "[pre-commit] Checking staged Python files (ruff/black)"
+
+# Collect staged Python files
+mapfile -t PY_FILES < <(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.py$' || true)
+
+if (( ${#PY_FILES[@]} == 0 )); then
+  echo "[pre-commit] No Python files staged. Skipping checks."
+  exit 0
+fi
+
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+run_tool() {
+  local tool="$1"; shift
+  if have_cmd uvx; then
+    uvx "$tool" "$@"
+  elif have_cmd "$tool"; then
+    "$tool" "$@"
+  else
+    return 127
+  fi
+}
+
+warn_missing_or_fail() {
+  local name="$1"
+  if [[ "${HOOK_STRICT:-0}" == "1" ]]; then
+    echo "[pre-commit] ERROR: $name not available and uvx not found. Set HOOK_STRICT=0 to bypass." >&2
+    exit 1
+  else
+    echo "[pre-commit] WARN: $name not available; skipping (set HOOK_STRICT=1 to enforce)." >&2
+  fi
+}
+
+EXIT=0
+
+# Ruff check (if config or tool available)
+if [[ -f ruff.toml ]] || grep -q '\[tool\.ruff\]' pyproject.toml 2>/dev/null || have_cmd ruff || have_cmd uvx; then
+  echo "[pre-commit] ruff check…"
+  if ! run_tool ruff check "${PY_FILES[@]}"; then
+    echo "[pre-commit] ruff failed. Run: uvx ruff fix" >&2
+    EXIT=1
+  fi
+else
+  warn_missing_or_fail "ruff"
+fi
+
+# Black check (if config or tool available)
+if grep -q '\[tool\.black\]' pyproject.toml 2>/dev/null || have_cmd black || have_cmd uvx; then
+  echo "[pre-commit] black --check …"
+  if ! run_tool black --check --diff "${PY_FILES[@]}"; then
+    echo "[pre-commit] black failed. Run: uvx black ." >&2
+    EXIT=1
+  fi
+else
+  warn_missing_or_fail "black"
+fi
+
+# Optional: mypy (only if enabled and config present)
+if [[ "${HOOK_MYPY:-0}" == "1" ]]; then
+  if [[ -f mypy.ini ]] || grep -q '\[tool\.mypy\]' pyproject.toml 2>/dev/null || have_cmd mypy || have_cmd uvx; then
+    echo "[pre-commit] mypy …"
+    # Run against repo to respect module/package structure
+    if ! run_tool mypy .; then
+      echo "[pre-commit] mypy failed. Fix type errors or disable via HOOK_MYPY=0." >&2
+      EXIT=1
+    fi
+  else
+    warn_missing_or_fail "mypy"
+  fi
+fi
+
+if (( EXIT != 0 )); then
+  echo "[pre-commit] Checks failed. Commit aborted."
+  exit "$EXIT"
+fi
+
+echo "[pre-commit] All checks passed."
+exit 0
+

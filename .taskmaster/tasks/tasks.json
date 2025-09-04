@@ -1010,11 +1010,22 @@
             "testStrategy": "Run the container using `docker run`. Check the container logs to ensure Uvicorn starts successfully and is listening on the correct host and port."
           }
         ]
+      },
+      {
+        "id": 29,
+        "title": "Cross-platform pre-commit hook: install + docs",
+        "description": "Ensure the repo’s pre-commit hook works on Linux/macOS/Windows and is easy to enable.",
+        "details": "Scope:\n- Keep uv-first hook that runs `ruff check` and `black --check --diff`; optional `mypy` via `HOOK_MYPY=1` and strict mode via `HOOK_STRICT=1`.\n- Maintain repo copy at `.github/hooks/pre-commit` (LF line endings) and install to `.git/hooks/pre-commit`.\n- Add Linux/macOS installer `scripts/dev/install-hooks.sh` (0755) and document alternative `git config core.hooksPath .github/hooks`.\n- Enforce LF with `.gitattributes` (already set: add .github/hooks/*) and verify executable bits tracked.\n- Update README: section “Git Hooks (uv-first)” with enable steps and troubleshooting for CRLF/permissions.\n- Optional: add CI job to run `uvx ruff check .` and `uvx black --check .` on PRs.\n\nAcceptance Criteria:\n- Fresh clone on Linux passes the hook when changes are formatted; fails when not.\n- README documents both install paths and env toggles (`HOOK_STRICT`, `HOOK_MYPY`).\n- Line endings normalized (LF) for hook scripts.",
+        "testStrategy": "Proposed (not executed):\n- On Linux: `bash scripts/dev/install-hooks.sh`; edit a py file with formatting issue → commit must fail; run `uvx black .` + `uvx ruff fix` → commit passes.\n- Alternative: `git config core.hooksPath .github/hooks` and repeat.\n- Verify `file .git/hooks/pre-commit` shows LF shebang; `git ls-files --eol .github/hooks/pre-commit` shows w/eol=lf.",
+        "status": "pending",
+        "dependencies": [],
+        "priority": "medium",
+        "subtasks": []
       }
     ],
     "metadata": {
       "created": "2025-08-29T17:04:17.805Z",
-      "updated": "2025-09-03T13:30:40.178Z",
+      "updated": "2025-09-04T00:32:17.378Z",
       "description": "Tasks for default context"
     }
   }

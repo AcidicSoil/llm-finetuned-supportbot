@@ -15,17 +15,17 @@ Features
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List
 
 import yaml
 from src.models import DataRecord
 from src.parsers import load_jsonl_records, load_preference_jsonl
 from src.tokenization import default_pair_template
+
 if TYPE_CHECKING:
     # Optional imports for type checking and IDEs only.
     from datasets import Dataset
     from transformers import BitsAndBytesConfig
-    from trl import SFTConfig, SFTTrainer
 
 # Repo root (for locating preset files regardless of CWD)
 ROOT = Path(__file__).resolve().parent.parent
@@ -44,6 +44,7 @@ def _records_to_prompt_completion(records: Iterable[DataRecord]) -> "Dataset":
         completions.append(a)
     # Lazy import to avoid heavy deps during tests that only parse args
     from datasets import Dataset
+
     return Dataset.from_dict({"prompt": prompts, "completion": completions})
 
 
@@ -56,6 +57,7 @@ def _bitsandbytes_config(
         return None
     # Map dtype string to torch dtype
     import torch  # lazy import
+
     dtype_map = {
         "float32": torch.float32,
         "float16": torch.float16,
@@ -64,9 +66,11 @@ def _bitsandbytes_config(
     bnb_compute_dtype = dtype_map.get(compute_dtype.lower())
     if quant == "8bit":
         from transformers import BitsAndBytesConfig
+
         return BitsAndBytesConfig(load_in_8bit=True)
     # 4bit
     from transformers import BitsAndBytesConfig
+
     return BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type=quant_type,
@@ -339,10 +343,12 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     # Heavy imports kept local so tests that only import/parse don't need them
-    import torch
-    from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
-    from peft import LoraConfig, TaskType, get_peft_model
     import inspect
+
+    import torch
+    from peft import LoraConfig, TaskType, get_peft_model
+    from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
+
     args = parse_args()
 
     set_seed(args.seed)
@@ -357,7 +363,9 @@ def main() -> None:
             if torch.cuda.is_available():
                 # Prefer bf16 on Ampere or newer if bf16 supported
                 cap = torch.cuda.get_device_capability()
-                bf16_supported = getattr(torch.cuda, "is_bf16_supported", lambda: False)()
+                bf16_supported = getattr(
+                    torch.cuda, "is_bf16_supported", lambda: False
+                )()
                 if bf16_supported or (isinstance(cap, tuple) and cap >= (8, 0)):
                     args.bf16 = True
                     print("[train_lora] Auto-enabled bf16 based on GPU capability.")
@@ -483,7 +491,6 @@ def main() -> None:
         "metric_for_best_model": str(args.metric_name),
         "greater_is_better": bool(args.greater_is_better),
     }
-    import inspect
 
     if str(args.recipe).lower() == "dpo":
         # Assemble DPOConfig with version tolerance
@@ -563,6 +570,7 @@ def main() -> None:
     else:
         # SFT path (default)
         from trl import SFTConfig, SFTTrainer
+
         try:
             from dataclasses import fields as dc_fields
             from dataclasses import is_dataclass
