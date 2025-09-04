@@ -32,7 +32,6 @@ node_modules/
 .mcp.json
 .venv
 memory-bank/
-logs/
 
 # python
 __pycache__/

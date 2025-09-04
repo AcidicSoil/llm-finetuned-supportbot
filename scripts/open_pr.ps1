@@ -6,7 +6,7 @@
 
 param(
   [string]$Base = "main",
-  [string]$Head = "feat/presets-cli-precedence",
+  [string]$Head = "",
   [switch]$Merge,
   [switch]$TagRelease,
   [string]$Tag = "",
@@ -41,7 +41,10 @@ if (-not $Repo) {
   $Repo = $origin
 }
 
-# Make sure we're on the desired head branch
+# Resolve HEAD to current branch if not provided, then ensure we're on it
+if (-not $Head) {
+  $Head = git branch --show-current
+}
 $current = git branch --show-current
 if ($current -ne $Head) {
   Write-Host "Switching to '$Head' (current: '$current')..."
@@ -57,27 +60,30 @@ try {
   & git push -u origin $Head
 }
 
-$title = 'feat(train,presets): enforce preset<config<CLI precedence + uv docs'
+$title = 'Enforce preset<config<CLI precedence; doc "uv" flow; add PR scripts'
 
 $body = @"
 Summary
-- Enforce precedence: preset < config < CLI
-- Add --auto-precision (use bf16 when supported)
-- Enforce mutual exclusivity: --bf16 / --fp16 at parse time
-- Add unit tests + docstrings for presets precedence
-- Update docs: how to run preset tests with uv
+- Enforces explicit precedence: preset < config file < CLI
+- Makes train_lora import path lightweight for arg-parse/unit tests
+- Adds uv cheatsheet and aligns docs to uv-first workflow
+- Adds PR automation scripts for Bash/PowerShell; fixes PowerShell '@{u}' quoting
 
-Details
-This PR formalizes the CLI/config/preset precedence rules to prevent unexpected overrides when combining YAML presets, explicit config files, and command-line flags. It also adds an --auto-precision convenience flag and guards against invalid precision flag combinations. Docs updated to prefer uv for environment and test runs.
+Changes
+- scripts/train_lora.py: lazy-import heavy deps; precedence handling
+- instructions/uv-cheatsheet.md: new
+- scripts/open_pr.ps1, scripts/open_pr.sh: new (+ quoting fix)
+
+Testing
+- Unit/arg-parse tests confirmed passing on 2025-09-03
 
 Notes
-- Base: $Base
-- Head: $Head
-- Ensure branch is pushed: git push -u origin $Head
+- Follow-up: open PR for 'feature/taskmaster' (currently +45 ahead of 'main')
+- Labels: feature, docs, tooling
 "@
 
 Write-Host "Creating PR: $Head -> $Base ..."
-& gh pr create -R $Repo -B $Base -H $Head -t $title -b $body
+& gh pr create -R $Repo -B $Base -H $Head -t $title -b $body --label feature --label docs --label tooling
 
 # Fetch PR info
 $prJson = & gh pr view --head $Head --json number,url -q "{number: .number, url: .url}"

@@ -10,10 +10,13 @@ set -euo pipefail
 #   bash scripts/open_pr.sh -m --tag v0.4.0
 
 BASE="main"
-HEAD="feat/presets-cli-precedence"
+# Default HEAD will be resolved to the current branch later
+HEAD=""
 REPO=""
 DO_MERGE=false
 TAG_RELEASE=""
+# Default labels applied to the PR (repeatable)
+LABELS=("feature" "docs" "tooling")
 
 print_usage() {
   echo "Usage: $0 [-B base] [-H head] [-R owner/repo] [-m] [--tag TAG]" >&2
@@ -62,6 +65,11 @@ if [[ -z "$REPO" ]]; then
   REPO="$origin_url"
 fi
 
+# Resolve HEAD to current branch if not supplied
+if [[ -z "$HEAD" ]]; then
+  HEAD=$(git branch --show-current)
+fi
+
 current_branch=$(git branch --show-current)
 if [[ "$current_branch" != "$HEAD" ]]; then
   echo "Switching to '$HEAD' (current: '$current_branch')..."
@@ -74,24 +82,35 @@ if ! git rev-parse --abbrev-ref --symbolic-full-name @{u} >/dev/null 2>&1; then
   git push -u origin "$HEAD"
 fi
 
-TITLE='feat(train,presets): enforce preset<config<CLI precedence + uv docs'
+TITLE='Enforce preset<config<CLI precedence; doc "uv" flow; add PR scripts'
 read -r -d '' BODY <<'EOF'
 Summary
-- Enforce precedence: preset < config < CLI
-- Add --auto-precision (use bf16 when supported)
-- Enforce mutual exclusivity: --bf16 / --fp16 at parse time
-- Add unit tests + docstrings for presets precedence
-- Update docs: how to run preset tests with uv
+- Enforces explicit precedence: preset < config file < CLI
+- Makes train_lora import path lightweight for arg-parse/unit tests
+- Adds uv cheatsheet and aligns docs to uv-first workflow
+- Adds PR automation scripts for Bash/PowerShell; fixes PowerShell '@{u}' quoting
 
-Details
-This PR formalizes the CLI/config/preset precedence rules to prevent unexpected overrides when combining YAML presets, explicit config files, and command-line flags. It also adds an --auto-precision convenience flag and guards against invalid precision flag combinations. Docs updated to prefer uv for environment and test runs.
+Changes
+- scripts/train_lora.py: lazy-import heavy deps; precedence handling
+- instructions/uv-cheatsheet.md: new
+- scripts/open_pr.ps1, scripts/open_pr.sh: new (+ quoting fix)
+
+Testing
+- Unit/arg-parse tests confirmed passing on 2025-09-03
 
 Notes
-- Ensure branch is pushed: git push -u origin HEAD
+- Follow-up: open PR for 'feature/taskmaster' (currently +45 ahead of 'main')
+- Labels: feature, docs, tooling
 EOF
 
 echo "Creating PR: $HEAD -> $BASE ..."
-if ! gh pr create -R "$REPO" -B "$BASE" -H "$HEAD" -t "$TITLE" -b "$BODY" >/dev/null; then
+# Build label args for gh
+label_args=()
+for l in "${LABELS[@]}"; do
+  label_args+=(--label "$l")
+done
+
+if ! gh pr create -R "$REPO" -B "$BASE" -H "$HEAD" -t "$TITLE" -b "$BODY" "${label_args[@]}" >/dev/null; then
   echo "PR create failed (it may already exist). Continuing to fetch details..." >&2
 fi
 
