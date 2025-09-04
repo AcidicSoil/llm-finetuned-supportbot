@@ -70,7 +70,7 @@ foreach ($l in $Labels) {
 & gh pr create -R $Repo -B $Base -H $Head --fill @label_args
 
 # Fetch PR info
-$prJson = & gh pr view --head $Head --json number,url -q "{number: .number, url: .url}"
+$prJson = & gh pr view $Head --json number,url -q "{number: .number, url: .url}"
 if (-not $prJson) { throw "Unable to retrieve PR details for head '$Head'." }
 $pr = $prJson | ConvertFrom-Json
 Write-Host ("PR #{0}: {1}" -f $pr.number, $pr.url)

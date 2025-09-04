@@ -95,7 +95,7 @@ if ! gh pr create -R "$REPO" -B "$BASE" -H "$HEAD" --fill "${label_args[@]}"; th
 fi
 
 # Retrieve PR number + URL for the head branch
-PR_JSON=$(gh pr view -R "$REPO" --head "$HEAD" --json number,url 2>/dev/null || true)
+PR_JSON=$(gh pr view -R "$REPO" "$HEAD" --json number,url 2>/dev/null || true)
 if [[ -z "$PR_JSON" ]]; then
   echo "Unable to retrieve PR details for head '$HEAD'." >&2
   exit 1
