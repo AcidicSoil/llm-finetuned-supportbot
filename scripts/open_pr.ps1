@@ -2,7 +2,7 @@
 # Usage examples (run from repo root):
 #   pwsh -File scripts/open_pr.ps1
 #   pwsh -File scripts/open_pr.ps1 -Merge
-#   pwsh -File scripts/open_pr.ps1 -Merge -TagRelease -Tag v0.4.0
+#   pwsh -File scripts/open_pr.ps1 -Merge -TagRelease -Tag v0.4.0 -Labels "bug", "critical"
 
 param(
   [string]$Base = "main",
@@ -10,7 +10,8 @@ param(
   [switch]$Merge,
   [switch]$TagRelease,
   [string]$Tag = "",
-  [string]$Repo = ""
+  [string]$Repo = "",
+  [string[]]$Labels = @()
 )
 
 Set-StrictMode -Version Latest
@@ -60,30 +61,13 @@ try {
   & git push -u origin $Head
 }
 
-$title = 'Enforce preset<config<CLI precedence; doc "uv" flow; add PR scripts'
-
-$body = @"
-Summary
-- Enforces explicit precedence: preset < config file < CLI
-- Makes train_lora import path lightweight for arg-parse/unit tests
-- Adds uv cheatsheet and aligns docs to uv-first workflow
-- Adds PR automation scripts for Bash/PowerShell; fixes PowerShell '@{u}' quoting
-
-Changes
-- scripts/train_lora.py: lazy-import heavy deps; precedence handling
-- instructions/uv-cheatsheet.md: new
-- scripts/open_pr.ps1, scripts/open_pr.sh: new (+ quoting fix)
-
-Testing
-- Unit/arg-parse tests confirmed passing on 2025-09-03
-
-Notes
-- Follow-up: open PR for 'feature/taskmaster' (currently +45 ahead of 'main')
-- Labels: feature, docs, tooling
-"@
-
 Write-Host "Creating PR: $Head -> $Base ..."
-& gh pr create -R $Repo -B $Base -H $Head -t $title -b $body --label feature --label docs --label tooling
+$label_args = @()
+foreach ($l in $Labels) {
+  $label_args += "--label", "$l"
+}
+
+& gh pr create -R $Repo -B $Base -H $Head --fill @label_args
 
 # Fetch PR info
 $prJson = & gh pr view --head $Head --json number,url -q "{number: .number, url: .url}"
