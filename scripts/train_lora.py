@@ -30,6 +30,9 @@ if TYPE_CHECKING:
 # Repo root (for locating preset files regardless of CWD)
 ROOT = Path(__file__).resolve().parent.parent
 
+# Repo root (for locating preset files regardless of CWD)
+ROOT = Path(__file__).resolve().parent.parent
+
 
 def _load_split_jsonl(path: Path) -> List[DataRecord]:
     return load_jsonl_records(str(path))
