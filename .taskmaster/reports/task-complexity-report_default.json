@@ -1,173 +1,53 @@
 {
 	"meta": {
-		"generatedAt": "2025-08-31T13:48:56.190Z",
-		"tasksAnalyzed": 20,
+		"generatedAt": "2025-09-03T13:50:11.140Z",
+		"tasksAnalyzed": 5,
 		"totalTasks": 28,
-		"analysisCount": 20,
+		"analysisCount": 5,
 		"thresholdScore": 5,
 		"projectName": "llm-finetune-supportbot",
 		"usedResearch": true
 	},
 	"complexityAnalysis": [
 		{
-			"taskId": 9,
-			"taskTitle": "Implement Checkpoint Saving and Resuming",
-			"complexityScore": 3,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for implementing checkpointing. The subtasks should cover: 1. Configuring `TrainingArguments` for periodic checkpoint saving (e.g., by step or epoch) and managing the output directory. 2. Adding a `--resume-from-checkpoint` command-line argument to the `scripts/train.py` script. 3. Implementing the logic in the script to detect the argument and pass the correct checkpoint path or boolean flag to the `Trainer.train()` method.",
-			"reasoning": "The complexity is low as this task primarily involves configuring standard, built-in features of the Hugging Face `Trainer`. The work is centered on wiring up `TrainingArguments` and adding a simple CLI flag, which follows a well-documented and common pattern."
-		},
-		{
-			"taskId": 10,
-			"taskTitle": "Develop Evaluation Harness",
-			"complexityScore": 7,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Expand this task into subtasks for building a side-by-side model evaluation script. The subtasks should create: 1. A utility for loading a base model. 2. A separate utility for loading a base model and applying a PEFT adapter. 3. A main CLI script with arguments for model paths, suite, and generation parameters. 4. The core evaluation loop to generate responses from both models. 5. A results writer to save the paired generations to a structured file.",
-			"reasoning": "This task is complex because it orchestrates several distinct components: loading two different model configurations (base vs. PEFT), managing data I/O for the evaluation suite, implementing a generation loop, and structuring the output. The existing 5 subtasks correctly partition this work into manageable, logical steps."
-		},
-		{
-			"taskId": 11,
-			"taskTitle": "Implement Automated Metrics Calculation",
-			"complexityScore": 5,
-			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for calculating evaluation metrics. Subtasks should include: 1. Creating a script that loads the paired generation results from the evaluation harness. 2. Implementing a 'win-rate' calculation function, which can initially be a stub or prepare data for manual annotation, with hooks for a future LLM-as-judge. 3. Implementing a placeholder function for 'hallucination rate' based on a predefined rubric. 4. A main function to aggregate these metrics and prepare them for output.",
-			"reasoning": "The task has moderate complexity. While the initial implementation may use stubs, it requires defining the interfaces for these metrics and setting up the framework for a more complex 'LLM-as-judge' system. It involves processing structured data and applying custom, potentially nuanced, scoring logic."
-		},
-		{
-			"taskId": 12,
-			"taskTitle": "Implement Results Exporter and Summary Table",
-			"complexityScore": 3,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for exporting and displaying evaluation results. The subtasks should cover: 1. Integrating with the metrics calculation script to receive the final scores and per-item data. 2. Implementing a function to write the detailed, per-question results to a structured file (e.g., CSV or JSONL) in a `results/` directory. 3. Implementing a function using a library like `rich` or `tabulate` to print a formatted summary table of key metrics to the console.",
-			"reasoning": "This task has low complexity as it primarily involves data formatting and file I/O, which are well-supported by standard Python libraries. It's a direct follow-on from the metrics calculation step, focusing on presentation rather than complex logic."
-		},
-		{
-			"taskId": 13,
-			"taskTitle": "Create Interactive CLI Demo",
-			"complexityScore": 2,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for creating an interactive CLI demo. The subtasks should include: 1. Setting up a `demo.py` script with command-line arguments to specify the base model and optional adapter path. 2. Reusing or implementing logic to load the specified model and tokenizer. 3. Creating an interactive loop that prompts the user for input, generates a response from the model, and prints it to the console.",
-			"reasoning": "The task is straightforward, involving standard library features (`input`) and reusing the model loading logic developed for evaluation. The core logic is a simple interactive loop, making it low complexity."
-		},
-		{
-			"taskId": 14,
-			"taskTitle": "Develop FastAPI Inference Service",
-			"complexityScore": 7,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Expand this task into subtasks for creating a FastAPI inference service. The subtasks should guide the creation of: 1. A basic FastAPI app structure with health and placeholder generate endpoints. 2. Pydantic models for request/response validation. 3. A simple API key authentication dependency. 4. Logic to handle both single and batch inference requests. 5. A run script and README for easy setup and usage.",
-			"reasoning": "This task is complex as it bridges ML models with a web service. It requires knowledge of API design (FastAPI, Pydantic), and considerations for deploying a stateful model, including authentication and batching. The existing 5 subtasks provide a solid, incremental implementation path."
-		},
-		{
-			"taskId": 15,
-			"taskTitle": "Implement Model Packaging Utility",
-			"complexityScore": 4,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for creating a model packaging utility. The subtasks should cover: 1. Creating a script (`scripts/package.py`) that takes a trained model checkpoint path and an output directory as arguments. 2. Implementing the logic to save the PEFT adapter model and the tokenizer to the output directory using the standard Hugging Face `save_pretrained` format. 3. Creating and testing a corresponding loader utility function that can load the packaged model from a directory for inference.",
-			"reasoning": "The core action uses simple library functions (`save_pretrained`), but the complexity is moderate because it requires ensuring the correct set of artifacts are saved and creating a corresponding loader function that correctly reconstructs the model state for inference, a critical step for deployment."
-		},
-		{
-			"taskId": 16,
-			"taskTitle": "Write Unit Tests for Data Pipeline",
-			"complexityScore": 5,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for creating unit tests for the data pipeline. The subtasks should cover: 1. Setting up the `pytest` framework and creating mock data files (e.g., sample JSONL). 2. Writing tests for the data loading and validation functions, checking for correct parsing and error handling on malformed data. 3. Writing tests for the train/val/test splitting script to verify split ratios, determinism, and correct stratification.",
-			"reasoning": "This task has moderate complexity because writing effective unit tests requires setting up test fixtures, creating mock data, defining assertions for various edge cases, and structuring the tests in a maintainable way using a framework like `pytest`."
-		},
-		{
-			"taskId": 17,
-			"taskTitle": "Write Smoke Tests for Training and Inference",
-			"complexityScore": 4,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for creating smoke tests. The subtasks should include: 1. Creating a tiny, self-contained dataset and a minimal training configuration YAML for fast execution. 2. Implementing a `pytest` test that runs the main training script for a single step using the minimal config and asserts successful completion. 3. Implementing a `pytest` test that runs an inference script (like the CLI demo) on a tiny model to verify the end-to-end inference path.",
-			"reasoning": "The complexity is moderate, not because the code is difficult, but because it requires careful configuration of a minimal, fast, and self-contained version of the main application workflows to ensure they can run reliably and quickly within a CI pipeline."
-		},
-		{
-			"taskId": 18,
-			"taskTitle": "Setup Basic CI Pipeline",
-			"complexityScore": 4,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for setting up a GitHub Actions CI pipeline. The subtasks should define the steps for: 1. Creating the workflow YAML file that triggers on push and pull requests to main branches. 2. Defining a 'Lint' job that installs dependencies and runs `ruff` for both linting and format checking. 3. Defining a 'Test' job that sets up Python, caches dependencies, and executes the full `pytest` suite.",
-			"reasoning": "This task has moderate complexity as it involves infrastructure-as-code (YAML configuration) and understanding the primitives of a CI system like GitHub Actions (jobs, steps, caching). Orchestrating these correctly in a fast and reliable pipeline requires specific knowledge."
-		},
-		{
-			"taskId": 19,
-			"taskTitle": "Add Configurable Training Recipes (SFT/DPO)",
-			"complexityScore": 7,
-			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for adding DPO training support. The subtasks should cover: 1. Refactoring the data processing logic to handle the DPO preference format (prompt, chosen, rejected). 2. Modifying the main training script to dynamically select and instantiate either `SFTTrainer` or `DPOTrainer` based on a configuration setting. 3. Creating a new `dpo.yaml` configuration file with DPO-specific parameters (e.g., `beta`). 4. Adding a smoke test for the DPO training path.",
-			"reasoning": "This task is complex because it requires a significant refactoring of the core training script and data pipeline to support a fundamentally different training objective (DPO). It involves handling different data structures, using a different Trainer class, and managing distinct sets of hyperparameters."
-		},
-		{
-			"taskId": 20,
-			"taskTitle": "Implement Best Model Selection",
-			"complexityScore": 3,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for implementing best model selection. The subtasks should include: 1. Configuring the `Trainer` to run evaluation periodically during training (e.g., `evaluation_strategy='epoch'`). 2. Setting the `metric_for_best_model` argument in `TrainingArguments` (e.g., to 'eval_loss') and `greater_is_better`. 3. Setting the `load_best_model_at_end=True` argument to ensure the final saved model is the best one found during training.",
-			"reasoning": "The complexity is low as it primarily involves setting a few standard arguments in the Hugging Face `Trainer`'s configuration. The main work is ensuring an evaluation loop runs periodically to generate the metric that the `Trainer` will use for comparison."
-		},
-		{
-			"taskId": 21,
-			"taskTitle": "Expand Evaluation Suite and Error Analysis",
-			"complexityScore": 6,
-			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for enhancing the evaluation process. The subtasks should cover: 1. Curating and adding at least two new evaluation question sets. 2. Defining a formal error classification schema and rubric. 3. Modifying the evaluation script to allow for tagging responses with error categories. 4. Updating the results summary to include statistics on the distribution of different error types.",
-			"reasoning": "This task has moderate complexity because it combines data curation (which is labor-intensive) with software development. Implementing the error analysis component requires defining a clear schema and extending the reporting to provide deeper insights. The existing 4 subtasks capture this well."
-		},
-		{
-			"taskId": 22,
-			"taskTitle": "Implement Advanced Input Length Handling",
-			"complexityScore": 6,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for handling long input sequences. The subtasks should include: 1. Adding a configuration option in the data processing setup to choose between 'truncation' and 'sliding_window'. 2. Implementing the sliding window logic within the tokenization function, which should process a single long example into multiple overlapping tokenized chunks. 3. Adding unit tests to verify the sliding window implementation, checking chunk content, overlap, and correct dimensions.",
-			"reasoning": "This task is moderately complex because implementing a correct sliding window strategy is much more involved than simple truncation. It requires careful logic to manage window size, stride, and how labels are handled across chunks to avoid data leakage during training."
-		},
-		{
-			"taskId": 23,
-			"taskTitle": "Add Mixed-Precision and Gradient Accumulation Presets",
-			"complexityScore": 2,
-			"recommendedSubtasks": 2,
-			"expansionPrompt": "Expand this task into subtasks for adding performance optimization configs. The subtasks should be: 1. Add `mixed_precision` (with choices like 'no', 'fp16', 'bf16') and `gradient_accumulation_steps` fields to the training YAML configuration schema. 2. Update the training script to read these values from the config and pass them to the `TrainingArguments` object.",
-			"reasoning": "The complexity is low because these are standard, built-in features of the Hugging Face `Trainer`. The task only requires exposing existing parameters through the project's configuration management system, not implementing the underlying logic."
-		},
-		{
 			"taskId": 24,
 			"taskTitle": "Add Hyperparameter Sweeps and Early Stopping",
 			"complexityScore": 7,
-			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for hyperparameter optimization and early stopping. Subtasks should cover: 1. Implementing an `EarlyStoppingCallback` and exposing its parameters (e.g., `patience`) in the training config. 2. Creating a new script for running sweeps (e.g., `scripts/sweep.py`) using a library like Optuna. 3. Defining an 'objective' function for the sweep that runs a training job and returns the metric to optimize. 4. Adding documentation on how to define a search space and run a sweep.",
-			"reasoning": "This task has high complexity due to the integration of a dedicated hyperparameter optimization library. While early stopping is simple, setting up an HPO sweep involves defining an objective function, managing trials, and integrating the sweep framework with the training script, which is a substantial addition."
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "This task is already well-expanded with 4 subtasks. To regenerate them, use the following prompt: 'Expand the task 'Add Hyperparameter Sweeps and Early Stopping'. The goal is to integrate Optuna for hyperparameter sweeps and use the Hugging Face Trainer's EarlyStoppingCallback. The expansion should cover adding the callback, creating a sweep runner script, defining the search space in a configuration file, and documenting the new functionality.'",
+			"reasoning": "The complexity is high (7/10) due to the integration of a major new library (Optuna), the creation of a new execution workflow (sweep runner), and modifications to the configuration system to support search spaces. The existing 4 subtasks are comprehensive and logically structured, so no further expansion is needed."
 		},
 		{
 			"taskId": 25,
 			"taskTitle": "Create Lightweight Model Registry",
 			"complexityScore": 3,
-			"recommendedSubtasks": 3,
-			"expansionPrompt": "Expand this task into subtasks for creating a file-based model registry. The subtasks should cover: 1. Defining a clear JSON schema for the metadata to be stored (e.g., run ID, metrics, artifact path). 2. Creating a utility function that populates this schema and writes a uniquely named JSON file to the `registry/` directory. 3. Integrating this utility function into the main evaluation script to be called upon successful completion.",
-			"reasoning": "The complexity is low because it's a simple, self-contained task involving basic file I/O and data serialization. It doesn't require external databases or complex services, just writing a structured JSON file to a designated directory."
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Expand the task 'Create Lightweight Model Registry'. The implementation should be file-based, storing JSON metadata for each run in a `registry/` directory. The subtasks should cover defining the metadata schema, creating a utility function to write the registry entry, integrating this into the post-evaluation step of the training pipeline, and creating a simple script to read and display registry contents.",
+			"reasoning": "The complexity is low (3/10) as it primarily involves file I/O and collecting existing data at the end of a pipeline, without requiring a database or separate service. Expansion into 4 subtasks is recommended to ensure a structured approach: defining the data contract (schema), encapsulating the write logic, integrating it into the existing workflow, and providing a basic utility for consumption."
 		},
 		{
 			"taskId": 26,
 			"taskTitle": "Implement Prompt Templating System",
 			"complexityScore": 5,
-			"recommendedSubtasks": 5,
-			"expansionPrompt": "Expand this task into subtasks for building a prompt templating system. The subtasks should include: 1. Adding Jinja2 as a dependency. 2. Creating a directory with example template files (e.g., ChatML, Alpaca). 3. Implementing a utility function to load and render a named template. 4. Integrating the templating utility into the interactive CLI demo. 5. Integrating the templating utility into the FastAPI `/generate` endpoint.",
-			"reasoning": "This task has moderate complexity because it introduces a new abstraction (templating) and requires modifying multiple user-facing components (CLI, API). It involves file management, integration of a new library, and changes to the inference data flow. The existing 5 subtasks are a good breakdown."
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "This task is already well-expanded with 5 subtasks. To regenerate them, use the following prompt: 'Expand the task 'Implement Prompt Templating System'. The system should use Jinja2 to apply templates to user input before inference. The expansion should cover adding the dependency, creating a directory with example template files, building a core utility function to render templates, and integrating this functionality into both the command-line demo and the FastAPI API endpoint.'",
+			"reasoning": "The complexity is medium (5/10) because it introduces a new dependency (Jinja2) and requires modifying multiple user-facing components (CLI, API) and adding a new shared utility. This requires careful integration to ensure consistency. The existing 5 subtasks are well-defined and cover the entire implementation lifecycle, so no further expansion is necessary."
 		},
 		{
 			"taskId": 27,
 			"taskTitle": "Add Optional Guardrail Hooks",
-			"complexityScore": 5,
+			"complexityScore": 4,
 			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for implementing inference guardrail hooks. The subtasks should cover: 1. Designing a simple, extensible hook interface (e.g., a callable function). 2. Refactoring the inference logic to add a pre-generation hook that processes the input prompt. 3. Adding a post-generation hook that processes the model's output. 4. Implementing a simple example guardrail (e.g., a keyword filter) that can be optionally enabled via configuration.",
-			"reasoning": "The complexity is moderate because it requires thoughtful design of a 'hook' or 'plugin' system and refactoring the core inference logic to accommodate these extension points. While the initial guardrails may be simple, building a flexible framework for them is the key challenge."
+			"expansionPrompt": "Expand the task 'Add Optional Guardrail Hooks'. The goal is to create a system for pre-processing inputs and post-processing model outputs to filter content. The subtasks should cover designing a common interface for guardrail functions, integrating hook execution points into the main inference pipeline, implementing at least one example guardrail (e.g., keyword-based filter), and adding configuration to enable or disable guardrails.",
+			"reasoning": "The complexity is medium-low (4/10). While a simple implementation is trivial, creating a robust and extensible hook system requires thoughtful design of the interface and configuration. Recommending 4 subtasks ensures that the design, integration, implementation of an example, and configuration are all addressed as separate, manageable steps."
 		},
 		{
 			"taskId": 28,
 			"taskTitle": "Create Dockerfile for API Service",
-			"complexityScore": 5,
+			"complexityScore": 6,
 			"recommendedSubtasks": 4,
-			"expansionPrompt": "Expand this task into subtasks for creating a production-ready Dockerfile for the API service. The subtasks should guide the creation of: 1. A multi-stage Dockerfile, with a builder stage for installing dependencies. 2. A final, lean runtime stage that copies application code and runs as a non-root user. 3. Logic to copy packaged model artifacts into the image and an `ENTRYPOINT` to start the `uvicorn` server. 4. A `.dockerignore` file and README instructions for building and running the container.",
-			"reasoning": "This task has moderate complexity because creating an optimized and secure Docker image requires knowledge of best practices like multi-stage builds, layer caching, and running as a non-root user, which is more involved than a simple script."
+			"expansionPrompt": "Expand the task 'Create Dockerfile for API Service'. The goal is to create a production-ready, multi-stage Dockerfile for the FastAPI application. The subtasks should cover the initial Dockerfile creation with a build stage for dependencies and a lean final stage, creating a `.dockerignore` file to optimize the build context, adding a `docker-compose.yml` for simplified local execution, and documenting the build/run process.",
+			"reasoning": "The complexity is medium (6/10) because creating a production-quality Dockerfile involves best practices beyond basic commands, such as multi-stage builds for smaller images, layer caching, handling large model artifacts efficiently, and security. The recommended 4 subtasks break this down into creating the core file, optimizing the build, providing developer-friendly tooling, and documentation."
 		}
 	]
 }

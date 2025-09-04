@@ -1,0 +1,5 @@
+# Increase accumulation and keep per-device batch small to reduce VRAM.
+per_device_train_batch_size: 1
+per_device_eval_batch_size: 1
+gradient_accumulation_steps: 8
+# Do not force precision here; it will inherit from other defaults or user flags.

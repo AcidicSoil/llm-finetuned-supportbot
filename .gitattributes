@@ -7,6 +7,9 @@
 *.toml text eol=lf
 *.md   text eol=lf
 
+# Ensure repo-stored hooks use LF (no extension)
+.github/hooks/* text eol=lf
+
 # Keep binary as-is
 *.png  binary
 *.jpg  binary

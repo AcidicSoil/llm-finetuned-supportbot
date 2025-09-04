@@ -15,46 +15,49 @@ Features
 import argparse
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List
 
-import torch
 import yaml
-from datasets import Dataset
-from peft import LoraConfig, TaskType, get_peft_model
 from src.models import DataRecord
 from src.parsers import load_jsonl_records, load_preference_jsonl
 from src.tokenization import default_pair_template
-from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
-    set_seed,
-)
-from trl import SFTConfig, SFTTrainer
+
+if TYPE_CHECKING:
+    # Optional imports for type checking and IDEs only.
+    from datasets import Dataset
+    from transformers import BitsAndBytesConfig
+
+# Repo root (for locating preset files regardless of CWD)
+ROOT = Path(__file__).resolve().parent.parent
 
 
 def _load_split_jsonl(path: Path) -> List[DataRecord]:
     return load_jsonl_records(str(path))
 
 
-def _records_to_prompt_completion(records: Iterable[DataRecord]) -> Dataset:
+def _records_to_prompt_completion(records: Iterable[DataRecord]) -> "Dataset":
     prompts: List[str] = []
     completions: List[str] = []
     for rec in records:
         p, a = default_pair_template(rec)
         prompts.append(p)
         completions.append(a)
+    # Lazy import to avoid heavy deps during tests that only parse args
+    from datasets import Dataset
+
     return Dataset.from_dict({"prompt": prompts, "completion": completions})
 
 
 def _bitsandbytes_config(
     quant: str, *, compute_dtype: str, quant_type: str, double_quant: bool
-) -> BitsAndBytesConfig | None:
+) -> "BitsAndBytesConfig" | None:
     if quant not in {"4bit", "8bit", "none"}:
         raise SystemExit("--quant must be one of: 4bit, 8bit, none")
     if quant == "none":
         return None
     # Map dtype string to torch dtype
+    import torch  # lazy import
+
     dtype_map = {
         "float32": torch.float32,
         "float16": torch.float16,
@@ -62,8 +65,12 @@ def _bitsandbytes_config(
     }
     bnb_compute_dtype = dtype_map.get(compute_dtype.lower())
     if quant == "8bit":
+        from transformers import BitsAndBytesConfig
+
         return BitsAndBytesConfig(load_in_8bit=True)
     # 4bit
+    from transformers import BitsAndBytesConfig
+
     return BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type=quant_type,
@@ -113,6 +120,15 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=None,
         help="Path to YAML config with training params",
+    )
+    # Optional preset overlay (applied before --config, still overridden by CLI flags)
+    p.add_argument(
+        "--preset",
+        type=str,
+        default=None,
+        help=(
+            "Name of preset overlay in configs/presets/<name>.yaml. Applied as defaults before --config and CLI."
+        ),
     )
     # Mark as optional to allow programmatic/test invocation; we validate in main()
     p.add_argument(
@@ -217,6 +233,14 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Enable float16 mixed precision if supported",
     )
+    # Optional: auto-detect precision when not explicitly set
+    p.add_argument(
+        "--auto-precision",
+        action="store_true",
+        help=(
+            "If set and neither --bf16 nor --fp16 are provided, enables bf16 automatically on supported GPUs."
+        ),
+    )
     # Best model selection
     p.add_argument(
         "--load-best-model-at-end",
@@ -250,8 +274,21 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="Path to checkpoint dir to resume training from",
     )
-    # First pass: get --config if present
+    # First pass: get --preset / --config if present
     prelim, _ = p.parse_known_args()
+    # 1) Apply preset overlay, if any
+    if getattr(prelim, "preset", None):
+        preset_path = ROOT / "configs" / "presets" / f"{prelim.preset}.yaml"
+        if not preset_path.exists():
+            raise SystemExit(f"preset file not found: {preset_path}")
+        try:
+            with open(preset_path, "r", encoding="utf-8") as f:
+                preset_loaded: Dict[str, Any] = yaml.safe_load(f) or {}
+            if not isinstance(preset_loaded, dict):
+                raise SystemExit(f"preset YAML must be a mapping: {preset_path}")
+            p.set_defaults(**preset_loaded)
+        except Exception as e:
+            raise SystemExit(f"failed to load preset {preset_path}: {e}")
     if prelim.config is not None:
         if not prelim.config.exists():
             raise SystemExit(f"config file not found: {prelim.config}")
@@ -266,6 +303,29 @@ def parse_args() -> argparse.Namespace:
 
     # Use parse_known_args so test runners' flags (e.g., -q) don't break parsing
     args, _unknown = p.parse_known_args()
+
+    # Enforce mutual exclusivity at parse-time based on explicit CLI flags.
+    # This ensures CLI intent overrides preset/config defaults even when tests
+    # call parse_args() without running main().
+    try:
+        import sys as _sys
+
+        argv_tokens = set(_sys.argv[1:])
+        bf16_set_explicit = "--bf16" in argv_tokens
+        fp16_set_explicit = "--fp16" in argv_tokens
+        if bf16_set_explicit and fp16_set_explicit:
+            raise SystemExit("Both --bf16 and --fp16 were provided; choose one.")
+        if bf16_set_explicit and not fp16_set_explicit:
+            # User asked for bf16 explicitly; ensure fp16 is off
+            args.fp16 = False
+            args.bf16 = True
+        if fp16_set_explicit and not bf16_set_explicit:
+            # User asked for fp16 explicitly; ensure bf16 is off
+            args.bf16 = False
+            args.fp16 = True
+    except Exception:
+        # If sys.argv is not accessible or other issues, skip adjustment
+        pass
     # Echo effective config for reproducibility
     try:
         # Serialize Path objects to str for printing
@@ -282,9 +342,35 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    # Heavy imports kept local so tests that only import/parse don't need them
+    import inspect
+
+    import torch
+    from peft import LoraConfig, TaskType, get_peft_model
+    from transformers import AutoModelForCausalLM, AutoTokenizer, set_seed
+
     args = parse_args()
 
     set_seed(args.seed)
+
+    # Sanity: prevent both fp16 and bf16 simultaneously
+    if getattr(args, "bf16", False) and getattr(args, "fp16", False):
+        raise SystemExit("Both --bf16 and --fp16 were set; please choose only one.")
+
+    # Optional precision auto-detect: only if user asked and neither flag set
+    if getattr(args, "auto_precision", False) and not args.bf16 and not args.fp16:
+        try:
+            if torch.cuda.is_available():
+                # Prefer bf16 on Ampere or newer if bf16 supported
+                cap = torch.cuda.get_device_capability()
+                bf16_supported = getattr(
+                    torch.cuda, "is_bf16_supported", lambda: False
+                )()
+                if bf16_supported or (isinstance(cap, tuple) and cap >= (8, 0)):
+                    args.bf16 = True
+                    print("[train_lora] Auto-enabled bf16 based on GPU capability.")
+        except Exception:
+            pass
 
     # Validate required arguments when running as a CLI
     if not args.model or not args.splits_dir or not args.output_dir:
@@ -405,7 +491,6 @@ def main() -> None:
         "metric_for_best_model": str(args.metric_name),
         "greater_is_better": bool(args.greater_is_better),
     }
-    import inspect
 
     if str(args.recipe).lower() == "dpo":
         # Assemble DPOConfig with version tolerance
@@ -484,6 +569,8 @@ def main() -> None:
         trainer = DPOTrainer(**trainer_kwargs)
     else:
         # SFT path (default)
+        from trl import SFTConfig, SFTTrainer
+
         try:
             from dataclasses import fields as dc_fields
             from dataclasses import is_dataclass

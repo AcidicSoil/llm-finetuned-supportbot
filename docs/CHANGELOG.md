@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## 2025-09-03 — Presets precedence + uv standardization
+
+- Enforced presets precedence in CLI: defaults < preset < --config < CLI flags.
+- Updated `scripts/train_lora.py` to lazy-import heavy ML deps so arg-parse tests run without full stack.
+- Standardized docs on `uv` usage (README, contributor guidelines, task docs, workflow notes).
+- Added link to `instructions/uv-cheatsheet.md` in README.
+
+Breaking changes: none. Behavior is clarified; existing flags remain compatible.
+
 ## 2025-09-02 — Task #19: Add Configurable Training Recipes (SFT/DPO)
 
 - Added preference dataset loader: `src/parsers/preference.py` with `load_preference_jsonl()`.
