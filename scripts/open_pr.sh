@@ -118,4 +118,3 @@ if [[ -n "$TAG_RELEASE" ]]; then
 fi
 
 echo "Done."
-

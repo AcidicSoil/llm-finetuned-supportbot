@@ -22,4 +22,3 @@ if command -v git >/dev/null 2>&1; then
 fi
 
 echo "[install-hooks] Done. Pre-commit hook active for this repo."
-
